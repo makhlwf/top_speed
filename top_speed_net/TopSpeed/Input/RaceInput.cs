@@ -431,6 +431,8 @@ namespace TopSpeed.Input
 
             if (UseKeyboard)
             {
+                if (IsSteerModifierDown() && (_lastState.IsDown(_kbLeft) || _lastState.IsDown(_kbRight)))
+                    return 0;
                 if (_lastState.IsDown(_kbLeft))
                     return -100;
                 if (_lastState.IsDown(_kbRight))
@@ -528,6 +530,47 @@ namespace TopSpeed.Input
         public bool GetDistanceReport() => WasPressed(_kbReportDistance) || AxisPressed(_reportDistance);
         public bool GetWheelAngleReport() => WasPressed(_kbReportWheelAngle) || AxisPressed(_reportWheelAngle);
         public bool GetHeadingReport() => WasPressed(_kbReportHeading) || AxisPressed(_reportHeading);
+
+        public bool TryGetSteerStep(out int direction)
+        {
+            direction = 0;
+            if (!UseKeyboard || !IsShiftDown() || IsCtrlDown())
+                return false;
+            if (WasPressed(_kbLeft))
+            {
+                direction = -1;
+                return true;
+            }
+            if (WasPressed(_kbRight))
+            {
+                direction = 1;
+                return true;
+            }
+            return false;
+        }
+
+        public bool TryGetSteerAlign(out int direction)
+        {
+            direction = 0;
+            if (!UseKeyboard || !IsCtrlDown())
+                return false;
+            if (WasPressed(_kbLeft))
+            {
+                direction = -1;
+                return true;
+            }
+            if (WasPressed(_kbRight))
+            {
+                direction = 1;
+                return true;
+            }
+            return false;
+        }
+
+        public bool IsSteerModifierDown()
+        {
+            return UseKeyboard && (IsShiftDown() || IsCtrlDown());
+        }
 
         internal Key GetKeyMapping(InputAction action)
         {
@@ -861,6 +904,16 @@ namespace TopSpeed.Input
             var current = GetAxis(axis, _lastJoystick);
             var previous = _hasPrevJoystick ? GetAxis(axis, _prevJoystick) : 0;
             return current > 50 && previous <= 50;
+        }
+
+        private bool IsShiftDown()
+        {
+            return _lastState.IsDown(Key.LeftShift) || _lastState.IsDown(Key.RightShift);
+        }
+
+        private bool IsCtrlDown()
+        {
+            return _lastState.IsDown(Key.LeftControl) || _lastState.IsDown(Key.RightControl);
         }
 
         private void ReadFromSettings()

@@ -54,6 +54,8 @@ namespace TopSpeed.Race
         private bool _sentStart;
         private bool _sentFinish;
         private PlayerState _currentState;
+        private StartGridLayout? _startGrid;
+        private bool _wasInFinish;
 
         public LevelMultiplayer(
             AudioManager audio,
@@ -95,8 +97,12 @@ namespace TopSpeed.Race
             _sentFinish = false;
 
             var rowSpacing = Math.Max(10.0f, _car.LengthM * 1.5f);
+            if (StartGridBuilder.TryBuild(_track.Map, _car.WidthM, rowSpacing, out var layout))
+                _startGrid = layout;
             var startPosition = CalculateStartPosition(_playerNumber, _car.WidthM, rowSpacing);
             _car.SetPosition(startPosition.X, startPosition.Z);
+            if (_track.HasFinishArea)
+                _wasInFinish = _track.IsInsideFinishArea(_car.WorldPosition);
 
             for (var i = 0; i < MaxPlayers; i++)
             {
@@ -211,7 +217,37 @@ namespace TopSpeed.Race
             if (_track.NextRoad(_car.MapState, _car.Speed, (int)_settings.CurveAnnouncement, out var nextRoad))
                 CallNextRoad(nextRoad);
 
-            if (_track.Lap(_car.DistanceMeters) > _lap)
+            if (_track.HasFinishArea)
+            {
+                if (UpdateLapFromFinishArea(_car.WorldPosition, ref _wasInFinish))
+                {
+                    _lap++;
+                    if (_lap > _nrOfLaps)
+                    {
+                        var finishSound = _randomSounds[(int)RandomSound.Finish][Algorithm.RandomInt(_totalRandomSounds[(int)RandomSound.Finish])];
+                        if (finishSound != null)
+                            Speak(finishSound, true);
+                        _car.ManualTransmission = false;
+                        _car.Quiet();
+                        _car.Stop();
+                        _raceTime = (int)(_stopwatch.ElapsedMilliseconds - _stopwatchDiffMs);
+                        Speak(_soundFinished[_positionFinish++]!, true);
+                        if (!_sentFinish)
+                        {
+                            _sentFinish = true;
+                            _currentState = PlayerState.Finished;
+                            _session.SendPlayerFinished();
+                            _session.SendPlayerState(_currentState);
+                        }
+                        PushEvent(RaceEventType.RaceFinish, 1.0f + _speakTime - _elapsedTotal);
+                    }
+                    else if (_settings.AutomaticInfo != AutomaticInfoMode.Off && _lap > 1 && _lap <= _nrOfLaps)
+                    {
+                        Speak(_soundLaps[_nrOfLaps - _lap], true);
+                    }
+                }
+            }
+            else if (_track.Lap(_car.DistanceMeters) > _lap)
             {
                 _lap = _track.Lap(_car.DistanceMeters);
                 if (_lap > _nrOfLaps)
@@ -416,6 +452,9 @@ namespace TopSpeed.Race
 
         private Vector3 CalculateStartPosition(int gridIndex, float vehicleWidth, float rowSpacing)
         {
+            if (_startGrid.HasValue)
+                return StartGridBuilder.GetPosition(_startGrid.Value, gridIndex);
+
             var start = _track.Map.CellToWorld(_track.Map.StartX, _track.Map.StartZ);
             var forward = MapMovement.DirectionVector(_track.Map.StartHeading);
             var right = new Vector3(forward.Z, 0f, -forward.X);

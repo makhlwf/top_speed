@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using TopSpeed.Tracks.Map;
 using TopSpeed.Tracks.Topology;
@@ -79,9 +80,14 @@ namespace TopSpeed.Tracks.Guidance
                 if (approach == null)
                     continue;
 
-                if (TryBuildCandidate(approach, TrackApproachSide.Entry, position, ref best, ref hasBest))
-                    continue;
-                TryBuildCandidate(approach, TrackApproachSide.Exit, position, ref best, ref hasBest);
+                var range = GetApproachRange(approach, _rangeMeters);
+                if (IsSideEnabled(approach, TrackApproachSide.Entry))
+                {
+                    if (TryBuildCandidate(approach, TrackApproachSide.Entry, position, range, ref best, ref hasBest))
+                        continue;
+                }
+                if (IsSideEnabled(approach, TrackApproachSide.Exit))
+                    TryBuildCandidate(approach, TrackApproachSide.Exit, position, range, ref best, ref hasBest);
             }
 
             if (!hasBest)
@@ -113,6 +119,7 @@ namespace TopSpeed.Tracks.Guidance
             TrackApproachDefinition approach,
             TrackApproachSide side,
             Vector2 position,
+            float rangeMeters,
             ref Candidate best,
             ref bool hasBest)
         {
@@ -125,7 +132,7 @@ namespace TopSpeed.Tracks.Guidance
 
             var portalPos = new Vector2(portal.X, portal.Z);
             var distance = Vector2.Distance(position, portalPos);
-            if (distance > _rangeMeters)
+            if (distance > rangeMeters)
                 return false;
 
             if (!hasBest || distance < best.DistanceMeters)
@@ -146,6 +153,126 @@ namespace TopSpeed.Tracks.Guidance
             }
 
             return true;
+        }
+
+        private static float GetApproachRange(TrackApproachDefinition approach, float defaultRange)
+        {
+            if (approach?.Metadata == null || approach.Metadata.Count == 0)
+                return defaultRange;
+
+            if (TryGetFloat(approach.Metadata, out var range, "approach_range", "beacon_range", "range"))
+                return Math.Max(1f, range);
+
+            return defaultRange;
+        }
+
+        private static bool IsSideEnabled(TrackApproachDefinition approach, TrackApproachSide side)
+        {
+            if (approach?.Metadata == null || approach.Metadata.Count == 0)
+                return true;
+
+            if (TryGetString(approach.Metadata, out var raw, "approach_side", "approach_sides", "side"))
+            {
+                var trimmed = raw.Trim().ToLowerInvariant();
+                if (trimmed.Contains("none") || trimmed.Contains("off") || trimmed.Contains("disabled"))
+                    return false;
+                var hasEntry = trimmed.Contains("entry");
+                var hasExit = trimmed.Contains("exit");
+                if (hasEntry || hasExit)
+                    return side == TrackApproachSide.Entry ? hasEntry : hasExit;
+            }
+
+            if (TryGetBool(approach.Metadata, out var entryEnabled, "approach_entry", "entry_enabled", "entry_beacon"))
+            {
+                if (side == TrackApproachSide.Entry)
+                    return entryEnabled;
+            }
+            if (TryGetBool(approach.Metadata, out var exitEnabled, "approach_exit", "exit_enabled", "exit_beacon"))
+            {
+                if (side == TrackApproachSide.Exit)
+                    return exitEnabled;
+            }
+
+            return true;
+        }
+
+        private static bool TryGetFloat(
+            IReadOnlyDictionary<string, string> metadata,
+            out float value,
+            params string[] keys)
+        {
+            value = 0f;
+            if (metadata == null || metadata.Count == 0)
+                return false;
+            foreach (var key in keys)
+            {
+                if (!metadata.TryGetValue(key, out var raw))
+                    continue;
+                if (float.TryParse(raw, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value))
+                    return true;
+            }
+            return false;
+        }
+
+        private static bool TryGetBool(
+            IReadOnlyDictionary<string, string> metadata,
+            out bool value,
+            params string[] keys)
+        {
+            value = false;
+            if (metadata == null || metadata.Count == 0)
+                return false;
+            foreach (var key in keys)
+            {
+                if (!metadata.TryGetValue(key, out var raw))
+                    continue;
+                if (TryParseBool(raw, out value))
+                    return true;
+            }
+            return false;
+        }
+
+        private static bool TryGetString(
+            IReadOnlyDictionary<string, string> metadata,
+            out string value,
+            params string[] keys)
+        {
+            value = string.Empty;
+            if (metadata == null || metadata.Count == 0)
+                return false;
+            foreach (var key in keys)
+            {
+                if (metadata.TryGetValue(key, out var raw) && !string.IsNullOrWhiteSpace(raw))
+                {
+                    value = raw;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static bool TryParseBool(string raw, out bool value)
+        {
+            value = false;
+            if (string.IsNullOrWhiteSpace(raw))
+                return false;
+            var trimmed = raw.Trim().ToLowerInvariant();
+            switch (trimmed)
+            {
+                case "1":
+                case "true":
+                case "yes":
+                case "on":
+                    value = true;
+                    return true;
+                case "0":
+                case "false":
+                case "no":
+                case "off":
+                    value = false;
+                    return true;
+            }
+            return bool.TryParse(raw, out value);
         }
 
         private static float NormalizeDegrees(float degrees)

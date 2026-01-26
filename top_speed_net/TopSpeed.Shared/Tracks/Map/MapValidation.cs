@@ -332,7 +332,7 @@ namespace TopSpeed.Tracks.Map
                         ApplyLink(links, block, issues);
                         break;
                     case "path":
-                        ApplyPath(paths, block, issues);
+                        ApplyPath(paths, shapes, block, issues);
                         break;
                     case "beacon":
                         ApplyBeacon(beacons, block, issues);
@@ -344,7 +344,7 @@ namespace TopSpeed.Tracks.Map
                         ApplyApproach(approaches, block, issues);
                         break;
                     case "curve":
-                        ApplyCurve(shapes, areas, portals, paths, approaches, block, issues);
+                        issues.Add(new TrackMapIssue(TrackMapIssueSeverity.Error, "Curve sections are not supported. Use paths, portals, and straight segments instead.", block.StartLine));
                         break;
                 }
             }
@@ -1007,6 +1007,7 @@ namespace TopSpeed.Tracks.Map
 
         private static void ApplyPath(
             List<PathDefinition> paths,
+            List<ShapeDefinition> shapes,
             SectionBlock block,
             List<TrackMapIssue> issues)
         {
@@ -1035,6 +1036,49 @@ namespace TopSpeed.Tracks.Map
             var toPortal = TryGetValue(block, "to", out var toValue) ? toValue : null;
             var width = TryFloat(block, "width", out var widthMeters) ? Math.Max(0.1f, widthMeters) : 0f;
             var name = TryGetValue(block, "name", out var nameValue) ? nameValue : null;
+
+            if (string.IsNullOrWhiteSpace(shapeId) &&
+                string.IsNullOrWhiteSpace(fromPortal) &&
+                string.IsNullOrWhiteSpace(toPortal) &&
+                TryReadHeadingValue(block, out var headingDegrees))
+            {
+                var hasX = TryFloat(block, "x", out var x) || TryFloat(block, "start_x", out x) || TryFloat(block, "startx", out x);
+                var hasZ = TryFloat(block, "z", out var z) || TryFloat(block, "start_z", out z) || TryFloat(block, "startz", out z);
+                if (hasX && hasZ)
+                {
+                    if (!TryFloat(block, "length", out var length) &&
+                        !TryFloat(block, "path_length", out length) &&
+                        !TryFloat(block, "distance", out length))
+                    {
+                        issues.Add(new TrackMapIssue(TrackMapIssueSeverity.Error, $"Path '{id}' requires length when using heading-based definition.", block.StartLine));
+                    }
+                    else if (length <= 0f)
+                    {
+                        issues.Add(new TrackMapIssue(TrackMapIssueSeverity.Error, $"Path '{id}' length must be positive.", block.StartLine));
+                    }
+                    else
+                    {
+                        var shapeAutoId = $"{id}_shape";
+                        if (shapes.Any(s => string.Equals(s.Id, shapeAutoId, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            issues.Add(new TrackMapIssue(TrackMapIssueSeverity.Error, $"Path '{id}' generated duplicate shape id '{shapeAutoId}'.", block.StartLine));
+                        }
+                        else
+                        {
+                            var radians = headingDegrees * (float)Math.PI / 180f;
+                            var dx = (float)Math.Sin(radians) * length;
+                            var dz = (float)Math.Cos(radians) * length;
+                            var points = new List<Vector2>
+                            {
+                                new Vector2(x, z),
+                                new Vector2(x + dx, z + dz)
+                            };
+                            shapes.Add(new ShapeDefinition(shapeAutoId, ShapeType.Polyline, points: points));
+                            shapeId = shapeAutoId;
+                        }
+                    }
+                }
+            }
 
             paths.Add(new PathDefinition(id, pathType, shapeId, fromPortal, toPortal, width, name));
         }
@@ -2070,9 +2114,6 @@ namespace TopSpeed.Tracks.Map
                 case "road":
                     type = PathType.Road;
                     return true;
-                case "curve":
-                    type = PathType.Curve;
-                    return true;
                 case "intersection":
                 case "cross":
                     type = PathType.Intersection;
@@ -2586,7 +2627,7 @@ namespace TopSpeed.Tracks.Map
 
             foreach (var approach in map.Approaches)
             {
-                if (sectorIds.Count > 0 && !sectorIds.Contains(approach.SectorId) && !IsCurveApproach(approach))
+                if (sectorIds.Count > 0 && !sectorIds.Contains(approach.SectorId))
                     issues.Add(new TrackMapIssue(TrackMapIssueSeverity.Warning, $"Approach references missing sector '{approach.SectorId}'."));
                 if (!string.IsNullOrWhiteSpace(approach.EntryPortalId) && !portalIds.Contains(approach.EntryPortalId!))
                     issues.Add(new TrackMapIssue(TrackMapIssueSeverity.Error, $"Approach '{approach.SectorId}' references missing entry portal '{approach.EntryPortalId}'."));
@@ -2599,20 +2640,6 @@ namespace TopSpeed.Tracks.Map
                 if (approach.AlignmentToleranceDegrees.HasValue && approach.AlignmentToleranceDegrees.Value < 0f)
                     issues.Add(new TrackMapIssue(TrackMapIssueSeverity.Error, $"Approach '{approach.SectorId}' tolerance must be non-negative."));
             }
-        }
-
-        private static bool IsCurveApproach(TrackApproachDefinition approach)
-        {
-            if (approach == null)
-                return false;
-            var metadata = approach.Metadata;
-            if (metadata == null || metadata.Count == 0)
-                return false;
-            if (!metadata.TryGetValue("curve", out var raw))
-                return false;
-            return string.Equals(raw, "true", StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(raw, "1", StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(raw, "yes", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

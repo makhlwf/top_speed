@@ -411,10 +411,13 @@ namespace TopSpeed.Race
                     _speech.Speak("Leaving zone.");
             }
 
-            var previousCurve = DescribeCurve(previous.Exits, _mapHeading, previous.IsOnPath);
-            var currentCurve = DescribeCurve(current.Exits, _mapHeading, current.IsOnPath);
-            if (!string.Equals(previousCurve, currentCurve, StringComparison.OrdinalIgnoreCase))
-                _speech.Speak(currentCurve);
+            if (_pathManager == null || !_pathManager.HasPaths)
+            {
+                var previousCurve = DescribeCurve(previous.Exits, _mapHeading, previous.IsOnPath);
+                var currentCurve = DescribeCurve(current.Exits, _mapHeading, current.IsOnPath);
+                if (!string.Equals(previousCurve, currentCurve, StringComparison.OrdinalIgnoreCase))
+                    _speech.Speak(currentCurve);
+            }
 
             var wasIntersection = previous.IsIntersection;
             var isIntersection = current.IsIntersection;

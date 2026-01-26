@@ -60,6 +60,8 @@ namespace TopSpeed.Tracks.Map
         public int StartX { get; set; }
         public int StartZ { get; set; }
         public MapDirection StartHeading { get; set; } = MapDirection.North;
+        public string? StartAreaId { get; set; }
+        public string? FinishAreaId { get; set; }
 
         public bool TryGetCell(int x, int z, out TrackMapCell cell)
         {
@@ -180,6 +182,92 @@ namespace TopSpeed.Tracks.Map
         public TrackPortalManager BuildPortalManager()
         {
             return new TrackPortalManager(_portals, _links);
+        }
+
+        public bool TryGetStartAreaBounds(out float minX, out float minZ, out float maxX, out float maxZ)
+        {
+            minX = 0f;
+            minZ = 0f;
+            maxX = 0f;
+            maxZ = 0f;
+            if (string.IsNullOrWhiteSpace(StartAreaId))
+                return false;
+            return TryGetAreaBounds(StartAreaId!, out minX, out minZ, out maxX, out maxZ);
+        }
+
+        public bool TryGetFinishAreaBounds(out float minX, out float minZ, out float maxX, out float maxZ)
+        {
+            minX = 0f;
+            minZ = 0f;
+            maxX = 0f;
+            maxZ = 0f;
+            if (string.IsNullOrWhiteSpace(FinishAreaId))
+                return false;
+            return TryGetAreaBounds(FinishAreaId!, out minX, out minZ, out maxX, out maxZ);
+        }
+
+        public bool TryGetAreaBounds(string areaId, out float minX, out float minZ, out float maxX, out float maxZ)
+        {
+            minX = 0f;
+            minZ = 0f;
+            maxX = 0f;
+            maxZ = 0f;
+
+            if (string.IsNullOrWhiteSpace(areaId))
+                return false;
+
+            TrackAreaDefinition? area = null;
+            foreach (var candidate in _areas)
+            {
+                if (candidate != null && string.Equals(candidate.Id, areaId, StringComparison.OrdinalIgnoreCase))
+                {
+                    area = candidate;
+                    break;
+                }
+            }
+            if (area == null || string.IsNullOrWhiteSpace(area.ShapeId))
+                return false;
+
+            ShapeDefinition? shape = null;
+            foreach (var candidate in _shapes)
+            {
+                if (candidate != null && string.Equals(candidate.Id, area.ShapeId, StringComparison.OrdinalIgnoreCase))
+                {
+                    shape = candidate;
+                    break;
+                }
+            }
+            if (shape == null)
+                return false;
+
+            return TryGetShapeBounds(shape, out minX, out minZ, out maxX, out maxZ);
+        }
+
+        public bool TryGetStartAreaDefinition(out TrackAreaDefinition area)
+        {
+            return TryGetAreaDefinition(StartAreaId, out area);
+        }
+
+        public bool TryGetFinishAreaDefinition(out TrackAreaDefinition area)
+        {
+            return TryGetAreaDefinition(FinishAreaId, out area);
+        }
+
+        private bool TryGetAreaDefinition(string? areaId, out TrackAreaDefinition area)
+        {
+            area = null!;
+            if (string.IsNullOrWhiteSpace(areaId))
+                return false;
+
+            foreach (var candidate in _areas)
+            {
+                if (candidate != null && string.Equals(candidate.Id, areaId, StringComparison.OrdinalIgnoreCase))
+                {
+                    area = candidate;
+                    return true;
+                }
+            }
+            return false;
         }
 
         public TrackPathManager BuildPathManager()
@@ -310,6 +398,70 @@ namespace TopSpeed.Tracks.Map
         {
             var opposite = Opposite(direction);
             return (cell.Exits & ExitsFromDirection(opposite)) != 0;
+        }
+
+        private static bool TryGetShapeBounds(ShapeDefinition shape, out float minX, out float minZ, out float maxX, out float maxZ)
+        {
+            minX = 0f;
+            minZ = 0f;
+            maxX = 0f;
+            maxZ = 0f;
+
+            if (shape == null)
+                return false;
+
+            switch (shape.Type)
+            {
+                case ShapeType.Rectangle:
+                    minX = Math.Min(shape.X, shape.X + shape.Width);
+                    maxX = Math.Max(shape.X, shape.X + shape.Width);
+                    minZ = Math.Min(shape.Z, shape.Z + shape.Height);
+                    maxZ = Math.Max(shape.Z, shape.Z + shape.Height);
+                    return true;
+                case ShapeType.Circle:
+                    minX = shape.X - shape.Radius;
+                    maxX = shape.X + shape.Radius;
+                    minZ = shape.Z - shape.Radius;
+                    maxZ = shape.Z + shape.Radius;
+                    return true;
+                case ShapeType.Ring:
+                    if (shape.Radius > 0f)
+                    {
+                        var outer = Math.Abs(shape.Radius) + Math.Abs(shape.RingWidth);
+                        minX = shape.X - outer;
+                        maxX = shape.X + outer;
+                        minZ = shape.Z - outer;
+                        maxZ = shape.Z + outer;
+                        return true;
+                    }
+                    var ringMinX = Math.Min(shape.X, shape.X + shape.Width) - Math.Abs(shape.RingWidth);
+                    var ringMaxX = Math.Max(shape.X, shape.X + shape.Width) + Math.Abs(shape.RingWidth);
+                    var ringMinZ = Math.Min(shape.Z, shape.Z + shape.Height) - Math.Abs(shape.RingWidth);
+                    var ringMaxZ = Math.Max(shape.Z, shape.Z + shape.Height) + Math.Abs(shape.RingWidth);
+                    minX = ringMinX;
+                    maxX = ringMaxX;
+                    minZ = ringMinZ;
+                    maxZ = ringMaxZ;
+                    return true;
+                case ShapeType.Polygon:
+                case ShapeType.Polyline:
+                    if (shape.Points == null || shape.Points.Count == 0)
+                        return false;
+                    minX = float.MaxValue;
+                    minZ = float.MaxValue;
+                    maxX = float.MinValue;
+                    maxZ = float.MinValue;
+                    foreach (var point in shape.Points)
+                    {
+                        if (point.X < minX) minX = point.X;
+                        if (point.X > maxX) maxX = point.X;
+                        if (point.Y < minZ) minZ = point.Y;
+                        if (point.Y > maxZ) maxZ = point.Y;
+                    }
+                    return true;
+            }
+
+            return false;
         }
 
         private readonly struct CellKey : IEquatable<CellKey>

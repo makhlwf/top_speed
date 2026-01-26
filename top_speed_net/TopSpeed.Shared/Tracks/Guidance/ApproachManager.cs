@@ -166,7 +166,8 @@ namespace TopSpeed.Tracks.Guidance
                 exitHeading,
                 width,
                 length,
-                tolerance);
+                tolerance,
+                metadata);
         }
 
         private bool TryBuildAlignment(

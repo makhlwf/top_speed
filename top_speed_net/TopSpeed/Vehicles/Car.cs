@@ -124,6 +124,8 @@ namespace TopSpeed.Vehicles
         private float _lastHeadingDegrees;
         private float _turnTickAccumulator;
         private bool _turnTickInitialized;
+        private bool _steerOverrideActive;
+        private int _steerOverrideCommand;
 
         private AudioSourceHandle _soundEngine;
         private AudioSourceHandle? _soundThrottle;
@@ -358,6 +360,13 @@ namespace TopSpeed.Vehicles
         public float HeadingRadians => _dynamicsState.Yaw;
         public float HeadingDegrees => NormalizeDegrees(_dynamicsState.Yaw * 180.0f / (float)Math.PI);
         public float FrontWheelAngleDegrees => _dynamicsState.SteerWheelAngleDeg;
+        public float SteerLimitDegrees => VehicleSteering.GetSteerLimitDegrees(
+            _dynamicsParams.SteerLowDeg,
+            _dynamicsParams.SteerHighDeg,
+            _dynamicsParams.SteerSpeedKph,
+            _dynamicsParams.SteerSpeedExponent,
+            _engine.SpeedKmh);
+        public float MaxSteerDegrees => _maxSteerDeg;
         public Vector3 WorldPosition => _worldPosition;
         public Vector3 WorldForward => _worldForward;
         public Vector3 WorldUp => _worldUp;
@@ -390,6 +399,19 @@ namespace TopSpeed.Vehicles
         public float DistanceMeters => _mapState.DistanceMeters;
         public MapMovementState MapState => _mapState;
 
+        public void SetSteeringOverride(int? command)
+        {
+            if (command.HasValue)
+            {
+                _steerOverrideActive = true;
+                _steerOverrideCommand = Math.Max(-100, Math.Min(100, command.Value));
+                return;
+            }
+
+            _steerOverrideActive = false;
+            _steerOverrideCommand = 0;
+        }
+
         public void Initialize(float positionX = 0, float positionY = 0)
         {
             if (Math.Abs(positionX) > 0.001f || Math.Abs(positionY) > 0.001f)
@@ -416,6 +438,8 @@ namespace TopSpeed.Vehicles
             };
             _turnTickInitialized = false;
             _turnTickAccumulator = 0f;
+            _steerOverrideActive = false;
+            _steerOverrideCommand = 0;
             _lastHeadingDegrees = HeadingDegrees;
             _worldPosition = pose.Position;
             _worldForward = pose.Tangent;
@@ -668,7 +692,10 @@ namespace TopSpeed.Vehicles
                 if (!IsFinite(_positionY))
                     _positionY = 0f;
 
-                _currentSteering = _input.GetSteering();
+                var steeringCommand = _input.GetSteering();
+                if (_steerOverrideActive)
+                    steeringCommand = _steerOverrideCommand;
+                _currentSteering = steeringCommand;
                 _currentThrottle = _input.GetThrottle();
                 _currentBrake = _input.GetBrake();
                 var gearUp = _input.GetGearUp();

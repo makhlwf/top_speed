@@ -37,12 +37,12 @@ namespace TopSpeed.Vehicles
             var shaped = Math.Abs(state.SteerInput) <= 0f
                 ? 0f
                 : Math.Sign(state.SteerInput) * (float)Math.Pow(Math.Abs(state.SteerInput), steerGamma);
-            var steerLimit = CalculateSteerLimit(steerLowDeg, steerHighDeg, steerSpeedKph, steerSpeedExponent, speedKph);
+            var steerLimit = GetSteerLimitDegrees(steerLowDeg, steerHighDeg, steerSpeedKph, steerSpeedExponent, speedKph);
             state.SteerWheelAngleDeg = shaped * steerLimit;
             state.SteerWheelAngleRad = state.SteerWheelAngleDeg * ((float)Math.PI / 180.0f);
         }
 
-        private static float CalculateSteerLimit(
+        internal static float GetSteerLimitDegrees(
             float steerLowDeg,
             float steerHighDeg,
             float steerSpeedKph,

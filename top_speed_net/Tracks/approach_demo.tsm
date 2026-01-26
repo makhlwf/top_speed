@@ -145,53 +145,12 @@ width=350
 height=350
 ring_width=100
 
-[curve: corner_se]
-name=South east corner
-center_x=240
-center_z=10
-radius=10
-width=12
-entry_heading=east
-exit_heading=north
-turn=left
-sector=main_loop
-
-[curve: corner_ne]
-name=North east corner
-center_x=240
-center_z=240
-radius=10
-width=12
-entry_heading=north
-exit_heading=west
-turn=left
-sector=main_loop
-
-[curve: corner_nw]
-name=North west corner
-center_x=10
-center_z=240
-radius=10
-width=12
-entry_heading=west
-exit_heading=south
-turn=left
-sector=main_loop
-
-[curve: corner_sw]
-name=South west corner
-center_x=10
-center_z=10
-radius=10
-width=12
-entry_heading=south
-exit_heading=east
-turn=left
-sector=corner_sw
-entry_portal=p_sw_entry_a
-exit_portal=p_sw_exit
-approach_length=15
-
+[shape: corner_sw_zone]
+type=rectangle
+x=0
+z=0
+width=30
+height=30
 
 [shape: beacon_zone]
 type=circle
@@ -206,17 +165,38 @@ z=118
 width=14
 height=14
 
-[shape: sw_entry_b_path]
+[shape: east_turn_zone]
+type=rectangle
+x=235
+z=0
+width=15
+height=30
+
+[shape: start_zone]
+type=rectangle
+x=40
+z=0
+width=40
+height=30
+
+[shape: finish_zone]
+type=rectangle
+x=190
+z=0
+width=40
+height=30
+
+[shape: sw_entry_a_path]
 type=polyline
-points=0,45|0,25
+points=0,45|0,30
 
 [shape: sw_entry_c_path]
 type=polyline
-points=15,45|15,25
+points=15,45|15,30
 
 [shape: sw_entry_c_connector]
 type=polyline
-points=15,25|10,20
+points=15,30|15,0|30,0
 
 # Areas
 [area: loop_area]
@@ -224,6 +204,7 @@ type=zone
 shape=loop_shape
 surface=asphalt
 noise=nonoise
+width=40
 
 [area: outer_grass]
 type=boundary
@@ -250,6 +231,43 @@ noise=trackside
 intersection_width=20
 intersection_length=20
 
+[area: corner_sw_area]
+type=zone
+name=South west corner
+shape=corner_sw_zone
+surface=asphalt
+noise=trackside
+
+[area: east_turn_area]
+type=zone
+name=East corner turn
+shape=east_turn_zone
+surface=asphalt
+noise=trackside
+
+[area: start_area]
+type=start
+name=Start zone
+shape=start_zone
+surface=asphalt
+noise=trackside
+start_x=60
+start_z=15
+start_heading=east
+grid_cols=4
+grid_rows=2
+grid_row_spacing=12
+grid_col_spacing=4
+grid_margin=2
+grid_max_vehicles=8
+
+[area: finish_area]
+type=finish
+name=Finish zone
+shape=finish_zone
+surface=asphalt
+noise=trackside
+
 # Sector (track-native)
 [sector: main_loop]
 type=straight
@@ -257,12 +275,24 @@ name=Main loop
 area=loop_area
 
 [sector: corner_sw]
-type=curve
+type=straight
 name=South west corner
-area=curve_corner_sw_area
+area=corner_sw_area
+branch_role=connector
 branch_entry=p_sw_entry_a
-branch_exits=p_sw_entry_a,p_sw_entry_b,p_sw_entry_c
+branch_exits=p_sw_entry_a,p_sw_entry_c
 preferred_exit=p_sw_entry_a
+
+[sector: east_turn]
+type=straight
+name=East corner
+area=east_turn_area
+branch_role=connector
+branch_entry=p_east_entry
+branch_exits=p_east_north
+preferred_exit=p_east_north
+approach_side=exit
+approach_range=15
 
 # Portals (entry/exit geometry)
 [portal: p_loop_entry]
@@ -281,10 +311,10 @@ width=12
 exit_heading=west
 role=exit
 
-[portal: p_sw_entry_b]
+[portal: p_sw_entry_a]
 sector=corner_sw
 x=0
-z=25
+z=30
 width=12
 entry_heading=south
 role=entry
@@ -292,10 +322,34 @@ role=entry
 [portal: p_sw_entry_c]
 sector=corner_sw
 x=15
-z=25
+z=30
 width=12
 entry_heading=south
 role=entry
+
+[portal: p_sw_exit]
+sector=corner_sw
+x=30
+z=0
+width=12
+exit_heading=east
+role=exit
+
+[portal: p_east_entry]
+sector=east_turn
+x=235
+z=15
+width=12
+entry_heading=east
+role=entry
+
+[portal: p_east_north]
+sector=east_turn
+x=235
+z=15
+width=12
+exit_heading=north
+role=exit
 
 [link]
 from=p_loop_entry
@@ -307,14 +361,14 @@ type=road
 shape=loop_path_shape
 from=p_loop_entry
 to=p_loop_exit
-width=12
+width=40
 name=Loop path
 
-[path: sw_entry_b_approach]
+[path: sw_entry_a_approach]
 type=connector
-shape=sw_entry_b_path
+shape=sw_entry_a_path
 width=12
-name=SW approach B
+name=SW approach A
 
 [path: sw_entry_c_approach]
 type=connector
@@ -327,6 +381,12 @@ type=connector
 shape=sw_entry_c_connector
 width=12
 name=SW entry C connector
+
+[path: corner_sw_path]
+type=connector
+shape=corner_sw_zone
+width=40
+name=SW corner zone
 
 # Beacons / markers
 [beacon: b_center]

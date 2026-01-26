@@ -14,6 +14,32 @@ using TS.Audio;
 
 namespace TopSpeed.Tracks.Map
 {
+    internal readonly struct TrackTurnGuidance
+    {
+        public TrackTurnGuidance(
+            string sectorId,
+            string? entryPortalId,
+            string? exitPortalId,
+            float turnHeadingDegrees,
+            float distanceMeters,
+            bool passed)
+        {
+            SectorId = sectorId;
+            EntryPortalId = entryPortalId;
+            ExitPortalId = exitPortalId;
+            TurnHeadingDegrees = turnHeadingDegrees;
+            DistanceMeters = distanceMeters;
+            Passed = passed;
+        }
+
+        public string SectorId { get; }
+        public string? EntryPortalId { get; }
+        public string? ExitPortalId { get; }
+        public float TurnHeadingDegrees { get; }
+        public float DistanceMeters { get; }
+        public bool Passed { get; }
+    }
+
     internal sealed class MapTrack : IDisposable
     {
         private const float CallLengthMeters = 30.0f;
@@ -24,6 +50,7 @@ namespace TopSpeed.Tracks.Map
         private readonly TrackSectorManager _sectorManager;
         private readonly TrackSectorRuleManager _sectorRuleManager;
         private readonly TrackPortalManager _portalManager;
+        private readonly TrackApproachManager _approachManager;
         private readonly TrackApproachBeacon _approachBeacon;
         private readonly TrackPathManager _pathManager;
         private readonly TrackBranchManager _branchManager;
@@ -61,6 +88,7 @@ namespace TopSpeed.Tracks.Map
             _portalManager = map.BuildPortalManager();
             _sectorManager = new TrackSectorManager(map.Sectors, _areaManager, _portalManager);
             _sectorRuleManager = map.BuildSectorRuleManager();
+            _approachManager = new TrackApproachManager(map.Sectors, map.Approaches, _portalManager);
             _approachBeacon = new TrackApproachBeacon(map);
             _pathManager = new TrackPathManager(map.Paths, map.Shapes, _portalManager, map.DefaultWidthMeters);
             _branchManager = map.BuildBranchManager();
@@ -88,6 +116,7 @@ namespace TopSpeed.Tracks.Map
         public float Length => Math.Max(0f, _map.CellCount * _map.CellSizeMeters);
         public TrackSectorRuleManager SectorRules => _sectorRuleManager;
         public TrackBranchManager Branches => _branchManager;
+        public bool HasFinishArea => !string.IsNullOrWhiteSpace(_map.FinishAreaId);
 
         public int Lap(float distanceMeters)
         {
@@ -183,6 +212,16 @@ namespace TopSpeed.Tracks.Map
             return road;
         }
 
+        public bool IsInsideFinishArea(Vector3 worldPosition)
+        {
+            if (_areaManager == null || string.IsNullOrWhiteSpace(_map.FinishAreaId))
+                return false;
+            if (!_areaManager.TryGetArea(_map.FinishAreaId!, out var area))
+                return false;
+            var position = new Vector2(worldPosition.X, worldPosition.Z);
+            return _areaManager.Contains(area, position);
+        }
+
         public bool TryGetSectorRules(
             Vector3 worldPosition,
             MapDirection heading,
@@ -235,6 +274,92 @@ namespace TopSpeed.Tracks.Map
 
             road = RoadAt(state);
             return true;
+        }
+
+        public bool TryGetTurnGuidance(Vector3 worldPosition, float headingDegrees, out TrackTurnGuidance guidance)
+        {
+            guidance = default;
+            if (_approachBeacon == null || _approachManager == null)
+                return false;
+            if (!_approachBeacon.TryGetCue(worldPosition, headingDegrees, out var cue))
+                return false;
+            if (!_approachManager.TryGetApproach(cue.SectorId, out var approach))
+                return false;
+
+            var position = new Vector2(worldPosition.X, worldPosition.Z);
+            var entryPortalId = approach.EntryPortalId;
+            var exitPortalId = approach.ExitPortalId;
+            var turnHeading = approach.ExitHeadingDegrees ?? cue.TargetHeadingDegrees;
+            var distance = cue.DistanceMeters;
+            var passed = cue.Passed;
+
+            var useEntry = cue.Side == TrackApproachSide.Entry;
+            var portalId = useEntry ? entryPortalId : exitPortalId;
+            var portalHeading = useEntry ? approach.EntryHeadingDegrees : approach.ExitHeadingDegrees;
+
+            if (!string.IsNullOrWhiteSpace(portalId) && _portalManager.TryGetPortal(portalId!, out var portal))
+            {
+                var portalPos = new Vector2(portal.X, portal.Z);
+                distance = Vector2.Distance(position, portalPos);
+                if (portalHeading.HasValue)
+                {
+                    var forward = HeadingToVector(portalHeading.Value);
+                    var toPlayer = position - portalPos;
+                    passed = Vector2.Dot(forward, toPlayer) > 0f;
+                }
+            }
+
+            guidance = new TrackTurnGuidance(
+                cue.SectorId,
+                entryPortalId,
+                exitPortalId,
+                turnHeading,
+                distance,
+                passed);
+            return true;
+        }
+
+        public bool TryGetAvailableHeadings(Vector3 worldPosition, MapDirection heading, out IReadOnlyList<float> headings)
+        {
+            var list = new List<float>();
+            var position = new Vector2(worldPosition.X, worldPosition.Z);
+            var headingDeg = HeadingDegrees(heading);
+
+            if (_sectorManager != null &&
+                _sectorManager.TryLocate(position, headingDeg, out var sector, out _, out _))
+            {
+                var branches = _branchManager.GetBranchesForSector(sector.Id);
+                foreach (var branch in branches)
+                {
+                    if (branch == null)
+                        continue;
+                    foreach (var exit in branch.Exits)
+                    {
+                        if (exit == null)
+                            continue;
+                        var exitHeading = exit.HeadingDegrees;
+                        if (!exitHeading.HasValue && _portalManager.TryGetPortal(exit.PortalId, out var portal))
+                            exitHeading = portal.ExitHeadingDegrees ?? portal.EntryHeadingDegrees;
+                        if (exitHeading.HasValue)
+                            AddHeading(list, exitHeading.Value);
+                    }
+                }
+            }
+
+            if (list.Count == 0)
+            {
+                var (cellX, cellZ) = _map.WorldToCell(worldPosition);
+                if (_map.TryGetCell(cellX, cellZ, out var cell))
+                {
+                    if ((cell.Exits & MapExits.North) != 0) AddHeading(list, 0f);
+                    if ((cell.Exits & MapExits.East) != 0) AddHeading(list, 90f);
+                    if ((cell.Exits & MapExits.South) != 0) AddHeading(list, 180f);
+                    if ((cell.Exits & MapExits.West) != 0) AddHeading(list, 270f);
+                }
+            }
+
+            headings = list;
+            return list.Count > 0;
         }
 
         public bool NextRoad(MapMovementState state, float speed, int curveAnnouncementMode, out TrackRoad road)
@@ -794,6 +919,32 @@ namespace TopSpeed.Tracks.Map
                 MapDirection.West => 270f,
                 _ => 0f
             };
+        }
+
+        private static Vector2 HeadingToVector(float headingDegrees)
+        {
+            var radians = headingDegrees * (float)Math.PI / 180f;
+            return new Vector2((float)Math.Sin(radians), (float)Math.Cos(radians));
+        }
+
+        private static void AddHeading(List<float> list, float headingDegrees)
+        {
+            var normalized = NormalizeDegrees(headingDegrees);
+            for (var i = 0; i < list.Count; i++)
+            {
+                var delta = Math.Abs(NormalizeDegrees(list[i]) - normalized);
+                if (delta < 1f || Math.Abs(delta - 360f) < 1f)
+                    return;
+            }
+            list.Add(normalized);
+        }
+
+        private static float NormalizeDegrees(float degrees)
+        {
+            var result = degrees % 360f;
+            if (result < 0f)
+                result += 360f;
+            return result;
         }
 
         internal bool IsSectorTransitionAllowed(Vector3 fromPosition, Vector3 toPosition, MapDirection heading)

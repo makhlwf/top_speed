@@ -24,6 +24,22 @@ namespace TopSpeed.Race
         protected const int RandomSoundGroups = 16;
         protected const int RandomSoundMax = 32;
         protected const float AdventureLaneWidth = 80.0f;
+        protected const float TurnGuidanceRangeMeters = 60.0f;
+        protected const float TurnGuidanceCooldownSeconds = 4.0f;
+        protected const float SteerAlignToleranceDegrees = 2.0f;
+        protected const float SteerHoldStepDegrees = 10.0f;
+        protected const float SteerAlignGain = 0.6f;
+        private static readonly float[] SteerSnapHeadings =
+        {
+            0f,
+            45f,
+            90f,
+            135f,
+            180f,
+            225f,
+            270f,
+            315f
+        };
         private const float KmToMiles = 0.621371f;
         private const float MetersPerMile = 1609.344f;
         private const float MetersToFeet = 3.28084f;
@@ -78,6 +94,16 @@ namespace TopSpeed.Race
         protected float _sayTimeLength;
         protected float _speakTime;
         protected int _unkeyQueue;
+
+        protected bool UpdateLapFromFinishArea(Vector3 worldPosition, ref bool wasInside)
+        {
+            if (!_track.HasFinishArea)
+                return false;
+            var inside = _track.IsInsideFinishArea(worldPosition);
+            var crossed = inside && !wasInside;
+            wasInside = inside;
+            return crossed;
+        }
         protected TrackRoad _currentRoad;
         protected long _oldStopwatchMs;
         protected long _stopwatchDiffMs;
@@ -100,6 +126,15 @@ namespace TopSpeed.Race
         protected AudioSourceHandle? _soundPause;
         protected AudioSourceHandle? _soundUnpause;
         protected AudioSourceHandle? _soundTrackName;
+        protected AudioSourceHandle? _soundDing;
+
+        private bool _steerAlignActive;
+        private float _steerAlignTargetHeading;
+        private bool _steerHoldActive;
+        private float _steerHoldAngleDeg;
+        private string? _lastTurnPortalId;
+        private float _lastTurnAnnouncementTime;
+        private int _lastTurnAnnouncementDistance;
 
         protected bool ExitRequested { get; set; }
         protected bool PauseRequested { get; set; }
@@ -193,14 +228,6 @@ namespace TopSpeed.Race
             for (var i = 0; i < RandomSoundGroups; i++)
                 _randomSounds[i] = new AudioSourceHandle?[RandomSoundMax];
 
-            LoadRandomSounds(RandomSound.EasyLeft, "race\\copilot\\easyleft");
-            LoadRandomSounds(RandomSound.Left, "race\\copilot\\left");
-            LoadRandomSounds(RandomSound.HardLeft, "race\\copilot\\hardleft");
-            LoadRandomSounds(RandomSound.HairpinLeft, "race\\copilot\\hairpinleft");
-            LoadRandomSounds(RandomSound.EasyRight, "race\\copilot\\easyright");
-            LoadRandomSounds(RandomSound.Right, "race\\copilot\\right");
-            LoadRandomSounds(RandomSound.HardRight, "race\\copilot\\hardright");
-            LoadRandomSounds(RandomSound.HairpinRight, "race\\copilot\\hairpinright");
             LoadRandomSounds(RandomSound.Asphalt, "race\\copilot\\asphalt");
             LoadRandomSounds(RandomSound.Gravel, "race\\copilot\\gravel");
             LoadRandomSounds(RandomSound.Water, "race\\copilot\\water");
@@ -215,6 +242,7 @@ namespace TopSpeed.Race
             }
 
             _soundTrackName = LoadTrackNameSound(_track.TrackName);
+            _soundDing = LoadLegacySound("ding.wav");
         }
 
         public bool Started => _started;
@@ -252,6 +280,12 @@ namespace TopSpeed.Race
             _car.ManualTransmission = _manualTransmission;
             _listenerInitialized = false;
             _lastListenerPosition = Vector3.Zero;
+            _steerAlignActive = false;
+            _steerHoldActive = false;
+            _steerHoldAngleDeg = 0f;
+            _lastTurnPortalId = null;
+            _lastTurnAnnouncementTime = 0f;
+            _lastTurnAnnouncementDistance = 0;
         }
 
         protected void FinalizeLevel()
@@ -438,6 +472,114 @@ namespace TopSpeed.Race
             }
         }
 
+        protected void HandleSteerAssistInput()
+        {
+            if (_input.TryGetSteerStep(out var stepDirection))
+            {
+                _steerAlignActive = false;
+                var maxSteer = Math.Max(1f, Math.Min(_car.MaxSteerDegrees, _car.SteerLimitDegrees));
+                var baseAngle = _steerHoldActive ? _steerHoldAngleDeg : _car.FrontWheelAngleDegrees;
+                _steerHoldAngleDeg = Clamp(baseAngle + (stepDirection * SteerHoldStepDegrees), -maxSteer, maxSteer);
+                _steerHoldActive = true;
+            }
+
+            if (_input.TryGetSteerAlign(out var alignDirection))
+            {
+                var baseHeading = _steerAlignActive ? _steerAlignTargetHeading : _car.HeadingDegrees;
+                var target = NextCompassHeading(baseHeading, alignDirection);
+                _steerAlignTargetHeading = target;
+                _steerAlignActive = true;
+                _steerHoldActive = false;
+                SpeakText(FormatSnapHeading(target));
+            }
+        }
+
+        protected void UpdateSteerAssist()
+        {
+            if (!_started || _car.State != CarState.Running)
+            {
+                _car.SetSteeringOverride(null);
+                return;
+            }
+
+            var manual = _input.GetSteering();
+            if (manual != 0 && !_input.IsSteerModifierDown())
+            {
+                _steerAlignActive = false;
+                _steerHoldActive = false;
+                _car.SetSteeringOverride(null);
+                return;
+            }
+
+            if (_steerAlignActive)
+            {
+                var delta = SignedDeltaDegrees(_car.HeadingDegrees, _steerAlignTargetHeading);
+                if (Math.Abs(delta) <= SteerAlignToleranceDegrees)
+                {
+                    _steerAlignActive = false;
+                    _steerHoldActive = false;
+                    _steerHoldAngleDeg = 0f;
+                    _car.SetSteeringOverride(0);
+                    PlayDing();
+                    return;
+                }
+
+                var steerLimit = Math.Max(1f, _car.SteerLimitDegrees);
+                var desiredAngle = Clamp(delta * SteerAlignGain, -steerLimit, steerLimit);
+                var command = (int)Math.Round((desiredAngle / steerLimit) * 100f);
+                _car.SetSteeringOverride(command);
+                return;
+            }
+
+            if (_steerHoldActive)
+            {
+                var steerLimit = Math.Max(1f, _car.SteerLimitDegrees);
+                var holdAngle = Clamp(_steerHoldAngleDeg, -steerLimit, steerLimit);
+                var command = (int)Math.Round((holdAngle / steerLimit) * 100f);
+                _car.SetSteeringOverride(command);
+                return;
+            }
+
+            _car.SetSteeringOverride(null);
+        }
+
+        protected void UpdateTurnGuidance()
+        {
+            if (_car.State != CarState.Running)
+                return;
+
+            if (!_track.TryGetTurnGuidance(_car.WorldPosition, _car.HeadingDegrees, out var guidance) || guidance.Passed)
+            {
+                _lastTurnPortalId = null;
+                return;
+            }
+
+            if (guidance.DistanceMeters <= 0f || guidance.DistanceMeters > TurnGuidanceRangeMeters)
+            {
+                _lastTurnPortalId = null;
+                return;
+            }
+
+            var portalKey = guidance.EntryPortalId ?? guidance.ExitPortalId ?? guidance.SectorId;
+            var roundedDistance = (int)Math.Round(guidance.DistanceMeters / 5f) * 5;
+            if (roundedDistance < 5)
+                roundedDistance = 5;
+
+            if (portalKey == _lastTurnPortalId)
+            {
+                if (_elapsedTotal - _lastTurnAnnouncementTime < TurnGuidanceCooldownSeconds)
+                    return;
+                if (Math.Abs(roundedDistance - _lastTurnAnnouncementDistance) < 5)
+                    return;
+            }
+
+            var headingText = FormatTurnDirection(guidance.TurnHeadingDegrees);
+            SpeakText($"Turn {headingText} in {roundedDistance} meters");
+            _lastTurnPortalId = portalKey;
+            _lastTurnAnnouncementTime = _elapsedTotal;
+            _lastTurnAnnouncementDistance = roundedDistance;
+        }
+
         protected void HandlePauseRequest(ref bool pauseKeyReleased)
         {
             if (!_input.GetPause() && !pauseKeyReleased)
@@ -449,6 +591,127 @@ namespace TopSpeed.Race
                 pauseKeyReleased = false;
                 PauseRequested = true;
             }
+        }
+
+        private static float NextCompassHeading(float currentHeading, int direction)
+        {
+            var current = NormalizeDegrees(currentHeading);
+            var bestDelta = direction > 0 ? 360f : -360f;
+            var best = current;
+
+            foreach (var heading in SteerSnapHeadings)
+            {
+                var delta = SignedDeltaDegrees(current, heading);
+                if (direction > 0)
+                {
+                    if (delta <= 0f)
+                        continue;
+                    if (delta < bestDelta)
+                    {
+                        bestDelta = delta;
+                        best = heading;
+                    }
+                }
+                else if (direction < 0)
+                {
+                    if (delta >= 0f)
+                        continue;
+                    if (delta > bestDelta)
+                    {
+                        bestDelta = delta;
+                        best = heading;
+                    }
+                }
+            }
+
+            if (Math.Abs(bestDelta) >= 360f - 0.001f)
+            {
+                if (direction > 0)
+                    return NormalizeDegrees(current + 45f);
+                if (direction < 0)
+                    return NormalizeDegrees(current - 45f);
+            }
+
+            return NormalizeDegrees(best);
+        }
+
+        private void PlayDing()
+        {
+            if (_soundDing == null)
+                return;
+            QueueSound(_soundDing);
+        }
+
+        private static float Clamp(float value, float min, float max)
+        {
+            if (value < min)
+                return min;
+            if (value > max)
+                return max;
+            return value;
+        }
+
+        private static float NormalizeDegrees(float degrees)
+        {
+            degrees %= 360f;
+            if (degrees < 0f)
+                degrees += 360f;
+            return degrees;
+        }
+
+        private static float SignedDeltaDegrees(float current, float target)
+        {
+            var delta = NormalizeDegrees(target - current);
+            if (delta > 180f)
+                delta -= 360f;
+            return delta;
+        }
+
+        private static string FormatTurnDirection(float headingDegrees)
+        {
+            var normalized = NormalizeDegrees(headingDegrees);
+            if (IsNear(normalized, 0f) || IsNear(normalized, 360f))
+                return "north";
+            if (IsNear(normalized, 90f))
+                return "east";
+            if (IsNear(normalized, 180f))
+                return "south";
+            if (IsNear(normalized, 270f))
+                return "west";
+            var whole = (int)Math.Round(normalized);
+            if (whole >= 360)
+                whole = 0;
+            return $"{whole} degrees";
+        }
+
+        private static string FormatSnapHeading(float headingDegrees)
+        {
+            var normalized = NormalizeDegrees(headingDegrees);
+            if (IsNear(normalized, 0f) || IsNear(normalized, 360f))
+                return "north";
+            if (IsNear(normalized, 45f))
+                return "north east";
+            if (IsNear(normalized, 90f))
+                return "east";
+            if (IsNear(normalized, 135f))
+                return "south east";
+            if (IsNear(normalized, 180f))
+                return "south";
+            if (IsNear(normalized, 225f))
+                return "south west";
+            if (IsNear(normalized, 270f))
+                return "west";
+            if (IsNear(normalized, 315f))
+                return "north west";
+            var whole = (int)Math.Round(normalized);
+            if (whole >= 360)
+                whole = 0;
+            return $"{whole} degrees";
+        }
+
+        private static bool IsNear(float value, float target)
+        {
+            return Math.Abs(value - target) <= 10f;
         }
 
         protected void SayTime(int raceTime, bool detailed = true)
@@ -505,16 +768,6 @@ namespace TopSpeed.Race
 
         protected void CallNextRoad(TrackRoad nextRoad)
         {
-            if ((int)_settings.Copilot > 0 && nextRoad.Type != TrackType.Straight)
-            {
-                var index = (int)nextRoad.Type - 1;
-                if (index >= 0 && index < RandomSoundGroups && _totalRandomSounds[index] > 0)
-                {
-                    var sound = _randomSounds[index][Algorithm.RandomInt(_totalRandomSounds[index])];
-                    QueueSound(sound);
-                }
-            }
-
             if ((int)_settings.Copilot > 1 && nextRoad.Surface != _currentRoad.Surface)
             {
                 var index = (int)nextRoad.Surface + 8;
@@ -886,6 +1139,7 @@ namespace TopSpeed.Race
             DisposeSound(_soundPause);
             DisposeSound(_soundUnpause);
             DisposeSound(_soundTrackName);
+            DisposeSound(_soundDing);
 
             for (var i = 0; i < _soundNumbers.Length; i++)
                 DisposeSound(_soundNumbers[i]);

@@ -15,6 +15,7 @@ namespace TopSpeed.Race
     {
         private const string HighscoreFile = "highscore.cfg";
         private bool _pauseKeyReleased = true;
+        private bool _wasInFinish;
 
         public LevelTimeTrial(
             AudioManager audio,
@@ -38,6 +39,8 @@ namespace TopSpeed.Race
             _soundPause = LoadLanguageSound("race\\pause");
             _soundUnpause = LoadLanguageSound("race\\unpause");
             _soundTheme4.SetVolumePercent((int)Math.Round(_settings.MusicVolume * 100f));
+            if (_track.HasFinishArea)
+                _wasInFinish = _track.IsInsideFinishArea(_car.WorldPosition);
         }
 
         public void FinalizeLevelTimeTrial()
@@ -108,6 +111,8 @@ namespace TopSpeed.Race
                 }
             }
 
+            HandleSteerAssistInput();
+            UpdateSteerAssist();
             _car.Run(elapsed);
             _track.Run(_car.MapState, elapsed);
             var road = _track.RoadAt(_car.MapState);
@@ -115,8 +120,31 @@ namespace TopSpeed.Race
             UpdateAudioListener(elapsed);
             if (_track.NextRoad(_car.MapState, _car.Speed, (int)_settings.CurveAnnouncement, out var nextRoad))
                 CallNextRoad(nextRoad);
+            UpdateTurnGuidance();
 
-            if (_track.Lap(_car.DistanceMeters) > _lap)
+            if (_track.HasFinishArea)
+            {
+                if (UpdateLapFromFinishArea(_car.WorldPosition, ref _wasInFinish))
+                {
+                    _lap++;
+                    if (_lap > _nrOfLaps)
+                    {
+                        var finishSound = _randomSounds[(int)RandomSound.Finish][Algorithm.RandomInt(_totalRandomSounds[(int)RandomSound.Finish])];
+                        if (finishSound != null)
+                            Speak(finishSound, true);
+                        _car.ManualTransmission = false;
+                        _car.Quiet();
+                        _car.Stop();
+                        _raceTime = (int)(_stopwatch.ElapsedMilliseconds - _stopwatchDiffMs);
+                        PushEvent(RaceEventType.RaceFinish, 2.0f);
+                    }
+                    else if (_settings.AutomaticInfo != AutomaticInfoMode.Off && _lap > 1 && _lap < _nrOfLaps + 1)
+                    {
+                        Speak(_soundLaps[_nrOfLaps - _lap], true);
+                    }
+                }
+            }
+            else if (_track.Lap(_car.DistanceMeters) > _lap)
             {
                 _lap = _track.Lap(_car.DistanceMeters);
                 if (_lap > _nrOfLaps)
