@@ -148,7 +148,8 @@ namespace TopSpeed.Tracks.Guidance
             var portalPos = new Vector2(portal.X, portal.Z);
             var portalDistance = Vector2.Distance(position, portalPos);
             var rangeDistance = portalDistance;
-            if (TryGetBeaconShape(approach, out var beaconShape))
+            var hasShape = TryGetBeaconShape(approach, out var beaconShape);
+            if (hasShape)
                 rangeDistance = DistanceToShape(beaconShape, position, approach.WidthMeters);
             if (rangeDistance > rangeMeters)
                 return false;
@@ -156,7 +157,7 @@ namespace TopSpeed.Tracks.Guidance
             if (!hasBest || portalDistance < best.DistanceMeters)
             {
                 var useHeadingBeacon = ResolveBeaconPlacement(approach);
-                TryGetBeaconShape(approach, out var beaconShape);
+                var candidateShape = hasShape ? beaconShape : null;
                 best = new Candidate
                 {
                     SectorId = approach.SectorId,
@@ -169,7 +170,7 @@ namespace TopSpeed.Tracks.Guidance
                     LengthMeters = approach.LengthMeters,
                     ToleranceDegrees = approach.AlignmentToleranceDegrees,
                     UseHeadingBeacon = useHeadingBeacon,
-                    BeaconShape = beaconShape
+                    BeaconShape = candidateShape
                 };
                 hasBest = true;
             }

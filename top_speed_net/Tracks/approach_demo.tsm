@@ -11,111 +11,7 @@ start_x=0
 start_z=0
 start_heading=east
 
-# 1 km loop perimeter (square 251x251, perimeter = 1000)
-[line]
-x=1
-z=0
-dir=east
-length=249
-exits=E,W
-
-[line]
-x=250
-z=1
-dir=north
-length=249
-exits=N,S
-
-[line]
-x=1
-z=250
-dir=east
-length=249
-exits=E,W
-
-[line]
-x=0
-z=1
-dir=north
-length=249
-exits=N,S
-
-# Cross lines through the center
-[line]
-x=125
-z=1
-dir=north
-length=249
-exits=N,S
-
-[line]
-x=1
-z=125
-dir=east
-length=249
-exits=E,W
-
-# Branch to the east
-[line]
-x=251
-z=125
-dir=east
-length=49
-exits=E,W
-width=10
-
-# Corners (curves)
-[cell]
-x=0
-z=0
-exits=NE
-
-[cell]
-x=250
-z=0
-exits=NW
-
-[cell]
-x=250
-z=250
-exits=SW
-
-[cell]
-x=0
-z=250
-exits=SE
-
-# Center intersection
-[cell]
-x=125
-z=125
-exits=NESW
-
-# Cross line connections on edges
-[cell]
-x=125
-z=0
-exits=NEW
-
-[cell]
-x=125
-z=250
-exits=SEW
-
-[cell]
-x=0
-z=125
-exits=NSE
-
-[cell]
-x=250
-z=125
-exits=NSWE
-
-[cell]
-x=300
-z=125
-exits=W
+# Legacy grid removed; path/area topology only.
 
 # Shapes
 [shape: loop_shape]
@@ -200,6 +96,10 @@ z=0
 width=40
 height=30
 
+[shape: east_branch_path]
+type=polyline
+points=251,125|300,125
+
 [shape: sw_entry_a_path]
 type=polyline
 points=0,45|0,30
@@ -215,7 +115,7 @@ points=15,30|15,0|30,0
 # Areas
 [area: loop_area]
 type=zone
-shape=loop_shape
+shape=loop_path_shape
 surface=asphalt
 noise=nonoise
 width=40
@@ -411,6 +311,12 @@ type=connector
 shape=east_turn_path_zone
 width=60
 name=East turn zone
+
+[path: east_branch_path]
+type=branch
+shape=east_branch_path
+width=10
+name=East branch
 
 # Beacons / markers
 [beacon: b_center]

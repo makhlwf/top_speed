@@ -443,8 +443,8 @@ namespace TopSpeed.Race
             if (_startGrid.HasValue)
                 return StartGridBuilder.GetPosition(_startGrid.Value, gridIndex);
 
-            var start = _track.Map.CellToWorld(_track.Map.StartX, _track.Map.StartZ);
-            var forward = MapMovement.DirectionVector(_track.Map.StartHeading);
+            var start = new Vector3(_track.Map.StartX, 0f, _track.Map.StartZ);
+            var forward = MapMovement.HeadingVector(_track.Map.StartHeadingDegrees);
             var right = new Vector3(forward.Z, 0f, -forward.X);
 
             var halfWidth = Math.Max(0.1f, vehicleWidth * 0.5f);

@@ -60,14 +60,9 @@ namespace TopSpeed.Tracks.Map
                 DefaultWidthMeters = definition.Metadata.DefaultWidthMeters,
                 StartX = definition.Metadata.StartX,
                 StartZ = definition.Metadata.StartZ,
+                StartHeadingDegrees = definition.Metadata.StartHeadingDegrees,
                 StartHeading = definition.Metadata.StartHeading
             };
-
-            foreach (var entry in definition.Cells)
-            {
-                var cell = entry.Value;
-                map.MergeCell(entry.Key.X, entry.Key.Z, cell.Exits, cell.Surface, cell.Noise, cell.WidthMeters, cell.IsSafeZone, cell.Zone);
-            }
 
             foreach (var sector in definition.Sectors)
                 map.AddSector(sector);
@@ -90,7 +85,6 @@ namespace TopSpeed.Tracks.Map
 
             AddSafeZoneRing(map, definition.Metadata);
             AddOuterRing(map, definition.Metadata);
-            AddRingCells(map);
             ApplyStartFromAreas(map, definition);
             ApplyFinishFromAreas(map, definition);
 
@@ -117,14 +111,13 @@ namespace TopSpeed.Tracks.Map
             if (ringMeters <= 0f)
                 return;
 
-            if (!map.TryGetBounds(out var minX, out var minZ, out var maxX, out var maxZ))
+            if (!TryGetTopologyBounds(map, out var minX, out var minZ, out var maxX, out var maxZ))
                 return;
 
-            var cellSize = map.CellSizeMeters;
-            var innerMinX = minX * cellSize;
-            var innerMaxX = maxX * cellSize;
-            var innerMinZ = minZ * cellSize;
-            var innerMaxZ = maxZ * cellSize;
+            var innerMinX = minX;
+            var innerMaxX = maxX;
+            var innerMinZ = minZ;
+            var innerMaxZ = maxZ;
 
             var name = string.IsNullOrWhiteSpace(metadata.SafeZoneName) ? "Safe zone" : metadata.SafeZoneName!;
             var surface = metadata.SafeZoneSurface;
@@ -143,14 +136,13 @@ namespace TopSpeed.Tracks.Map
             if (ringMeters <= 0f)
                 return;
 
-            if (!map.TryGetBounds(out var minX, out var minZ, out var maxX, out var maxZ))
+            if (!TryGetTopologyBounds(map, out var minX, out var minZ, out var maxX, out var maxZ))
                 return;
 
-            var cellSize = map.CellSizeMeters;
-            var innerMinX = minX * cellSize;
-            var innerMaxX = maxX * cellSize;
-            var innerMinZ = minZ * cellSize;
-            var innerMaxZ = maxZ * cellSize;
+            var innerMinX = minX;
+            var innerMaxX = maxX;
+            var innerMinZ = minZ;
+            var innerMaxZ = maxZ;
 
             var name = string.IsNullOrWhiteSpace(metadata.OuterRingName) ? "Outer ring" : metadata.OuterRingName!;
             var surface = metadata.OuterRingSurface;
@@ -184,25 +176,6 @@ namespace TopSpeed.Tracks.Map
             map.AddArea(new TrackAreaDefinition(areaId, areaType, shapeId, name, surface, noise, null, flags));
         }
 
-        private static void AddRingCells(TrackMap map)
-        {
-            if (map == null || map.Shapes.Count == 0 || map.Areas.Count == 0)
-                return;
-
-            var areaManager = map.BuildAreaManager();
-            foreach (var area in map.Areas)
-            {
-                if (!areaManager.TryGetShape(area.ShapeId, out var shape))
-                    continue;
-                if (shape.Type != ShapeType.Ring)
-                    continue;
-                if (!TryGetRingBounds(shape, out var minX, out var minZ, out var maxX, out var maxZ))
-                    continue;
-
-                AddRingCells(map, areaManager, area, minX, minZ, maxX, maxZ);
-            }
-        }
-
         private static void ApplyStartFromAreas(TrackMap map, TrackMapDefinition definition)
         {
             if (map == null || definition == null)
@@ -226,13 +199,15 @@ namespace TopSpeed.Tracks.Map
             if (TryGetStartPosition(startArea, out var startPos) ||
                 TryGetAreaCenter(definition, startArea, out startPos))
             {
-                var (cellX, cellZ) = map.WorldToCell(new System.Numerics.Vector3(startPos.X, 0f, startPos.Y));
-                map.StartX = cellX;
-                map.StartZ = cellZ;
+                map.StartX = startPos.X;
+                map.StartZ = startPos.Y;
             }
 
-            if (TryGetStartHeading(startArea, out var heading))
-                map.StartHeading = heading;
+            if (TryGetStartHeading(startArea, out var headingDegrees))
+            {
+                map.StartHeadingDegrees = MapMovement.NormalizeDegrees(headingDegrees);
+                map.StartHeading = MapMovement.ToCardinal(map.StartHeadingDegrees);
+            }
         }
 
         private static void ApplyFinishFromAreas(TrackMap map, TrackMapDefinition definition)
@@ -279,9 +254,9 @@ namespace TopSpeed.Tracks.Map
             return true;
         }
 
-        private static bool TryGetStartHeading(TrackAreaDefinition area, out MapDirection heading)
+        private static bool TryGetStartHeading(TrackAreaDefinition area, out float headingDegrees)
         {
-            heading = MapDirection.North;
+            headingDegrees = 0f;
             if (area?.Metadata == null || area.Metadata.Count == 0)
                 return false;
 
@@ -290,13 +265,13 @@ namespace TopSpeed.Tracks.Map
 
             if (TryParseHeading(raw, out var parsed))
             {
-                heading = parsed;
+                headingDegrees = MapMovement.HeadingFromDirection(parsed);
                 return true;
             }
 
             if (TryParseDegrees(raw, out var degrees))
             {
-                heading = HeadingFromDegrees(degrees);
+                headingDegrees = MapMovement.NormalizeDegrees(degrees);
                 return true;
             }
 
@@ -433,46 +408,125 @@ namespace TopSpeed.Tracks.Map
             return float.TryParse(raw, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out degrees);
         }
 
-        private static MapDirection HeadingFromDegrees(float degrees)
+        private static bool TryGetTopologyBounds(TrackMap map, out float minX, out float minZ, out float maxX, out float maxZ)
         {
-            var normalized = degrees % 360f;
-            if (normalized < 0f)
-                normalized += 360f;
-            if (normalized >= 315f || normalized < 45f)
-                return MapDirection.North;
-            if (normalized < 135f)
-                return MapDirection.East;
-            if (normalized < 225f)
-                return MapDirection.South;
-            return MapDirection.West;
-        }
+            minX = 0f;
+            minZ = 0f;
+            maxX = 0f;
+            maxZ = 0f;
+            var hasBounds = false;
 
-        private static void AddRingCells(
-            TrackMap map,
-            TrackAreaManager areaManager,
-            TrackAreaDefinition area,
-            float minX,
-            float minZ,
-            float maxX,
-            float maxZ)
-        {
-            var cellSize = map.CellSizeMeters;
-            var minCellX = (int)Math.Floor(minX / cellSize);
-            var maxCellX = (int)Math.Ceiling(maxX / cellSize);
-            var minCellZ = (int)Math.Floor(minZ / cellSize);
-            var maxCellZ = (int)Math.Ceiling(maxZ / cellSize);
-
-            for (var x = minCellX; x <= maxCellX; x++)
+            if (map.Shapes.Count > 0)
             {
-                for (var z = minCellZ; z <= maxCellZ; z++)
+                foreach (var shape in map.Shapes)
                 {
-                    var world = map.CellToWorld(x, z);
-                    var position = new System.Numerics.Vector2(world.X, world.Z);
-                    if (!areaManager.Contains(area, position))
+                    if (shape == null || !TryGetShapeBounds(shape, out var sMinX, out var sMinZ, out var sMaxX, out var sMaxZ))
                         continue;
-                    map.GetOrCreateCell(x, z);
+                    if (!hasBounds)
+                    {
+                        minX = sMinX;
+                        minZ = sMinZ;
+                        maxX = sMaxX;
+                        maxZ = sMaxZ;
+                        hasBounds = true;
+                    }
+                    else
+                    {
+                        if (sMinX < minX) minX = sMinX;
+                        if (sMinZ < minZ) minZ = sMinZ;
+                        if (sMaxX > maxX) maxX = sMaxX;
+                        if (sMaxZ > maxZ) maxZ = sMaxZ;
+                    }
                 }
             }
+
+            if (map.Portals.Count > 0)
+            {
+                foreach (var portal in map.Portals)
+                {
+                    if (portal == null)
+                        continue;
+                    if (!hasBounds)
+                    {
+                        minX = portal.X;
+                        maxX = portal.X;
+                        minZ = portal.Z;
+                        maxZ = portal.Z;
+                        hasBounds = true;
+                        continue;
+                    }
+                    if (portal.X < minX) minX = portal.X;
+                    if (portal.X > maxX) maxX = portal.X;
+                    if (portal.Z < minZ) minZ = portal.Z;
+                    if (portal.Z > maxZ) maxZ = portal.Z;
+                }
+            }
+
+            return hasBounds;
+        }
+
+        private static bool TryGetShapeBounds(ShapeDefinition shape, out float minX, out float minZ, out float maxX, out float maxZ)
+        {
+            minX = 0f;
+            minZ = 0f;
+            maxX = 0f;
+            maxZ = 0f;
+
+            if (shape == null)
+                return false;
+
+            switch (shape.Type)
+            {
+                case ShapeType.Rectangle:
+                    minX = Math.Min(shape.X, shape.X + shape.Width);
+                    maxX = Math.Max(shape.X, shape.X + shape.Width);
+                    minZ = Math.Min(shape.Z, shape.Z + shape.Height);
+                    maxZ = Math.Max(shape.Z, shape.Z + shape.Height);
+                    return true;
+                case ShapeType.Circle:
+                    minX = shape.X - shape.Radius;
+                    maxX = shape.X + shape.Radius;
+                    minZ = shape.Z - shape.Radius;
+                    maxZ = shape.Z + shape.Radius;
+                    return true;
+                case ShapeType.Ring:
+                    if (shape.Radius > 0f)
+                    {
+                        var outer = Math.Abs(shape.Radius) + Math.Abs(shape.RingWidth);
+                        minX = shape.X - outer;
+                        maxX = shape.X + outer;
+                        minZ = shape.Z - outer;
+                        maxZ = shape.Z + outer;
+                        return true;
+                    }
+                    var ringMinX = Math.Min(shape.X, shape.X + shape.Width) - Math.Abs(shape.RingWidth);
+                    var ringMaxX = Math.Max(shape.X, shape.X + shape.Width) + Math.Abs(shape.RingWidth);
+                    var ringMinZ = Math.Min(shape.Z, shape.Z + shape.Height) - Math.Abs(shape.RingWidth);
+                    var ringMaxZ = Math.Max(shape.Z, shape.Z + shape.Height) + Math.Abs(shape.RingWidth);
+                    minX = ringMinX;
+                    maxX = ringMaxX;
+                    minZ = ringMinZ;
+                    maxZ = ringMaxZ;
+                    return true;
+                case ShapeType.Polygon:
+                case ShapeType.Polyline:
+                    if (shape.Points == null || shape.Points.Count == 0)
+                        return false;
+                    minX = float.MaxValue;
+                    minZ = float.MaxValue;
+                    maxX = float.MinValue;
+                    maxZ = float.MinValue;
+                    foreach (var point in shape.Points)
+                    {
+                        if (point.X < minX) minX = point.X;
+                        if (point.X > maxX) maxX = point.X;
+                        if (point.Y < minZ) minZ = point.Y;
+                        if (point.Y > maxZ) maxZ = point.Y;
+                    }
+                    return true;
+            }
+
+            return false;
         }
 
         private static bool TryGetRingBounds(

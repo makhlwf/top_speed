@@ -50,7 +50,7 @@ namespace TopSpeed.Tracks.Map
             var hasStartArea = map.TryGetStartAreaDefinition(out var startArea);
             var metadata = hasStartArea ? startArea.Metadata : null;
 
-            var forward = MapMovement.DirectionVector(map.StartHeading);
+            var forward = MapMovement.HeadingVector(map.StartHeadingDegrees);
             if (forward.LengthSquared() <= float.Epsilon)
                 return false;
             forward = Vector3.Normalize(forward);

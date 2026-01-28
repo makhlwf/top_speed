@@ -1,9 +1,13 @@
 using System;
+using System.Collections.Generic;
 
 namespace TopSpeed.Tracks.Topology
 {
     public sealed class PathDefinition
     {
+        private readonly List<PathLaneDefinition> _lanes;
+        private readonly Dictionary<string, string> _metadata;
+
         public PathDefinition(
             string id,
             PathType type,
@@ -11,7 +15,9 @@ namespace TopSpeed.Tracks.Topology
             string? fromPortalId,
             string? toPortalId,
             float widthMeters,
-            string? name = null)
+            string? name = null,
+            IReadOnlyDictionary<string, string>? metadata = null,
+            IReadOnlyList<PathLaneDefinition>? lanes = null)
         {
             if (string.IsNullOrWhiteSpace(id))
                 throw new ArgumentException("Path id is required.", nameof(id));
@@ -24,6 +30,13 @@ namespace TopSpeed.Tracks.Topology
             WidthMeters = widthMeters;
             var trimmedName = name?.Trim();
             Name = string.IsNullOrWhiteSpace(trimmedName) ? null : trimmedName;
+            _metadata = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (metadata != null)
+            {
+                foreach (var pair in metadata)
+                    _metadata[pair.Key] = pair.Value;
+            }
+            _lanes = lanes != null ? new List<PathLaneDefinition>(lanes) : new List<PathLaneDefinition>();
         }
 
         public string Id { get; }
@@ -33,5 +46,20 @@ namespace TopSpeed.Tracks.Topology
         public string? ToPortalId { get; }
         public float WidthMeters { get; }
         public string? Name { get; }
+        public IReadOnlyDictionary<string, string> Metadata => _metadata;
+        public IReadOnlyList<PathLaneDefinition> Lanes => _lanes;
+
+        public bool TryAddLane(PathLaneDefinition lane)
+        {
+            if (lane == null)
+                throw new ArgumentNullException(nameof(lane));
+            foreach (var existing in _lanes)
+            {
+                if (string.Equals(existing.Id, lane.Id, StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
+            _lanes.Add(lane);
+            return true;
+        }
     }
 }

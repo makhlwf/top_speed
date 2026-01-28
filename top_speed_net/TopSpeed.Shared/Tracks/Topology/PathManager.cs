@@ -86,7 +86,7 @@ namespace TopSpeed.Tracks.Topology
             var hits = new List<TrackPathInstance>();
             foreach (var path in _paths)
             {
-                if (Contains(path.Shape, position, path.WidthMeters))
+                if (Contains(path, position))
                     hits.Add(path);
             }
             return hits;
@@ -96,26 +96,38 @@ namespace TopSpeed.Tracks.Topology
         {
             foreach (var path in _paths)
             {
-                if (Contains(path.Shape, position, path.WidthMeters))
+                if (Contains(path, position))
                     return true;
             }
             return false;
         }
 
-        private static bool Contains(ShapeDefinition shape, Vector2 position, float widthMeters)
+        private static bool Contains(TrackPathInstance path, Vector2 position)
         {
+            if (path == null || path.Shape == null)
+                return false;
+
+            var shape = path.Shape;
+            var width = Math.Abs(path.WidthMeters);
+
             switch (shape.Type)
             {
                 case ShapeType.Rectangle:
-                    return ContainsRectangle(shape, position);
+                    return width > 0f
+                        ? ContainsRectanglePath(shape, position, width)
+                        : ContainsRectangle(shape, position);
                 case ShapeType.Circle:
-                    return ContainsCircle(shape, position);
+                    return width > 0f
+                        ? ContainsCirclePath(shape, position, width)
+                        : ContainsCircle(shape, position);
                 case ShapeType.Ring:
-                    return ContainsRing(shape, position);
+                    return width > 0f
+                        ? ContainsRingPath(shape, position, width)
+                        : ContainsRing(shape, position);
                 case ShapeType.Polygon:
-                    return ContainsPolygon(shape.Points, position);
+                    return ContainsPolygonPath(shape.Points, position, width, path.Definition);
                 case ShapeType.Polyline:
-                    return ContainsPolyline(shape.Points, position, widthMeters);
+                    return ContainsPolylinePath(shape.Points, position, width, path.Definition);
                 default:
                     return false;
             }
@@ -138,9 +150,63 @@ namespace TopSpeed.Tracks.Topology
             return (dx * dx + dz * dz) <= (shape.Radius * shape.Radius);
         }
 
+        private static bool ContainsRectanglePath(ShapeDefinition shape, Vector2 position, float widthMeters)
+        {
+            if (widthMeters <= 0f)
+                return false;
+
+            var minX = Math.Min(shape.X, shape.X + shape.Width);
+            var maxX = Math.Max(shape.X, shape.X + shape.Width);
+            var minZ = Math.Min(shape.Z, shape.Z + shape.Height);
+            var maxZ = Math.Max(shape.Z, shape.Z + shape.Height);
+            var centerX = (minX + maxX) * 0.5f;
+            var centerZ = (minZ + maxZ) * 0.5f;
+            var lengthX = Math.Abs(shape.Width);
+            var lengthZ = Math.Abs(shape.Height);
+
+            Vector2 a;
+            Vector2 b;
+            if (lengthX >= lengthZ)
+            {
+                a = new Vector2(minX, centerZ);
+                b = new Vector2(maxX, centerZ);
+            }
+            else
+            {
+                a = new Vector2(centerX, minZ);
+                b = new Vector2(centerX, maxZ);
+            }
+
+            var radius = widthMeters * 0.5f;
+            return DistanceToSegmentSquared(a, b, position) <= (radius * radius);
+        }
+
+        private static bool ContainsCirclePath(ShapeDefinition shape, Vector2 position, float widthMeters)
+        {
+            var radius = Math.Abs(shape.Radius);
+            if (radius <= 0f || widthMeters <= 0f)
+                return false;
+
+            var dist = Vector2.Distance(new Vector2(shape.X, shape.Z), position);
+            var inner = Math.Max(0f, radius - widthMeters);
+            return dist >= inner && dist <= radius;
+        }
+
         private static bool ContainsRing(ShapeDefinition shape, Vector2 position)
         {
             var ringWidth = Math.Abs(shape.RingWidth);
+            if (ringWidth <= 0f)
+                return false;
+
+            if (shape.Radius > 0f)
+                return ContainsRingCircle(shape, position, ringWidth);
+
+            return ContainsRingRectangle(shape, position, ringWidth);
+        }
+
+        private static bool ContainsRingPath(ShapeDefinition shape, Vector2 position, float widthMeters)
+        {
+            var ringWidth = Math.Abs(widthMeters);
             if (ringWidth <= 0f)
                 return false;
 
@@ -208,7 +274,36 @@ namespace TopSpeed.Tracks.Topology
             return inside;
         }
 
-        private static bool ContainsPolyline(IReadOnlyList<Vector2> points, Vector2 position, float widthMeters)
+        private static bool ContainsPolygonPath(
+            IReadOnlyList<Vector2> points,
+            Vector2 position,
+            float widthMeters,
+            PathDefinition? definition)
+        {
+            if (points == null || points.Count < 3)
+                return false;
+
+            var width = Math.Abs(widthMeters);
+            if (width <= 0f)
+                return ContainsPolygon(points, position);
+
+            var centered = IsCenteredClosedWidth(definition);
+            if (centered)
+            {
+                var radius = width * 0.5f;
+                return DistanceToPolylineSquared(points, position, true) <= (radius * radius);
+            }
+
+            if (!ContainsPolygon(points, position))
+                return false;
+            return DistanceToPolylineSquared(points, position, true) <= (width * width);
+        }
+
+        private static bool ContainsPolylinePath(
+            IReadOnlyList<Vector2> points,
+            Vector2 position,
+            float widthMeters,
+            PathDefinition? definition)
         {
             if (points == null || points.Count < 2)
                 return false;
@@ -217,14 +312,23 @@ namespace TopSpeed.Tracks.Topology
             if (width <= 0f)
                 return false;
 
-            var radius = width * 0.5f;
-            var radiusSq = radius * radius;
-            for (var i = 0; i < points.Count - 1; i++)
+            var closed = IsClosedPolyline(points);
+            if (!closed)
             {
-                if (DistanceToSegmentSquared(points[i], points[i + 1], position) <= radiusSq)
-                    return true;
+                var radius = width * 0.5f;
+                return DistanceToPolylineSquared(points, position, false) <= (radius * radius);
             }
-            return false;
+
+            var centered = IsCenteredClosedWidth(definition);
+            if (centered)
+            {
+                var radius = width * 0.5f;
+                return DistanceToPolylineSquared(points, position, true) <= (radius * radius);
+            }
+
+            if (!ContainsPolygon(points, position))
+                return false;
+            return DistanceToPolylineSquared(points, position, true) <= (width * width);
         }
 
         private static float DistanceToSegmentSquared(Vector2 a, Vector2 b, Vector2 p)
@@ -244,6 +348,79 @@ namespace TopSpeed.Tracks.Topology
             var closest = a + ab * t;
             var delta = p - closest;
             return Vector2.Dot(delta, delta);
+        }
+
+        private static float DistanceToPolylineSquared(IReadOnlyList<Vector2> points, Vector2 position, bool closed)
+        {
+            if (points == null || points.Count < 2)
+                return float.MaxValue;
+
+            var count = points.Count;
+            var lastIndex = count - 1;
+            var lastEqualsFirst = count > 1 && Vector2.DistanceSquared(points[0], points[lastIndex]) <= 0.0001f;
+            var segmentCount = lastEqualsFirst ? lastIndex : count - 1;
+
+            var best = float.MaxValue;
+            for (var i = 0; i < segmentCount; i++)
+            {
+                var a = points[i];
+                var b = points[i + 1];
+                var dist = DistanceToSegmentSquared(a, b, position);
+                if (dist < best)
+                    best = dist;
+            }
+
+            if (closed && !lastEqualsFirst)
+            {
+                var dist = DistanceToSegmentSquared(points[lastIndex], points[0], position);
+                if (dist < best)
+                    best = dist;
+            }
+
+            return best;
+        }
+
+        private static bool IsClosedPolyline(IReadOnlyList<Vector2> points)
+        {
+            if (points == null || points.Count < 3)
+                return false;
+            return Vector2.DistanceSquared(points[0], points[points.Count - 1]) <= 0.0001f;
+        }
+
+        private static bool IsCenteredClosedWidth(PathDefinition? definition)
+        {
+            if (definition?.Metadata == null || definition.Metadata.Count == 0)
+                return false;
+
+            if (!TryGetMetadataValue(definition.Metadata, out var mode, "width_mode", "path_width_mode", "width_align", "width_alignment"))
+                return false;
+
+            var trimmed = mode.Trim().ToLowerInvariant();
+            return trimmed.Contains("center") ||
+                   trimmed.Contains("centre") ||
+                   trimmed.Contains("both") ||
+                   trimmed.Contains("sym");
+        }
+
+        private static bool TryGetMetadataValue(
+            IReadOnlyDictionary<string, string> metadata,
+            out string value,
+            params string[] keys)
+        {
+            value = string.Empty;
+            if (metadata == null || metadata.Count == 0)
+                return false;
+
+            foreach (var key in keys)
+            {
+                if (metadata.TryGetValue(key, out var raw) && !string.IsNullOrWhiteSpace(raw))
+                {
+                    value = raw;
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

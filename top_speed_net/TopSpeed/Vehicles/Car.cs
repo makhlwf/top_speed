@@ -415,7 +415,7 @@ namespace TopSpeed.Vehicles
         public void Initialize(float positionX = 0, float positionY = 0)
         {
             if (Math.Abs(positionX) > 0.001f || Math.Abs(positionY) > 0.001f)
-                _mapState = _track.CreateStateFromWorld(new Vector3(positionX, 0f, positionY), _track.Map.StartHeading);
+                _mapState = _track.CreateStateFromWorld(new Vector3(positionX, 0f, positionY), _track.Map.StartHeadingDegrees);
             else
                 _mapState = _track.CreateStartState();
             _positionX = 0f;
@@ -450,7 +450,7 @@ namespace TopSpeed.Vehicles
 
         public void SetPosition(float positionX, float positionY)
         {
-            _mapState = _track.CreateStateFromWorld(new Vector3(positionX, 0f, positionY), _mapState.Heading);
+            _mapState = _track.CreateStateFromWorld(new Vector3(positionX, 0f, positionY), _mapState.HeadingDegrees);
             _positionX = 0f;
             _positionY = _mapState.DistanceMeters;
             var pose = _track.GetPose(_mapState);
@@ -924,7 +924,7 @@ namespace TopSpeed.Vehicles
                     _soundSand.SetVolumePercent(90);
                     _soundSnow.SetVolumePercent(90);
                 }
-                var heading = MapMovement.DirectionFromYaw(_dynamicsState.Yaw);
+                var headingDegrees = MapMovement.HeadingFromYaw(_dynamicsState.Yaw);
                 var distanceMeters = (_speed / 3.6f) * elapsed;
                 var previousPosition = _worldPosition;
 
@@ -935,20 +935,16 @@ namespace TopSpeed.Vehicles
                 var nextPosition = _worldPosition + (velocity * elapsed);
 
                 var canMove = _track.IsWithinTrack(nextPosition);
-                if (canMove && !_track.IsSectorTransitionAllowed(_worldPosition, nextPosition, heading))
+                if (canMove && !_track.IsSectorTransitionAllowed(_worldPosition, nextPosition, headingDegrees))
                     canMove = false;
 
                 if (canMove)
                 {
                     _worldPosition = nextPosition;
                     _mapState.WorldPosition = _worldPosition;
-                    var (cellX, cellZ) = _track.Map.WorldToCell(_worldPosition);
-                    _mapState.CellX = cellX;
-                    _mapState.CellZ = cellZ;
-                    _mapState.Heading = heading;
-                    _mapState.HeadingDegrees = HeadingDegrees;
+                    _mapState.HeadingDegrees = headingDegrees;
                     _mapState.DistanceMeters += distanceMeters;
-                    ApplySectorSpeedRules(nextPosition, heading);
+                    ApplySectorSpeedRules(nextPosition, headingDegrees);
                 }
                 else
                 {
@@ -1265,14 +1261,6 @@ namespace TopSpeed.Vehicles
                             _vibration.PlayEffect(VibrationEffectType.CurbRight);
                         else
                             _vibration.StopEffect(VibrationEffectType.CurbRight);
-                    }
-                    if (_relPos < 0 || _relPos > 1)
-                    {
-                        var fullCrash = _gear > 1 || _speed >= 50.0f;
-                        if (fullCrash)
-                            Crash();
-                        else
-                            MiniCrash((road.Right + road.Left) / 2);
                     }
                 }
             }
@@ -1705,9 +1693,9 @@ namespace TopSpeed.Vehicles
             _soundTurnTick.Play(loop: false);
         }
 
-        private void ApplySectorSpeedRules(Vector3 worldPosition, MapDirection heading)
+        private void ApplySectorSpeedRules(Vector3 worldPosition, float headingDegrees)
         {
-            if (!_track.TryGetSectorRules(worldPosition, heading, out _, out var rules, out _, out _))
+            if (!_track.TryGetSectorRules(worldPosition, headingDegrees, out _, out var rules, out _, out _))
                 return;
 
             var speedCap = rules.MaxSpeedKph;

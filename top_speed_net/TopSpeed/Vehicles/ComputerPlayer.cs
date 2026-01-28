@@ -296,7 +296,7 @@ namespace TopSpeed.Vehicles
         public void Initialize(float positionX, float positionY, float trackLength)
         {
             if (Math.Abs(positionX) > 0.001f || Math.Abs(positionY) > 0.001f)
-                _mapState = _track.CreateStateFromWorld(new Vector3(positionX, 0f, positionY), _track.Map.StartHeading);
+                _mapState = _track.CreateStateFromWorld(new Vector3(positionX, 0f, positionY), _track.Map.StartHeadingDegrees);
             else
                 _mapState = _track.CreateStartState();
             _positionX = 0f;
@@ -562,10 +562,10 @@ namespace TopSpeed.Vehicles
                     _engine.OverrideRpm(_lastDriveRpm);
                 if (_thrust < -50 && _speed > 0)
                     _currentSteering = _currentSteering * 2 / 3;
-                var heading = MapMovement.DirectionFromYaw(_dynamicsState.Yaw);
+                var headingDegrees = MapMovement.HeadingFromYaw(_dynamicsState.Yaw);
                 var distanceMeters = (_speed / 3.6f) * elapsed;
                 var previousPosition = _worldPosition;
-                _track.TryMove(ref _mapState, distanceMeters, heading, out _, out var boundaryHit);
+                _track.TryMove(ref _mapState, distanceMeters, headingDegrees, out _, out var boundaryHit);
                 if (boundaryHit)
                 {
                     _speed = 0f;
@@ -574,12 +574,12 @@ namespace TopSpeed.Vehicles
                 }
                 else
                 {
-                    ApplySectorSpeedRules(_mapState.WorldPosition, heading);
+                    ApplySectorSpeedRules(_mapState.WorldPosition, headingDegrees);
                 }
                 _worldPosition = _mapState.WorldPosition;
                 _positionY = _mapState.DistanceMeters;
                 var worldVelocity = elapsed > 0f ? (_worldPosition - previousPosition) / elapsed : Vector3.Zero;
-                _worldForward = MapMovement.DirectionVector(heading);
+                _worldForward = MapMovement.HeadingVector(headingDegrees);
                 _worldUp = Vector3.UnitY;
                 _worldVelocity = worldVelocity;
 
@@ -695,7 +695,7 @@ namespace TopSpeed.Vehicles
 
             var worldPosition = new Vector3(positionX, 0f, positionY);
             _worldPosition = worldPosition;
-            _mapState = _track.CreateStateFromWorld(worldPosition, _mapState.Heading);
+            _mapState = _track.CreateStateFromWorld(worldPosition, _mapState.HeadingDegrees);
             _mapState.WorldPosition = worldPosition;
 
             var now = _currentTime();
@@ -776,14 +776,6 @@ namespace TopSpeed.Vehicles
                 if (_frame % 4 == 0)
                 {
                     _relPos = (_positionX - road.Left) / (_laneWidth * 2.0f);
-                    if (_relPos < 0 || _relPos > 1)
-                    {
-                        var fullCrash = _gear > 1 || _speed >= 50.0f;
-                        if (fullCrash)
-                            Crash((road.Right + road.Left) / 2);
-                        else
-                            MiniCrash((road.Right + road.Left) / 2);
-                    }
                 }
             }
 
@@ -791,9 +783,9 @@ namespace TopSpeed.Vehicles
             _frame++;
         }
 
-        private void ApplySectorSpeedRules(Vector3 worldPosition, MapDirection heading)
+        private void ApplySectorSpeedRules(Vector3 worldPosition, float headingDegrees)
         {
-            if (!_track.TryGetSectorRules(worldPosition, heading, out _, out var rules, out _, out _))
+            if (!_track.TryGetSectorRules(worldPosition, headingDegrees, out _, out var rules, out _, out _))
                 return;
 
             var speedCap = rules.MaxSpeedKph;

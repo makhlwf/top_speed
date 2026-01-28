@@ -60,6 +60,7 @@ namespace TopSpeed.Tracks.Map
         private readonly string _trackName;
         private readonly bool _userDefined;
         private TrackNoise _currentNoise;
+        private readonly float _trackLength;
 
         private AudioSourceHandle? _soundCrowd;
         private AudioSourceHandle? _soundOcean;
@@ -95,6 +96,7 @@ namespace TopSpeed.Tracks.Map
             _approachBeacon = new TrackApproachBeacon(map);
             _pathManager = new TrackPathManager(map.Paths, map.Shapes, _portalManager, map.DefaultWidthMeters);
             _branchManager = map.BuildBranchManager();
+            _trackLength = ResolveTrackLength();
             InitializeSounds();
         }
 
@@ -116,7 +118,7 @@ namespace TopSpeed.Tracks.Map
         public bool UserDefined => _userDefined;
         public float LaneWidth => Math.Max(0.5f, _map.DefaultWidthMeters * 0.5f);
         public TrackMap Map => _map;
-        public float Length => Math.Max(0f, _map.CellCount * _map.CellSizeMeters);
+        public float Length => _trackLength;
         public TrackSectorRuleManager SectorRules => _sectorRuleManager;
         public TrackBranchManager Branches => _branchManager;
         public bool HasFinishArea => !string.IsNullOrWhiteSpace(_map.FinishAreaId);
@@ -139,80 +141,115 @@ namespace TopSpeed.Tracks.Map
             return MapMovement.CreateStart(_map);
         }
 
-        public MapMovementState CreateStateFromWorld(Vector3 worldPosition, MapDirection heading)
+        public MapMovementState CreateStateFromWorld(Vector3 worldPosition, float headingDegrees)
         {
-            var (x, z) = _map.WorldToCell(worldPosition);
             return new MapMovementState
             {
-                CellX = x,
-                CellZ = z,
-                Heading = heading,
-                HeadingDegrees = HeadingDegrees(heading),
-                WorldPosition = _map.CellToWorld(x, z),
-                DistanceMeters = 0f,
-                PendingMeters = 0f
+                WorldPosition = worldPosition,
+                HeadingDegrees = MapMovement.NormalizeDegrees(headingDegrees),
+                DistanceMeters = 0f
             };
         }
 
         public TrackPose GetPose(MapMovementState state)
         {
-            var forward = MapMovement.DirectionVector(state.Heading);
+            var forward = MapMovement.HeadingVector(state.HeadingDegrees);
             var right = new Vector3(forward.Z, 0f, -forward.X);
             var up = Vector3.UnitY;
-            var heading = state.Heading switch
-            {
-                MapDirection.North => 0f,
-                MapDirection.East => (float)(Math.PI * 0.5),
-                MapDirection.South => (float)Math.PI,
-                MapDirection.West => (float)(-Math.PI * 0.5),
-                _ => 0f
-            };
+            var heading = state.HeadingDegrees * (float)Math.PI / 180f;
             return new TrackPose(state.WorldPosition, forward, right, up, heading, 0f);
         }
 
         public TrackRoad RoadAt(MapMovementState state)
         {
-            if (!_map.TryGetCell(state.CellX, state.CellZ, out var cell))
-            {
-                var defaultRoad = BuildDefaultRoad();
-                var defaultSafeZone = false;
-                var defaultLength = _map.CellSizeMeters;
-                var defaultWidth = Math.Max(0.5f, _map.DefaultWidthMeters);
-                var defaultSurface = _map.DefaultSurface;
-                var defaultNoise = _map.DefaultNoise;
-                ApplyPathWidth(state.WorldPosition, ref defaultWidth);
-                ApplyAreaOverrides(state.WorldPosition, state.Heading, ref defaultWidth, ref defaultLength, ref defaultSurface, ref defaultNoise, ref defaultSafeZone);
-                defaultRoad.Left = -defaultWidth * 0.5f;
-                defaultRoad.Right = defaultWidth * 0.5f;
-                defaultRoad.Length = defaultLength;
-                defaultRoad.Surface = defaultSurface;
-                defaultRoad.IsSafeZone = defaultSafeZone;
-                defaultRoad.IsOutOfBounds = !IsWithinTrackInternal(state.WorldPosition, defaultSafeZone);
-                ApplySectorRuleFields(state.WorldPosition, state.Heading, ref defaultRoad);
-                return defaultRoad;
-            }
-
-            var width = Math.Max(0.5f, cell.WidthMeters);
+            var road = BuildDefaultRoad();
+            var safeZone = false;
             var length = _map.CellSizeMeters;
-            var surface = cell.Surface;
-            var noise = cell.Noise;
-            var safeZone = cell.IsSafeZone;
+            var width = Math.Max(0.5f, _map.DefaultWidthMeters);
+            var surface = _map.DefaultSurface;
+            var noise = _map.DefaultNoise;
 
             ApplyPathWidth(state.WorldPosition, ref width);
-            ApplyAreaOverrides(state.WorldPosition, state.Heading, ref width, ref length, ref surface, ref noise, ref safeZone);
+            ApplyAreaOverrides(state.WorldPosition, state.HeadingDegrees, ref width, ref length, ref surface, ref noise, ref safeZone);
 
-            var road = new TrackRoad
-            {
-                Left = -width * 0.5f,
-                Right = width * 0.5f,
-                Surface = surface,
-                Type = ResolveCurveType(cell.Exits, state.Heading),
-                Length = length,
-                IsSafeZone = safeZone,
-                IsOutOfBounds = !IsWithinTrackInternal(state.WorldPosition, safeZone)
-            };
-            ApplySectorRuleFields(state.WorldPosition, state.Heading, ref road);
+            road.Left = -width * 0.5f;
+            road.Right = width * 0.5f;
+            road.Length = length;
+            road.Surface = surface;
+            road.Type = TrackType.Straight;
+            road.IsSafeZone = safeZone;
+            road.IsOutOfBounds = !IsWithinTrackInternal(state.WorldPosition, safeZone);
+            ApplySectorRuleFields(state.WorldPosition, state.HeadingDegrees, ref road);
             return road;
+        }
+
+        private float ResolveTrackLength()
+        {
+            var best = 0f;
+            if (_map.Approaches != null)
+            {
+                foreach (var approach in _map.Approaches)
+                {
+                    if (approach?.LengthMeters is { } len && len > best)
+                        best = len;
+                }
+            }
+
+            if (best > 0f)
+                return best;
+
+            if (_pathManager != null && _pathManager.HasPaths)
+            {
+                foreach (var path in _pathManager.Paths)
+                {
+                    if (path?.Shape == null)
+                        continue;
+                    var length = GetShapeLength(path.Shape);
+                    if (length > best)
+                        best = length;
+                }
+            }
+
+            return Math.Max(0f, best);
+        }
+
+        private static float GetShapeLength(ShapeDefinition shape)
+        {
+            if (shape == null)
+                return 0f;
+
+            switch (shape.Type)
+            {
+                case ShapeType.Rectangle:
+                    return Math.Max(Math.Abs(shape.Width), Math.Abs(shape.Height));
+                case ShapeType.Circle:
+                    return 2f * (float)Math.PI * Math.Abs(shape.Radius);
+                case ShapeType.Ring:
+                    if (shape.Radius > 0f)
+                        return 2f * (float)Math.PI * Math.Abs(shape.Radius);
+                    return 2f * (Math.Abs(shape.Width) + Math.Abs(shape.Height));
+                case ShapeType.Polyline:
+                    return PolylineLength(shape.Points, false);
+                case ShapeType.Polygon:
+                    return PolylineLength(shape.Points, true);
+                default:
+                    return 0f;
+            }
+        }
+
+        private static float PolylineLength(IReadOnlyList<Vector2>? points, bool closed)
+        {
+            if (points == null || points.Count < 2)
+                return 0f;
+
+            var length = 0f;
+            for (var i = 0; i < points.Count - 1; i++)
+                length += Vector2.Distance(points[i], points[i + 1]);
+
+            if (closed && points.Count > 2)
+                length += Vector2.Distance(points[points.Count - 1], points[0]);
+
+            return length;
         }
 
         public bool IsInsideFinishArea(Vector3 worldPosition)
@@ -227,7 +264,7 @@ namespace TopSpeed.Tracks.Map
 
         public bool TryGetSectorRules(
             Vector3 worldPosition,
-            MapDirection heading,
+            float headingDegrees,
             out TrackSectorDefinition sector,
             out TrackSectorRules rules,
             out PortalDefinition? portal,
@@ -242,7 +279,7 @@ namespace TopSpeed.Tracks.Map
                 return false;
 
             var position2D = new Vector2(worldPosition.X, worldPosition.Z);
-            if (!_sectorManager.TryLocate(position2D, HeadingDegrees(heading), out var foundSector, out var foundPortal, out var delta))
+            if (!_sectorManager.TryLocate(position2D, headingDegrees, out var foundSector, out var foundPortal, out var delta))
                 return false;
 
             if (!_sectorRuleManager.TryGetRules(foundSector.Id, out var foundRules))
@@ -255,26 +292,38 @@ namespace TopSpeed.Tracks.Map
             return true;
         }
 
-        public bool TryMove(ref MapMovementState state, float distanceMeters, MapDirection heading, out TrackRoad road, out bool boundaryHit)
+        public bool TryMove(ref MapMovementState state, float distanceMeters, float headingDegrees, out TrackRoad road, out bool boundaryHit)
         {
             boundaryHit = false;
             road = BuildDefaultRoad();
-            var previousState = state;
-            var previousPosition = state.WorldPosition;
-            if (!MapMovement.TryMove(_map, ref state, distanceMeters, heading, out var cell, out boundaryHit))
+            if (Math.Abs(distanceMeters) < 0.001f)
             {
                 road = RoadAt(state);
                 return false;
             }
 
-            if (!IsSectorTransitionAllowed(previousPosition, state.WorldPosition, heading))
+            var previousPosition = state.WorldPosition;
+            var heading = MapMovement.NormalizeDegrees(headingDegrees);
+            var direction = MapMovement.HeadingVector(heading);
+            var nextPosition = previousPosition + (direction * distanceMeters);
+
+            if (!IsWithinTrack(nextPosition))
             {
-                state = previousState;
                 boundaryHit = true;
                 road = RoadAt(state);
                 return false;
             }
 
+            if (!IsSectorTransitionAllowed(previousPosition, nextPosition, heading))
+            {
+                boundaryHit = true;
+                road = RoadAt(state);
+                return false;
+            }
+
+            state.WorldPosition = nextPosition;
+            state.HeadingDegrees = heading;
+            state.DistanceMeters += distanceMeters;
             road = RoadAt(state);
             return true;
         }
@@ -330,14 +379,13 @@ namespace TopSpeed.Tracks.Map
             return true;
         }
 
-        public bool TryGetAvailableHeadings(Vector3 worldPosition, MapDirection heading, out IReadOnlyList<float> headings)
+        public bool TryGetAvailableHeadings(Vector3 worldPosition, float headingDegrees, out IReadOnlyList<float> headings)
         {
             var list = new List<float>();
             var position = new Vector2(worldPosition.X, worldPosition.Z);
-            var headingDeg = HeadingDegrees(heading);
 
             if (_sectorManager != null &&
-                _sectorManager.TryLocate(position, headingDeg, out var sector, out _, out _))
+                _sectorManager.TryLocate(position, headingDegrees, out var sector, out _, out _))
             {
                 var branches = _branchManager.GetBranchesForSector(sector.Id);
                 foreach (var branch in branches)
@@ -357,18 +405,6 @@ namespace TopSpeed.Tracks.Map
                 }
             }
 
-            if (list.Count == 0)
-            {
-                var (cellX, cellZ) = _map.WorldToCell(worldPosition);
-                if (_map.TryGetCell(cellX, cellZ, out var cell))
-                {
-                    if ((cell.Exits & MapExits.North) != 0) AddHeading(list, 0f);
-                    if ((cell.Exits & MapExits.East) != 0) AddHeading(list, 90f);
-                    if ((cell.Exits & MapExits.South) != 0) AddHeading(list, 180f);
-                    if ((cell.Exits & MapExits.West) != 0) AddHeading(list, 270f);
-                }
-            }
-
             headings = list;
             return list.Count > 0;
         }
@@ -376,45 +412,16 @@ namespace TopSpeed.Tracks.Map
         public bool NextRoad(MapMovementState state, float speed, int curveAnnouncementMode, out TrackRoad road)
         {
             road = RoadAt(state);
-            if (!_map.TryGetCell(state.CellX, state.CellZ, out _))
+            if (!TryGetTurnGuidance(state.WorldPosition, state.HeadingDegrees, out var guidance))
+                return false;
+            if (guidance.Passed)
                 return false;
 
-            var steps = (int)Math.Max(1f, Math.Round(CallLengthMeters / _map.CellSizeMeters));
-            var x = state.CellX;
-            var z = state.CellZ;
-            var heading = state.Heading;
-            var currentType = road.Type;
+            if (guidance.GuidanceRangeMeters > 0f && guidance.DistanceMeters > guidance.GuidanceRangeMeters)
+                return false;
 
-            for (var i = 0; i < steps; i++)
-            {
-                if (!_map.TryStep(x, z, heading, out var nextX, out var nextZ, out var nextCell))
-                    return false;
-
-                var nextState = state;
-                nextState.CellX = nextX;
-                nextState.CellZ = nextZ;
-                var nextRoad = new TrackRoad
-                {
-                    Left = -Math.Max(0.5f, nextCell.WidthMeters) * 0.5f,
-                    Right = Math.Max(0.5f, nextCell.WidthMeters) * 0.5f,
-                    Surface = nextCell.Surface,
-                    Type = ResolveCurveType(nextCell.Exits, heading),
-                    Length = _map.CellSizeMeters,
-                    IsSafeZone = nextCell.IsSafeZone,
-                    IsOutOfBounds = false
-                };
-
-                if (nextRoad.Type != currentType)
-                {
-                    road = nextRoad;
-                    return true;
-                }
-
-                x = nextX;
-                z = nextZ;
-            }
-
-            return false;
+            road.Type = ResolveTurnType(state.HeadingDegrees, guidance.TurnHeadingDegrees);
+            return true;
         }
 
         public void Initialize()
@@ -425,13 +432,12 @@ namespace TopSpeed.Tracks.Map
 
         public void Run(MapMovementState state, float elapsed)
         {
-            var hasCell = _map.TryGetCell(state.CellX, state.CellZ, out var cell);
-            var noise = hasCell ? cell.Noise : _map.DefaultNoise;
-            var surface = hasCell ? cell.Surface : _map.DefaultSurface;
-            var safeZone = hasCell && cell.IsSafeZone;
+            var noise = _map.DefaultNoise;
+            var surface = _map.DefaultSurface;
+            var safeZone = false;
             var length = _map.CellSizeMeters;
-            var width = Math.Max(0.5f, hasCell ? cell.WidthMeters : _map.DefaultWidthMeters);
-            ApplyAreaOverrides(state.WorldPosition, state.Heading, ref width, ref length, ref surface, ref noise, ref safeZone);
+            var width = Math.Max(0.5f, _map.DefaultWidthMeters);
+            ApplyAreaOverrides(state.WorldPosition, state.HeadingDegrees, ref width, ref length, ref surface, ref noise, ref safeZone);
             if (noise != _currentNoise)
             {
                 StopNoise(_currentNoise);
@@ -509,7 +515,7 @@ namespace TopSpeed.Tracks.Map
 
         private void ApplyAreaOverrides(
             Vector3 worldPosition,
-            MapDirection heading,
+            float headingDegrees,
             ref float width,
             ref float length,
             ref TrackSurface surface,
@@ -517,6 +523,7 @@ namespace TopSpeed.Tracks.Map
             ref bool safeZone)
         {
             var position = new Vector2(worldPosition.X, worldPosition.Z);
+            var heading = MapMovement.ToCardinal(headingDegrees);
             ApplySectorOverrides(position, heading, ref width, ref length, ref surface, ref noise, ref safeZone);
 
             if (_areaManager == null)
@@ -652,29 +659,41 @@ namespace TopSpeed.Tracks.Map
             return false;
         }
 
-        private static TrackType ResolveCurveType(MapExits exits, MapDirection heading)
+        private static TrackType ResolveTurnType(float currentHeading, float targetHeading)
         {
-            var count = CountExits(exits);
-            if (count >= 3)
+            var delta = NormalizeDegrees(targetHeading - currentHeading);
+            if (delta > 180f)
+                delta -= 360f;
+            var abs = Math.Abs(delta);
+            if (abs < 5f)
                 return TrackType.Straight;
 
-            if (count == 2)
+            TrackType left;
+            TrackType right;
+            if (abs < 30f)
             {
-                if (exits == (MapExits.North | MapExits.South) || exits == (MapExits.East | MapExits.West))
-                    return TrackType.Straight;
-
-                var right = TurnRight(heading);
-                var left = TurnLeft(heading);
-                var hasRight = (exits & TrackMap.ExitsFromDirection(right)) != 0;
-                var hasLeft = (exits & TrackMap.ExitsFromDirection(left)) != 0;
-                if (hasRight && !hasLeft)
-                    return TrackType.Right;
-                if (hasLeft && !hasRight)
-                    return TrackType.Left;
+                left = TrackType.EasyLeft;
+                right = TrackType.EasyRight;
+            }
+            else if (abs < 70f)
+            {
+                left = TrackType.Left;
+                right = TrackType.Right;
+            }
+            else if (abs < 120f)
+            {
+                left = TrackType.HardLeft;
+                right = TrackType.HardRight;
+            }
+            else
+            {
+                left = TrackType.HairpinLeft;
+                right = TrackType.HairpinRight;
             }
 
-            return TrackType.Straight;
+            return delta < 0f ? left : right;
         }
+
 
         private void TryBuildTurnCandidate(
             TrackApproachDefinition approach,
@@ -927,39 +946,6 @@ namespace TopSpeed.Tracks.Map
             return Vector2.Distance(closest, position);
         }
 
-        private static int CountExits(MapExits exits)
-        {
-            var count = 0;
-            if ((exits & MapExits.North) != 0) count++;
-            if ((exits & MapExits.East) != 0) count++;
-            if ((exits & MapExits.South) != 0) count++;
-            if ((exits & MapExits.West) != 0) count++;
-            return count;
-        }
-
-        private static MapDirection TurnRight(MapDirection heading)
-        {
-            return heading switch
-            {
-                MapDirection.North => MapDirection.East,
-                MapDirection.East => MapDirection.South,
-                MapDirection.South => MapDirection.West,
-                MapDirection.West => MapDirection.North,
-                _ => MapDirection.North
-            };
-        }
-
-        private static MapDirection TurnLeft(MapDirection heading)
-        {
-            return heading switch
-            {
-                MapDirection.North => MapDirection.West,
-                MapDirection.West => MapDirection.South,
-                MapDirection.South => MapDirection.East,
-                MapDirection.East => MapDirection.North,
-                _ => MapDirection.North
-            };
-        }
 
         private void InitializeSounds()
         {
@@ -1130,9 +1116,6 @@ namespace TopSpeed.Tracks.Map
         {
             var position = new Vector2(worldPosition.X, worldPosition.Z);
             var safeZone = IsSafeZone(position);
-            var (cellX, cellZ) = _map.WorldToCell(worldPosition);
-            if (_map.TryGetCell(cellX, cellZ, out var cell) && cell.IsSafeZone)
-                safeZone = true;
             return IsWithinTrackInternal(worldPosition, safeZone);
         }
 
@@ -1145,11 +1128,13 @@ namespace TopSpeed.Tracks.Map
             {
                 if (_pathManager.ContainsAny(position))
                     return true;
+                if (_areaManager != null && _areaManager.ContainsTrackArea(position))
+                    return true;
                 return isSafeZone;
             }
-
-            var (cellX, cellZ) = _map.WorldToCell(worldPosition);
-            return _map.TryGetCell(cellX, cellZ, out _);
+            if (_areaManager != null && _areaManager.ContainsTrackArea(position))
+                return true;
+            return isSafeZone;
         }
 
         private bool IsSafeZone(Vector2 position)
@@ -1207,12 +1192,11 @@ namespace TopSpeed.Tracks.Map
             return result;
         }
 
-        internal bool IsSectorTransitionAllowed(Vector3 fromPosition, Vector3 toPosition, MapDirection heading)
+        internal bool IsSectorTransitionAllowed(Vector3 fromPosition, Vector3 toPosition, float headingDegrees)
         {
             if (_sectorRuleManager == null || _sectorManager == null)
                 return true;
 
-            var headingDegrees = HeadingDegrees(heading);
             var fromPos = new Vector2(fromPosition.X, fromPosition.Z);
             var toPos = new Vector2(toPosition.X, toPosition.Z);
 
@@ -1232,22 +1216,23 @@ namespace TopSpeed.Tracks.Map
             {
                 var entryPortalId = toPortal?.Id;
                 var exitPortalId = fromPortal?.Id;
-                if (!_sectorRuleManager.AllowsExit(fromSector.Id, exitPortalId, heading))
+                var direction = MapMovement.ToCardinal(headingDegrees);
+                if (!_sectorRuleManager.AllowsExit(fromSector.Id, exitPortalId, direction))
                     return false;
-                if (!_sectorRuleManager.AllowsEntry(toSector.Id, entryPortalId, heading))
+                if (!_sectorRuleManager.AllowsEntry(toSector.Id, entryPortalId, direction))
                     return false;
             }
 
             return true;
         }
 
-        private void ApplySectorRuleFields(Vector3 worldPosition, MapDirection heading, ref TrackRoad road)
+        private void ApplySectorRuleFields(Vector3 worldPosition, float headingDegrees, ref TrackRoad road)
         {
             if (_sectorRuleManager == null || _sectorManager == null)
                 return;
 
             var position = new Vector2(worldPosition.X, worldPosition.Z);
-            if (!_sectorManager.TryLocate(position, HeadingDegrees(heading), out var sector, out _, out _))
+            if (!_sectorManager.TryLocate(position, headingDegrees, out var sector, out _, out _))
                 return;
             if (!_sectorRuleManager.TryGetRules(sector.Id, out var rules))
                 return;
