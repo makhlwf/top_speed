@@ -19,7 +19,46 @@ namespace TS.Audio
         public float MaxDistance = 10000.0f;
         public float RollOff = 1.0f;
         public float Occlusion = 0f;
+        public float AirAbsLow = 1.0f;
+        public float AirAbsMid = 1.0f;
+        public float AirAbsHigh = 1.0f;
+        public float TransLow = 0.0f;
+        public float TransMid = 0.0f;
+        public float TransHigh = 0.0f;
+        public int SimulationFlags = 0;
+        public float ReverbTimeLow = 0.0f;
+        public float ReverbTimeMid = 0.0f;
+        public float ReverbTimeHigh = 0.0f;
+        public float ReverbEqLow = 1.0f;
+        public float ReverbEqMid = 1.0f;
+        public float ReverbEqHigh = 1.0f;
+        public int ReverbDelay = 0;
+        public float ReflectionWet = 0.35f;
+        public int RoomFlags = 0;
+        public float RoomReverbTimeSeconds = 0f;
+        public float RoomReverbGain = 0f;
+        public float RoomReflectionWet = 0.35f;
+        public float RoomHfDecayRatio = 1f;
+        public float RoomEarlyReflectionsGain = 0f;
+        public float RoomLateReverbGain = 0f;
+        public float RoomDiffusion = 0f;
+        public float RoomAirAbsorptionScale = 1f;
+        public float RoomOcclusionScale = 1f;
+        public float RoomTransmissionScale = 1f;
+        public float RoomOcclusionOverride = float.NaN;
+        public float RoomTransmissionOverrideLow = float.NaN;
+        public float RoomTransmissionOverrideMid = float.NaN;
+        public float RoomTransmissionOverrideHigh = float.NaN;
+        public float RoomAirAbsorptionOverrideLow = float.NaN;
+        public float RoomAirAbsorptionOverrideMid = float.NaN;
+        public float RoomAirAbsorptionOverrideHigh = float.NaN;
         public DistanceModel DistanceModel = DistanceModel.Inverse;
+
+        public const int SimOcclusion = 1 << 0;
+        public const int SimTransmission = 1 << 1;
+        public const int SimAirAbsorption = 1 << 2;
+        public const int SimReflections = 1 << 3;
+        public const int RoomHasProfile = 1 << 8;
     }
 
     public sealed class AudioSourceHandle : IDisposable
@@ -225,6 +264,65 @@ namespace TS.Audio
             }
         }
 
+        internal void ApplyDirectSimulation(float occlusion, float airLow, float airMid, float airHigh, float transLow, float transMid, float transHigh)
+        {
+            Volatile.Write(ref _spatial.Occlusion, occlusion);
+            Volatile.Write(ref _spatial.AirAbsLow, airLow);
+            Volatile.Write(ref _spatial.AirAbsMid, airMid);
+            Volatile.Write(ref _spatial.AirAbsHigh, airHigh);
+            Volatile.Write(ref _spatial.TransLow, transLow);
+            Volatile.Write(ref _spatial.TransMid, transMid);
+            Volatile.Write(ref _spatial.TransHigh, transHigh);
+            Volatile.Write(ref _spatial.SimulationFlags,
+                AudioSourceSpatialParams.SimOcclusion |
+                AudioSourceSpatialParams.SimTransmission |
+                AudioSourceSpatialParams.SimAirAbsorption);
+        }
+
+        internal void ApplyReflectionSimulation(float timeLow, float timeMid, float timeHigh, float eqLow, float eqMid, float eqHigh, int delay)
+        {
+            Volatile.Write(ref _spatial.ReverbTimeLow, timeLow);
+            Volatile.Write(ref _spatial.ReverbTimeMid, timeMid);
+            Volatile.Write(ref _spatial.ReverbTimeHigh, timeHigh);
+            Volatile.Write(ref _spatial.ReverbEqLow, eqLow);
+            Volatile.Write(ref _spatial.ReverbEqMid, eqMid);
+            Volatile.Write(ref _spatial.ReverbEqHigh, eqHigh);
+            Volatile.Write(ref _spatial.ReverbDelay, delay);
+            Volatile.Write(ref _spatial.SimulationFlags, _spatial.SimulationFlags | AudioSourceSpatialParams.SimReflections);
+        }
+
+        public void SetReflectionWet(float wet)
+        {
+            if (wet < 0f) wet = 0f;
+            if (wet > 1f) wet = 1f;
+            Volatile.Write(ref _spatial.ReflectionWet, wet);
+        }
+
+        public void SetRoomAcoustics(RoomAcoustics acoustics)
+        {
+            Volatile.Write(ref _spatial.RoomFlags, acoustics.HasRoom ? AudioSourceSpatialParams.RoomHasProfile : 0);
+            Volatile.Write(ref _spatial.RoomReverbTimeSeconds, acoustics.ReverbTimeSeconds);
+            Volatile.Write(ref _spatial.RoomReverbGain, acoustics.ReverbGain);
+            Volatile.Write(ref _spatial.RoomReflectionWet, acoustics.ReflectionWet);
+            Volatile.Write(ref _spatial.RoomHfDecayRatio, acoustics.HfDecayRatio);
+            Volatile.Write(ref _spatial.RoomEarlyReflectionsGain, acoustics.EarlyReflectionsGain);
+            Volatile.Write(ref _spatial.RoomLateReverbGain, acoustics.LateReverbGain);
+            Volatile.Write(ref _spatial.RoomDiffusion, acoustics.Diffusion);
+            Volatile.Write(ref _spatial.RoomAirAbsorptionScale, acoustics.AirAbsorptionScale);
+            Volatile.Write(ref _spatial.RoomOcclusionScale, acoustics.OcclusionScale);
+            Volatile.Write(ref _spatial.RoomTransmissionScale, acoustics.TransmissionScale);
+
+            Volatile.Write(ref _spatial.RoomOcclusionOverride, acoustics.OcclusionOverride ?? float.NaN);
+            Volatile.Write(ref _spatial.RoomTransmissionOverrideLow, acoustics.TransmissionOverrideLow ?? float.NaN);
+            Volatile.Write(ref _spatial.RoomTransmissionOverrideMid, acoustics.TransmissionOverrideMid ?? float.NaN);
+            Volatile.Write(ref _spatial.RoomTransmissionOverrideHigh, acoustics.TransmissionOverrideHigh ?? float.NaN);
+            Volatile.Write(ref _spatial.RoomAirAbsorptionOverrideLow, acoustics.AirAbsorptionOverrideLow ?? float.NaN);
+            Volatile.Write(ref _spatial.RoomAirAbsorptionOverrideMid, acoustics.AirAbsorptionOverrideMid ?? float.NaN);
+            Volatile.Write(ref _spatial.RoomAirAbsorptionOverrideHigh, acoustics.AirAbsorptionOverrideHigh ?? float.NaN);
+
+            SetReflectionWet(acoustics.ReflectionWet);
+        }
+
         public void ApplyCurveDistanceScaler(float curveDistanceScaler)
         {
             if (!_spatialize)
@@ -266,6 +364,9 @@ namespace TS.Audio
 
         public int InputChannels => _channels;
         public int InputSampleRate => _sampleRate;
+        internal bool UsesSteamAudio => _useHrtf;
+        internal bool IsSpatialized => _spatialize;
+        internal AudioSourceSpatialParams SpatialParams => _spatial;
 
         public float GetLengthSeconds()
         {

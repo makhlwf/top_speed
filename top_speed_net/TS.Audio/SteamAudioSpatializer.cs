@@ -14,6 +14,8 @@ namespace TS.Audio
         private IPL.BinauralEffect _binauralRight;
         private IPL.DirectEffect _directLeft;
         private IPL.DirectEffect _directRight;
+        private IPL.ReflectionEffect _reflection;
+        private IPL.ReflectionMixer _reflectionMixer;
         private readonly float[] _mono;
         private readonly float[] _outL;
         private readonly float[] _outR;
@@ -25,6 +27,7 @@ namespace TS.Audio
         private readonly float[] _outLeftR;
         private readonly float[] _outRightL;
         private readonly float[] _outRightR;
+        private readonly float[] _reverbMono;
         private readonly int _frameSize;
 
         public SteamAudioSpatializer(SteamAudioContext context, uint frameSize, bool trueStereo, HrtfDownmixMode downmixMode)
@@ -62,6 +65,21 @@ namespace TS.Audio
             if (error != IPL.Error.Success)
                 throw new InvalidOperationException("Failed to create direct effect: " + error);
 
+            var reflectionSettings = new IPL.ReflectionEffectSettings
+            {
+                Type = IPL.ReflectionEffectType.Parametric,
+                NumChannels = 1,
+                IrSize = 0
+            };
+
+            error = IPL.ReflectionEffectCreate(_ctx.Context, in audioSettings, in reflectionSettings, out _reflection);
+            if (error != IPL.Error.Success)
+                throw new InvalidOperationException("Failed to create reflection effect: " + error);
+
+            error = IPL.ReflectionMixerCreate(_ctx.Context, in audioSettings, in reflectionSettings, out _reflectionMixer);
+            if (error != IPL.Error.Success)
+                throw new InvalidOperationException("Failed to create reflection mixer: " + error);
+
             _mono = new float[_frameSize];
             _outL = new float[_frameSize];
             _outR = new float[_frameSize];
@@ -73,6 +91,7 @@ namespace TS.Audio
             _outLeftR = new float[_frameSize];
             _outRightL = new float[_frameSize];
             _outRightR = new float[_frameSize];
+            _reverbMono = new float[_frameSize];
         }
 
         public unsafe void Process(NativeArray<float> framesIn, UInt32 frameCountIn, NativeArray<float> framesOut, ref UInt32 frameCountOut, UInt32 channels, AudioSourceSpatialParams spatial)
@@ -93,12 +112,16 @@ namespace TS.Audio
             fixed (float* pOutLR = _outLeftR)
             fixed (float* pOutRL = _outRightL)
             fixed (float* pOutRR = _outRightR)
+            fixed (float* pMono = _mono)
+            fixed (float* pReverb = _reverbMono)
             {
                 for (int i = 0; i < frames; i++)
                 {
                     int idx = i * (int)channels;
                     pInL[i] = framesIn[idx];
                     pInR[i] = framesIn[idx + 1];
+                    pMono[i] = 0.5f * (pInL[i] + pInR[i]);
+                    pReverb[i] = 0f;
                 }
 
                 var attenuation = GetAttenuationAndDirection(spatial, out var direction);
@@ -106,18 +129,45 @@ namespace TS.Audio
                 var directParams = new IPL.DirectEffectParams
                 {
                     Flags = IPL.DirectEffectFlags.ApplyDistanceAttenuation,
-                    TransmissionType = IPL.TransmissionType.FrequencyIndependent,
+                    TransmissionType = IPL.TransmissionType.FrequencyDependent,
                     DistanceAttenuation = attenuation,
-                    Directivity = 1.0f,
-                    Occlusion = Volatile.Read(ref spatial.Occlusion)
+                    Directivity = 1.0f
                 };
 
-                directParams.AirAbsorption[0] = 1.0f;
-                directParams.AirAbsorption[1] = 1.0f;
-                directParams.AirAbsorption[2] = 1.0f;
-                directParams.Transmission[0] = 0.0f;
-                directParams.Transmission[1] = 0.0f;
-                directParams.Transmission[2] = 0.0f;
+                var simFlags = Volatile.Read(ref spatial.SimulationFlags);
+                if ((simFlags & AudioSourceSpatialParams.SimAirAbsorption) != 0)
+                {
+                    directParams.Flags |= IPL.DirectEffectFlags.ApplyAirAbsorption;
+                    directParams.AirAbsorption[0] = Volatile.Read(ref spatial.AirAbsLow);
+                    directParams.AirAbsorption[1] = Volatile.Read(ref spatial.AirAbsMid);
+                    directParams.AirAbsorption[2] = Volatile.Read(ref spatial.AirAbsHigh);
+                }
+                else
+                {
+                    directParams.AirAbsorption[0] = 1.0f;
+                    directParams.AirAbsorption[1] = 1.0f;
+                    directParams.AirAbsorption[2] = 1.0f;
+                }
+
+                if ((simFlags & AudioSourceSpatialParams.SimOcclusion) != 0)
+                {
+                    directParams.Flags |= IPL.DirectEffectFlags.ApplyOcclusion;
+                    directParams.Occlusion = Volatile.Read(ref spatial.Occlusion);
+                }
+
+                if ((simFlags & AudioSourceSpatialParams.SimTransmission) != 0)
+                {
+                    directParams.Flags |= IPL.DirectEffectFlags.ApplyTransmission;
+                    directParams.Transmission[0] = Volatile.Read(ref spatial.TransLow);
+                    directParams.Transmission[1] = Volatile.Read(ref spatial.TransMid);
+                    directParams.Transmission[2] = Volatile.Read(ref spatial.TransHigh);
+                }
+                else
+                {
+                    directParams.Transmission[0] = 0.0f;
+                    directParams.Transmission[1] = 0.0f;
+                    directParams.Transmission[2] = 0.0f;
+                }
 
                 var binauralParams = new IPL.BinauralEffectParams
                 {
@@ -170,6 +220,19 @@ namespace TS.Audio
                         framesOut[idx + ch] = 0f;
                 }
 
+                if ((simFlags & AudioSourceSpatialParams.SimReflections) != 0)
+                {
+                    ApplyReflections(frames, spatial);
+                    float wetScale = Volatile.Read(ref spatial.ReflectionWet);
+                    for (int i = 0; i < frames; i++)
+                    {
+                        int idx = i * (int)channels;
+                        float wet = pReverb[i] * wetScale;
+                        framesOut[idx] += wet;
+                        framesOut[idx + 1] += wet;
+                    }
+                }
+
                 frameCountOut = (UInt32)frames;
             }
         }
@@ -184,6 +247,10 @@ namespace TS.Audio
                 IPL.DirectEffectRelease(ref _directLeft);
             if (_directRight.Handle != IntPtr.Zero)
                 IPL.DirectEffectRelease(ref _directRight);
+            if (_reflection.Handle != IntPtr.Zero)
+                IPL.ReflectionEffectRelease(ref _reflection);
+            if (_reflectionMixer.Handle != IntPtr.Zero)
+                IPL.ReflectionMixerRelease(ref _reflectionMixer);
         }
 
         private unsafe void ProcessMono(NativeArray<float> framesIn, UInt32 frameCountIn, NativeArray<float> framesOut, ref UInt32 frameCountOut, UInt32 channels, AudioSourceSpatialParams spatial)
@@ -193,12 +260,14 @@ namespace TS.Audio
             fixed (float* pMono = _mono)
             fixed (float* pOutL = _outL)
             fixed (float* pOutR = _outR)
+            fixed (float* pReverb = _reverbMono)
             {
                 int chCount = (int)channels;
                 for (int i = 0; i < frames; i++)
                 {
                     int idx = i * chCount;
                     pMono[i] = DownmixSample(framesIn, idx, chCount);
+                    pReverb[i] = 0f;
                 }
 
                 var attenuation = GetAttenuationAndDirection(spatial, out var direction);
@@ -206,18 +275,45 @@ namespace TS.Audio
                 var directParams = new IPL.DirectEffectParams
                 {
                     Flags = IPL.DirectEffectFlags.ApplyDistanceAttenuation,
-                    TransmissionType = IPL.TransmissionType.FrequencyIndependent,
+                    TransmissionType = IPL.TransmissionType.FrequencyDependent,
                     DistanceAttenuation = attenuation,
-                    Directivity = 1.0f,
-                    Occlusion = Volatile.Read(ref spatial.Occlusion)
+                    Directivity = 1.0f
                 };
 
-                directParams.AirAbsorption[0] = 1.0f;
-                directParams.AirAbsorption[1] = 1.0f;
-                directParams.AirAbsorption[2] = 1.0f;
-                directParams.Transmission[0] = 0.0f;
-                directParams.Transmission[1] = 0.0f;
-                directParams.Transmission[2] = 0.0f;
+                var simFlags = Volatile.Read(ref spatial.SimulationFlags);
+                if ((simFlags & AudioSourceSpatialParams.SimAirAbsorption) != 0)
+                {
+                    directParams.Flags |= IPL.DirectEffectFlags.ApplyAirAbsorption;
+                    directParams.AirAbsorption[0] = Volatile.Read(ref spatial.AirAbsLow);
+                    directParams.AirAbsorption[1] = Volatile.Read(ref spatial.AirAbsMid);
+                    directParams.AirAbsorption[2] = Volatile.Read(ref spatial.AirAbsHigh);
+                }
+                else
+                {
+                    directParams.AirAbsorption[0] = 1.0f;
+                    directParams.AirAbsorption[1] = 1.0f;
+                    directParams.AirAbsorption[2] = 1.0f;
+                }
+
+                if ((simFlags & AudioSourceSpatialParams.SimOcclusion) != 0)
+                {
+                    directParams.Flags |= IPL.DirectEffectFlags.ApplyOcclusion;
+                    directParams.Occlusion = Volatile.Read(ref spatial.Occlusion);
+                }
+
+                if ((simFlags & AudioSourceSpatialParams.SimTransmission) != 0)
+                {
+                    directParams.Flags |= IPL.DirectEffectFlags.ApplyTransmission;
+                    directParams.Transmission[0] = Volatile.Read(ref spatial.TransLow);
+                    directParams.Transmission[1] = Volatile.Read(ref spatial.TransMid);
+                    directParams.Transmission[2] = Volatile.Read(ref spatial.TransHigh);
+                }
+                else
+                {
+                    directParams.Transmission[0] = 0.0f;
+                    directParams.Transmission[1] = 0.0f;
+                    directParams.Transmission[2] = 0.0f;
+                }
 
                 var binauralParams = new IPL.BinauralEffectParams
                 {
@@ -261,7 +357,56 @@ namespace TS.Audio
                         framesOut[idx + ch] = 0f;
                 }
 
+                if ((simFlags & AudioSourceSpatialParams.SimReflections) != 0)
+                {
+                    ApplyReflections(frames, spatial);
+                    float wetScale = Volatile.Read(ref spatial.ReflectionWet);
+                    for (int i = 0; i < frames; i++)
+                    {
+                        int idx = i * (int)channels;
+                        float wet = pReverb[i] * wetScale;
+                        framesOut[idx] += wet;
+                        if (channels > 1)
+                            framesOut[idx + 1] += wet;
+                    }
+                }
+
                 frameCountOut = (UInt32)frames;
+            }
+        }
+
+        private unsafe void ApplyReflections(int frames, AudioSourceSpatialParams spatial)
+        {
+            var reflectionParams = new IPL.ReflectionEffectParams
+            {
+                Type = IPL.ReflectionEffectType.Parametric,
+                NumChannels = 1,
+                IrSize = 0,
+                Delay = Volatile.Read(ref spatial.ReverbDelay)
+            };
+
+            reflectionParams.ReverbTimes[0] = Volatile.Read(ref spatial.ReverbTimeLow);
+            reflectionParams.ReverbTimes[1] = Volatile.Read(ref spatial.ReverbTimeMid);
+            reflectionParams.ReverbTimes[2] = Volatile.Read(ref spatial.ReverbTimeHigh);
+            reflectionParams.Eq[0] = Volatile.Read(ref spatial.ReverbEqLow);
+            reflectionParams.Eq[1] = Volatile.Read(ref spatial.ReverbEqMid);
+            reflectionParams.Eq[2] = Volatile.Read(ref spatial.ReverbEqHigh);
+
+            var inPtr = stackalloc IntPtr[1];
+            var outPtr = stackalloc IntPtr[1];
+
+            fixed (float* pIn = _mono)
+            fixed (float* pOut = _reverbMono)
+            {
+                inPtr[0] = (IntPtr)pIn;
+                outPtr[0] = (IntPtr)pOut;
+
+                var inBuffer = new IPL.AudioBuffer { NumChannels = 1, NumSamples = frames, Data = (IntPtr)inPtr };
+                var outBuffer = new IPL.AudioBuffer { NumChannels = 1, NumSamples = frames, Data = (IntPtr)outPtr };
+
+                IPL.ReflectionMixerReset(_reflectionMixer);
+                IPL.ReflectionEffectApply(_reflection, ref reflectionParams, ref inBuffer, ref outBuffer, _reflectionMixer);
+                IPL.ReflectionMixerApply(_reflectionMixer, ref reflectionParams, ref outBuffer);
             }
         }
 

@@ -215,6 +215,11 @@ namespace TopSpeed.Audio
             _system.UpdateListenerAll(position, forward, up, velocity);
         }
 
+        public void SetRoomAcoustics(RoomAcoustics acoustics)
+        {
+            _output.SetRoomAcoustics(acoustics);
+        }
+
         public void Dispose()
         {
             StopUpdateThread();

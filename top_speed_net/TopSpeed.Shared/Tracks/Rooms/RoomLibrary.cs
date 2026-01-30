@@ -5,10 +5,13 @@ namespace TopSpeed.Tracks.Rooms
 {
     public static class TrackRoomLibrary
     {
+        public const float DefaultReflectionWet = 0.35f;
+
         private struct RoomValues
         {
             public float ReverbTimeSeconds;
             public float ReverbGain;
+            public float ReflectionWet;
             public float HfDecayRatio;
             public float EarlyReflectionsGain;
             public float LateReverbGain;
@@ -25,6 +28,7 @@ namespace TopSpeed.Tracks.Rooms
                 {
                     ReverbTimeSeconds = 0.4f,
                     ReverbGain = 0.10f,
+                    ReflectionWet = DefaultReflectionWet,
                     HfDecayRatio = 0.80f,
                     EarlyReflectionsGain = 0.10f,
                     LateReverbGain = 0.10f,
@@ -37,6 +41,7 @@ namespace TopSpeed.Tracks.Rooms
                 {
                     ReverbTimeSeconds = 0.8f,
                     ReverbGain = 0.20f,
+                    ReflectionWet = DefaultReflectionWet,
                     HfDecayRatio = 0.70f,
                     EarlyReflectionsGain = 0.30f,
                     LateReverbGain = 0.20f,
@@ -49,6 +54,7 @@ namespace TopSpeed.Tracks.Rooms
                 {
                     ReverbTimeSeconds = 0.6f,
                     ReverbGain = 0.15f,
+                    ReflectionWet = DefaultReflectionWet,
                     HfDecayRatio = 0.50f,
                     EarlyReflectionsGain = 0.20f,
                     LateReverbGain = 0.15f,
@@ -61,6 +67,7 @@ namespace TopSpeed.Tracks.Rooms
                 {
                     ReverbTimeSeconds = 1.2f,
                     ReverbGain = 0.50f,
+                    ReflectionWet = DefaultReflectionWet,
                     HfDecayRatio = 0.60f,
                     EarlyReflectionsGain = 0.60f,
                     LateReverbGain = 0.50f,
@@ -73,6 +80,7 @@ namespace TopSpeed.Tracks.Rooms
                 {
                     ReverbTimeSeconds = 2.4f,
                     ReverbGain = 0.70f,
+                    ReflectionWet = DefaultReflectionWet,
                     HfDecayRatio = 0.50f,
                     EarlyReflectionsGain = 0.70f,
                     LateReverbGain = 0.70f,
@@ -85,6 +93,7 @@ namespace TopSpeed.Tracks.Rooms
                 {
                     ReverbTimeSeconds = 1.0f,
                     ReverbGain = 0.40f,
+                    ReflectionWet = DefaultReflectionWet,
                     HfDecayRatio = 0.60f,
                     EarlyReflectionsGain = 0.50f,
                     LateReverbGain = 0.40f,
@@ -97,6 +106,7 @@ namespace TopSpeed.Tracks.Rooms
                 {
                     ReverbTimeSeconds = 1.8f,
                     ReverbGain = 0.55f,
+                    ReflectionWet = DefaultReflectionWet,
                     HfDecayRatio = 0.60f,
                     EarlyReflectionsGain = 0.60f,
                     LateReverbGain = 0.60f,
@@ -109,6 +119,7 @@ namespace TopSpeed.Tracks.Rooms
                 {
                     ReverbTimeSeconds = 1.4f,
                     ReverbGain = 0.45f,
+                    ReflectionWet = DefaultReflectionWet,
                     HfDecayRatio = 0.50f,
                     EarlyReflectionsGain = 0.60f,
                     LateReverbGain = 0.50f,
@@ -121,6 +132,7 @@ namespace TopSpeed.Tracks.Rooms
                 {
                     ReverbTimeSeconds = 2.8f,
                     ReverbGain = 0.60f,
+                    ReflectionWet = DefaultReflectionWet,
                     HfDecayRatio = 0.40f,
                     EarlyReflectionsGain = 0.50f,
                     LateReverbGain = 0.60f,
@@ -133,6 +145,7 @@ namespace TopSpeed.Tracks.Rooms
                 {
                     ReverbTimeSeconds = 1.5f,
                     ReverbGain = 0.45f,
+                    ReflectionWet = DefaultReflectionWet,
                     HfDecayRatio = 0.60f,
                     EarlyReflectionsGain = 0.70f,
                     LateReverbGain = 0.50f,
@@ -145,6 +158,7 @@ namespace TopSpeed.Tracks.Rooms
                 {
                     ReverbTimeSeconds = 1.6f,
                     ReverbGain = 0.50f,
+                    ReflectionWet = DefaultReflectionWet,
                     HfDecayRatio = 0.60f,
                     EarlyReflectionsGain = 0.50f,
                     LateReverbGain = 0.50f,
@@ -157,6 +171,7 @@ namespace TopSpeed.Tracks.Rooms
                 {
                     ReverbTimeSeconds = 2.6f,
                     ReverbGain = 0.60f,
+                    ReflectionWet = DefaultReflectionWet,
                     HfDecayRatio = 0.50f,
                     EarlyReflectionsGain = 0.60f,
                     LateReverbGain = 0.60f,
@@ -169,6 +184,7 @@ namespace TopSpeed.Tracks.Rooms
                 {
                     ReverbTimeSeconds = 0.7f,
                     ReverbGain = 0.30f,
+                    ReflectionWet = DefaultReflectionWet,
                     HfDecayRatio = 0.70f,
                     EarlyReflectionsGain = 0.40f,
                     LateReverbGain = 0.30f,
@@ -181,6 +197,7 @@ namespace TopSpeed.Tracks.Rooms
                 {
                     ReverbTimeSeconds = 1.1f,
                     ReverbGain = 0.40f,
+                    ReflectionWet = DefaultReflectionWet,
                     HfDecayRatio = 0.60f,
                     EarlyReflectionsGain = 0.50f,
                     LateReverbGain = 0.40f,
@@ -193,6 +210,7 @@ namespace TopSpeed.Tracks.Rooms
                 {
                     ReverbTimeSeconds = 1.8f,
                     ReverbGain = 0.50f,
+                    ReflectionWet = DefaultReflectionWet,
                     HfDecayRatio = 0.50f,
                     EarlyReflectionsGain = 0.60f,
                     LateReverbGain = 0.50f,
@@ -224,6 +242,7 @@ namespace TopSpeed.Tracks.Rooms
                 id,
                 values.ReverbTimeSeconds,
                 values.ReverbGain,
+                values.ReflectionWet,
                 values.HfDecayRatio,
                 values.EarlyReflectionsGain,
                 values.LateReverbGain,

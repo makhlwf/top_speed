@@ -90,7 +90,8 @@ Rooms describe how a space sounds beyond surface materials. A room profile contr
 
 Room presets include outdoor_open, outdoor_urban, outdoor_forest, tunnel_short, tunnel_long, garage_small, garage_large, underpass, canyon, stadium_open, hall_medium, hall_large, room_small, room_medium, and room_large. You can create your own room section and optionally start from a preset, then override just the values you want to change.
 
-Room keys are reverb_time, reverb_gain, hf_decay_ratio, early_reflections_gain, late_reverb_gain, diffusion, air_absorption, occlusion_scale, and transmission_scale. All values are 0 to 1 except reverb_time, which is seconds.
+Room keys are reverb_time, reverb_gain, reflection_wet, hf_decay_ratio, early_reflections_gain, late_reverb_gain, diffusion, air_absorption, occlusion_scale, and transmission_scale. All values are 0 to 1 except reverb_time, which is seconds.
+Optional override keys replace simulation instead of scaling it: occlusion_override, transmission_override (or transmission_override_low/_mid/_high), and air_absorption_override (or air_absorption_override_low/_mid/_high). If an override key is present, its value wins for that band; otherwise the *_scale values are applied to the simulated result.
 
 ## Walls
 

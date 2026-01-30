@@ -22,6 +22,7 @@ namespace TS.Audio
         private readonly List<AudioSourceHandle> _sources;
         private readonly List<OggStreamHandle> _streams;
         private readonly SteamAudioContext? _steamAudio;
+        private RoomAcoustics _roomAcoustics;
 
         public string Name => _config.Name;
         public int SampleRate => (int)_config.SampleRate;
@@ -44,6 +45,7 @@ namespace TS.Audio
             _streams = new List<OggStreamHandle>();
             _trueStereoHrtf = _systemConfig.HrtfMode == HrtfMode.Stereo;
             _downmixMode = _systemConfig.HrtfDownmixMode;
+            _roomAcoustics = RoomAcoustics.Default;
 
             _context = new MaContext();
             _context.Initialize();
@@ -161,6 +163,7 @@ namespace TS.Audio
             else
                 source.SetDistanceModel(_systemConfig.DistanceModel, _systemConfig.MinDistance, _systemConfig.MaxDistance, _systemConfig.RollOff);
             source.SetDopplerFactor(_systemConfig.DopplerFactor);
+            source.SetRoomAcoustics(_roomAcoustics);
             _sources.Add(source);
             return source;
         }
@@ -186,6 +189,7 @@ namespace TS.Audio
             else
                 source.SetDistanceModel(_systemConfig.DistanceModel, _systemConfig.MinDistance, _systemConfig.MaxDistance, _systemConfig.RollOff);
             source.SetDopplerFactor(_systemConfig.DopplerFactor);
+            source.SetRoomAcoustics(_roomAcoustics);
             _sources.Add(source);
             return source;
         }
@@ -228,6 +232,15 @@ namespace TS.Audio
             }
         }
 
+        public void SetRoomAcoustics(RoomAcoustics acoustics)
+        {
+            _roomAcoustics = acoustics;
+            for (int i = 0; i < _sources.Count; i++)
+            {
+                _sources[i].SetRoomAcoustics(_roomAcoustics);
+            }
+        }
+
         private static ma_vec3f ToMaVec3(Vector3 value)
         {
             // MiniAudio defaults to right-handed with forward = -Z.
@@ -248,6 +261,8 @@ namespace TS.Audio
             {
                 _sources[i].UpdateDoppler(_listenerPosition, _listenerVelocity, _systemConfig);
             }
+
+            _steamAudio?.UpdateSimulation(_sources);
         }
 
         public void Dispose()

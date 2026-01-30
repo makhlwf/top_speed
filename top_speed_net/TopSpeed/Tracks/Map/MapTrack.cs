@@ -9,6 +9,7 @@ using TopSpeed.Tracks.Areas;
 using TopSpeed.Tracks.Acoustics;
 using TopSpeed.Tracks.Guidance;
 using TopSpeed.Tracks.Geometry;
+using TopSpeed.Tracks.Rooms;
 using TopSpeed.Tracks.Sectors;
 using TopSpeed.Tracks.Topology;
 using TopSpeed.Tracks.Walls;
@@ -64,6 +65,8 @@ namespace TopSpeed.Tracks.Map
         private TrackNoise _currentNoise;
         private readonly float _trackLength;
         private TrackSteamAudioScene? _steamAudioScene;
+        private RoomAcoustics _currentRoomAcoustics;
+        private bool _hasRoomAcoustics;
 
         private AudioSourceHandle? _soundCrowd;
         private AudioSourceHandle? _soundOcean;
@@ -405,6 +408,7 @@ namespace TopSpeed.Tracks.Map
 
             UpdateNoiseLoop(noise);
             UpdateApproachBeacon(state, elapsed);
+            UpdateRoomAcoustics(state.WorldPosition);
 
             if (_map.Weather == TrackWeather.Rain)
                 PlayIfNotPlaying(_soundRain);
@@ -524,6 +528,161 @@ namespace TopSpeed.Tracks.Map
                 if (!TryApplyMetadataDimensions(widthArea.Metadata, ref width, ref length))
                     TryApplyShapeDimensions(widthArea, heading, ref width, ref length);
             }
+        }
+
+        private void UpdateRoomAcoustics(Vector3 worldPosition)
+        {
+            var acoustics = ResolveRoomAcoustics(worldPosition);
+            if (!_hasRoomAcoustics || !RoomAcousticsEquals(_currentRoomAcoustics, acoustics))
+            {
+                _audio.SetRoomAcoustics(acoustics);
+                _currentRoomAcoustics = acoustics;
+                _hasRoomAcoustics = true;
+            }
+        }
+
+        private RoomAcoustics ResolveRoomAcoustics(Vector3 worldPosition)
+        {
+            var position = new Vector2(worldPosition.X, worldPosition.Z);
+            if (_areaManager == null)
+                return RoomAcoustics.Default;
+
+            var areas = _areaManager.FindAreasContaining(position);
+            if (areas.Count == 0)
+                return RoomAcoustics.Default;
+
+            TrackAreaDefinition? roomArea = null;
+            foreach (var candidate in areas)
+            {
+                if (candidate == null || string.IsNullOrWhiteSpace(candidate.RoomId))
+                    continue;
+                roomArea = candidate;
+            }
+
+            if (roomArea == null || !TryResolveRoom(roomArea, out var room))
+                return RoomAcoustics.Default;
+
+            return new RoomAcoustics
+            {
+                HasRoom = true,
+                ReverbTimeSeconds = room.ReverbTimeSeconds,
+                ReverbGain = room.ReverbGain,
+                ReflectionWet = room.ReflectionWet,
+                HfDecayRatio = room.HfDecayRatio,
+                EarlyReflectionsGain = room.EarlyReflectionsGain,
+                LateReverbGain = room.LateReverbGain,
+                Diffusion = room.Diffusion,
+                AirAbsorptionScale = room.AirAbsorption,
+                OcclusionScale = room.OcclusionScale,
+                TransmissionScale = room.TransmissionScale,
+                OcclusionOverride = room.OcclusionOverride,
+                TransmissionOverrideLow = room.TransmissionOverrideLow,
+                TransmissionOverrideMid = room.TransmissionOverrideMid,
+                TransmissionOverrideHigh = room.TransmissionOverrideHigh,
+                AirAbsorptionOverrideLow = room.AirAbsorptionOverrideLow,
+                AirAbsorptionOverrideMid = room.AirAbsorptionOverrideMid,
+                AirAbsorptionOverrideHigh = room.AirAbsorptionOverrideHigh
+            };
+        }
+
+        private bool TryResolveRoom(TrackAreaDefinition area, out TrackRoomDefinition room)
+        {
+            room = null!;
+            if (area == null || string.IsNullOrWhiteSpace(area.RoomId))
+                return false;
+
+            var id = area.RoomId!.Trim();
+            if (!TryGetRoomById(id, out var baseRoom))
+                return false;
+
+            room = ApplyRoomOverrides(baseRoom, area.RoomOverrides);
+            return true;
+        }
+
+        private bool TryGetRoomById(string id, out TrackRoomDefinition room)
+        {
+            room = null!;
+            if (string.IsNullOrWhiteSpace(id))
+                return false;
+
+            foreach (var candidate in _map.Rooms)
+            {
+                if (candidate != null && string.Equals(candidate.Id, id, StringComparison.OrdinalIgnoreCase))
+                {
+                    room = candidate;
+                    return true;
+                }
+            }
+
+            return TrackRoomLibrary.TryGetPreset(id, out room);
+        }
+
+        private static TrackRoomDefinition ApplyRoomOverrides(TrackRoomDefinition room, TrackRoomOverrides? overrides)
+        {
+            if (overrides == null || !overrides.HasAny)
+                return room;
+
+            return new TrackRoomDefinition(
+                room.Id,
+                room.Name,
+                overrides.ReverbTimeSeconds ?? room.ReverbTimeSeconds,
+                overrides.ReverbGain ?? room.ReverbGain,
+                overrides.ReflectionWet ?? room.ReflectionWet,
+                overrides.HfDecayRatio ?? room.HfDecayRatio,
+                overrides.EarlyReflectionsGain ?? room.EarlyReflectionsGain,
+                overrides.LateReverbGain ?? room.LateReverbGain,
+                overrides.Diffusion ?? room.Diffusion,
+                overrides.AirAbsorption ?? room.AirAbsorption,
+                overrides.OcclusionScale ?? room.OcclusionScale,
+                overrides.TransmissionScale ?? room.TransmissionScale,
+                overrides.OcclusionOverride ?? room.OcclusionOverride,
+                overrides.TransmissionOverrideLow ?? room.TransmissionOverrideLow,
+                overrides.TransmissionOverrideMid ?? room.TransmissionOverrideMid,
+                overrides.TransmissionOverrideHigh ?? room.TransmissionOverrideHigh,
+                overrides.AirAbsorptionOverrideLow ?? room.AirAbsorptionOverrideLow,
+                overrides.AirAbsorptionOverrideMid ?? room.AirAbsorptionOverrideMid,
+                overrides.AirAbsorptionOverrideHigh ?? room.AirAbsorptionOverrideHigh);
+        }
+
+        private static bool RoomAcousticsEquals(RoomAcoustics left, RoomAcoustics right)
+        {
+            if (left.HasRoom != right.HasRoom)
+                return false;
+
+            if (!NearlyEqual(left.ReverbTimeSeconds, right.ReverbTimeSeconds)) return false;
+            if (!NearlyEqual(left.ReverbGain, right.ReverbGain)) return false;
+            if (!NearlyEqual(left.ReflectionWet, right.ReflectionWet)) return false;
+            if (!NearlyEqual(left.HfDecayRatio, right.HfDecayRatio)) return false;
+            if (!NearlyEqual(left.EarlyReflectionsGain, right.EarlyReflectionsGain)) return false;
+            if (!NearlyEqual(left.LateReverbGain, right.LateReverbGain)) return false;
+            if (!NearlyEqual(left.Diffusion, right.Diffusion)) return false;
+            if (!NearlyEqual(left.AirAbsorptionScale, right.AirAbsorptionScale)) return false;
+            if (!NearlyEqual(left.OcclusionScale, right.OcclusionScale)) return false;
+            if (!NearlyEqual(left.TransmissionScale, right.TransmissionScale)) return false;
+
+            if (!NullableEqual(left.OcclusionOverride, right.OcclusionOverride)) return false;
+            if (!NullableEqual(left.TransmissionOverrideLow, right.TransmissionOverrideLow)) return false;
+            if (!NullableEqual(left.TransmissionOverrideMid, right.TransmissionOverrideMid)) return false;
+            if (!NullableEqual(left.TransmissionOverrideHigh, right.TransmissionOverrideHigh)) return false;
+            if (!NullableEqual(left.AirAbsorptionOverrideLow, right.AirAbsorptionOverrideLow)) return false;
+            if (!NullableEqual(left.AirAbsorptionOverrideMid, right.AirAbsorptionOverrideMid)) return false;
+            if (!NullableEqual(left.AirAbsorptionOverrideHigh, right.AirAbsorptionOverrideHigh)) return false;
+
+            return true;
+        }
+
+        private static bool NearlyEqual(float a, float b)
+        {
+            return Math.Abs(a - b) <= 0.001f;
+        }
+
+        private static bool NullableEqual(float? left, float? right)
+        {
+            if (left.HasValue != right.HasValue)
+                return false;
+            if (!left.HasValue)
+                return true;
+            return NearlyEqual(left.Value, right!.Value);
         }
 
         private void ApplySectorOverrides(
@@ -962,6 +1121,8 @@ namespace TopSpeed.Tracks.Map
             try
             {
                 _steamAudioScene = SteamAudioSceneBuilder.Build(_map, steam);
+                if (_steamAudioScene != null)
+                    steam.SetScene(_steamAudioScene.Scene);
             }
             catch (Exception ex)
             {

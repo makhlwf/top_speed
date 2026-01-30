@@ -200,13 +200,23 @@ namespace TopSpeed.Tracks.Map
             "room",
             "reverb_time",
             "reverb_gain",
+            "reflection_wet",
             "hf_decay_ratio",
             "early_reflections_gain",
             "late_reverb_gain",
             "diffusion",
             "air_absorption",
+            "air_absorption_override",
+            "air_absorption_override_low",
+            "air_absorption_override_mid",
+            "air_absorption_override_high",
             "occlusion_scale",
+            "occlusion_override",
             "transmission_scale",
+            "transmission_override",
+            "transmission_override_low",
+            "transmission_override_mid",
+            "transmission_override_high",
             "flags",
             "flag",
             "caps",
@@ -312,13 +322,24 @@ namespace TopSpeed.Tracks.Map
             "preset",
             "reverb_time",
             "reverb_gain",
+            "reflection_wet",
             "hf_decay_ratio",
             "early_reflections_gain",
             "late_reverb_gain",
             "diffusion",
             "air_absorption",
+            "air_absorption_override",
+            "air_absorption_override_low",
+            "air_absorption_override_mid",
+            "air_absorption_override_high",
             "occlusion_scale",
+            "occlusion_override",
             "transmission_scale"
+            ,
+            "transmission_override",
+            "transmission_override_low",
+            "transmission_override_mid",
+            "transmission_override_high"
         };
 
         public static bool TryResolvePath(string nameOrPath, out string path)
@@ -2575,6 +2596,7 @@ namespace TopSpeed.Tracks.Map
 
             var hasReverbTime = TryFloat(block, "reverb_time", out var reverbTime);
             var hasReverbGain = TryFloat(block, "reverb_gain", out var reverbGain);
+            var hasReflectionWet = TryFloat(block, "reflection_wet", out var reflectionWet);
             var hasHfDecay = TryFloat(block, "hf_decay_ratio", out var hfDecayRatio);
             var hasEarlyGain = TryFloat(block, "early_reflections_gain", out var earlyGain);
             var hasLateGain = TryFloat(block, "late_reverb_gain", out var lateGain);
@@ -2582,10 +2604,30 @@ namespace TopSpeed.Tracks.Map
             var hasAirAbsorption = TryFloat(block, "air_absorption", out var airAbsorption);
             var hasOcclusion = TryFloat(block, "occlusion_scale", out var occlusionScale);
             var hasTransmission = TryFloat(block, "transmission_scale", out var transmissionScale);
+            var hasOcclusionOverride = TryFloat(block, "occlusion_override", out var occlusionOverride);
+            var hasTransmissionOverride = ResolveOverrideTriple(
+                block,
+                "transmission_override",
+                "transmission_override_low",
+                "transmission_override_mid",
+                "transmission_override_high",
+                out float? transOverrideLow,
+                out float? transOverrideMid,
+                out float? transOverrideHigh);
+            var hasAirAbsorptionOverride = ResolveOverrideTriple(
+                block,
+                "air_absorption_override",
+                "air_absorption_override_low",
+                "air_absorption_override_mid",
+                "air_absorption_override_high",
+                out float? airOverrideLow,
+                out float? airOverrideMid,
+                out float? airOverrideHigh);
 
             var hasAny = preset != null || hasReverbTime || hasReverbGain || hasHfDecay ||
                          hasEarlyGain || hasLateGain || hasDiffusion || hasAirAbsorption ||
-                         hasOcclusion || hasTransmission;
+                         hasOcclusion || hasTransmission || hasOcclusionOverride ||
+                         hasTransmissionOverride || hasAirAbsorptionOverride;
 
             if (!hasAny)
             {
@@ -2603,6 +2645,9 @@ namespace TopSpeed.Tracks.Map
 
             var resolvedReverbTime = hasReverbTime ? Math.Max(0f, reverbTime) : preset!.ReverbTimeSeconds;
             var resolvedReverbGain = hasReverbGain ? Clamp01(reverbGain) : preset!.ReverbGain;
+            var resolvedReflectionWet = hasReflectionWet
+                ? Clamp01(reflectionWet)
+                : (hasReverbGain ? Clamp01(reverbGain) : (preset?.ReflectionWet ?? TrackRoomLibrary.DefaultReflectionWet));
             var resolvedHfDecay = hasHfDecay ? Clamp01(hfDecayRatio) : preset!.HfDecayRatio;
             var resolvedEarlyGain = hasEarlyGain ? Clamp01(earlyGain) : preset!.EarlyReflectionsGain;
             var resolvedLateGain = hasLateGain ? Clamp01(lateGain) : preset!.LateReverbGain;
@@ -2616,13 +2661,21 @@ namespace TopSpeed.Tracks.Map
                 name,
                 resolvedReverbTime,
                 resolvedReverbGain,
+                resolvedReflectionWet,
                 resolvedHfDecay,
                 resolvedEarlyGain,
                 resolvedLateGain,
                 resolvedDiffusion,
                 resolvedAirAbsorption,
                 resolvedOcclusion,
-                resolvedTransmission));
+                resolvedTransmission,
+                hasOcclusionOverride ? Clamp01(occlusionOverride) : preset?.OcclusionOverride,
+                hasTransmissionOverride ? transOverrideLow : preset?.TransmissionOverrideLow,
+                hasTransmissionOverride ? transOverrideMid : preset?.TransmissionOverrideMid,
+                hasTransmissionOverride ? transOverrideHigh : preset?.TransmissionOverrideHigh,
+                hasAirAbsorptionOverride ? airOverrideLow : preset?.AirAbsorptionOverrideLow,
+                hasAirAbsorptionOverride ? airOverrideMid : preset?.AirAbsorptionOverrideMid,
+                hasAirAbsorptionOverride ? airOverrideHigh : preset?.AirAbsorptionOverrideHigh));
         }
 
         private static void ApplyApproach(
@@ -2870,6 +2923,8 @@ namespace TopSpeed.Tracks.Map
                 overrides.ReverbTimeSeconds = Math.Max(0f, reverbTime);
             if (TryFloat(block, "reverb_gain", out var reverbGain))
                 overrides.ReverbGain = Clamp01(reverbGain);
+            if (TryFloat(block, "reflection_wet", out var reflectionWet))
+                overrides.ReflectionWet = Clamp01(reflectionWet);
             if (TryFloat(block, "hf_decay_ratio", out var hfDecayRatio))
                 overrides.HfDecayRatio = Clamp01(hfDecayRatio);
             if (TryFloat(block, "early_reflections_gain", out var earlyGain))
@@ -2884,6 +2939,36 @@ namespace TopSpeed.Tracks.Map
                 overrides.OcclusionScale = Clamp01(occlusionScale);
             if (TryFloat(block, "transmission_scale", out var transmissionScale))
                 overrides.TransmissionScale = Clamp01(transmissionScale);
+            if (TryFloat(block, "occlusion_override", out var occlusionOverride))
+                overrides.OcclusionOverride = Clamp01(occlusionOverride);
+            if (ResolveOverrideTriple(
+                    block,
+                    "transmission_override",
+                    "transmission_override_low",
+                    "transmission_override_mid",
+                    "transmission_override_high",
+                    out var transOverrideLow,
+                    out var transOverrideMid,
+                    out var transOverrideHigh))
+            {
+                overrides.TransmissionOverrideLow = transOverrideLow;
+                overrides.TransmissionOverrideMid = transOverrideMid;
+                overrides.TransmissionOverrideHigh = transOverrideHigh;
+            }
+            if (ResolveOverrideTriple(
+                    block,
+                    "air_absorption_override",
+                    "air_absorption_override_low",
+                    "air_absorption_override_mid",
+                    "air_absorption_override_high",
+                    out var airOverrideLow,
+                    out var airOverrideMid,
+                    out var airOverrideHigh))
+            {
+                overrides.AirAbsorptionOverrideLow = airOverrideLow;
+                overrides.AirAbsorptionOverrideMid = airOverrideMid;
+                overrides.AirAbsorptionOverrideHigh = airOverrideHigh;
+            }
 
             hasAny = overrides.HasAny;
             return hasAny ? overrides : null;
@@ -2959,6 +3044,49 @@ namespace TopSpeed.Tracks.Map
             }
 
             return has;
+        }
+
+        private static bool ResolveOverrideTriple(
+            SectionBlock block,
+            string baseKey,
+            string lowKey,
+            string midKey,
+            string highKey,
+            out float? low,
+            out float? mid,
+            out float? high)
+        {
+            low = null;
+            mid = null;
+            high = null;
+            var hasAny = false;
+
+            if (TryFloat(block, baseKey, out var baseValue))
+            {
+                var clamped = Clamp01(baseValue);
+                low = clamped;
+                mid = clamped;
+                high = clamped;
+                hasAny = true;
+            }
+
+            if (TryFloat(block, lowKey, out var lowValue))
+            {
+                low = Clamp01(lowValue);
+                hasAny = true;
+            }
+            if (TryFloat(block, midKey, out var midValue))
+            {
+                mid = Clamp01(midValue);
+                hasAny = true;
+            }
+            if (TryFloat(block, highKey, out var highValue))
+            {
+                high = Clamp01(highValue);
+                hasAny = true;
+            }
+
+            return hasAny;
         }
 
         private static bool TryParseTriple(string raw, out float low, out float mid, out float high)

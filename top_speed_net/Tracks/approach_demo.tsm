@@ -108,12 +108,18 @@ z=0
 width=40
 height=30
 
+# Rooms
+[room: demo_room]
+preset=tunnel_short
+reflection_wet=0.6
+
 # Areas
 [area: loop_area]
 type=zone
 shape=loop_south_zone
 material=asphalt
 noise=nonoise
+room=demo_room
 auto_walls=true
 wall_edges=north
 wall_width=2
@@ -125,6 +131,7 @@ type=zone
 shape=loop_west_zone
 material=asphalt
 noise=nonoise
+room=demo_room
 auto_walls=true
 wall_edges=east
 wall_width=2
@@ -136,6 +143,7 @@ type=zone
 shape=loop_north_zone
 material=asphalt
 noise=nonoise
+room=demo_room
 auto_walls=true
 wall_edges=south
 wall_width=2
@@ -147,6 +155,7 @@ type=zone
 shape=loop_east_zone
 material=asphalt
 noise=nonoise
+room=demo_room
 auto_walls=true
 wall_edges=west
 wall_width=2
@@ -158,12 +167,14 @@ type=zone
 shape=corner_nw_zone
 material=asphalt
 noise=nonoise
+room=demo_room
 
 [area: corner_ne_area]
 type=zone
 shape=corner_ne_zone
 material=asphalt
 noise=nonoise
+room=demo_room
 
 [area: outer_grass]
 type=boundary
@@ -171,6 +182,7 @@ name=Outer grass ring
 shape=outer_grass_ring
 material=sand
 noise=nonoise
+room=demo_room
 
 
 [area: main_intersection]
@@ -179,6 +191,7 @@ name=Intersection
 shape=intersection_zone
 material=asphalt
 noise=trackside
+room=demo_room
 intersection_width=20
 intersection_length=20
 
@@ -188,6 +201,7 @@ name=South west corner
 shape=corner_sw_zone
 material=asphalt
 noise=trackside
+room=demo_room
 
 [area: east_turn_area]
 type=zone
@@ -195,6 +209,7 @@ name=East corner turn
 shape=east_turn_zone
 material=asphalt
 noise=trackside
+room=demo_room
 auto_walls=true
 wall_edges=west
 wall_width=2
@@ -207,6 +222,7 @@ name=Start zone
 shape=start_zone
 material=asphalt
 noise=trackside
+room=demo_room
 start_x=60
 start_z=15
 start_heading=east
