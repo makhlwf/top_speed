@@ -28,6 +28,11 @@ namespace TS.Audio
         public IPL.Hrtf Hrtf;
         public readonly int SampleRate;
         public readonly int FrameSize;
+        public readonly int ReflectionOrder;
+        public readonly int ReflectionChannels;
+        public readonly int ReflectionIrSize;
+        public readonly float ReflectionDurationSeconds;
+        public readonly IPL.ReflectionEffectType ReflectionType;
         private volatile ListenerState _listenerState;
         internal ListenerState ListenerSnapshot => _listenerState;
         private IPL.Simulator _simulator;
@@ -39,6 +44,11 @@ namespace TS.Audio
         {
             SampleRate = sampleRate;
             FrameSize = frameSize;
+            ReflectionOrder = 1;
+            ReflectionChannels = (ReflectionOrder + 1) * (ReflectionOrder + 1);
+            ReflectionDurationSeconds = 1.5f;
+            ReflectionIrSize = Math.Max(1, (int)Math.Ceiling(ReflectionDurationSeconds * SampleRate));
+            ReflectionType = IPL.ReflectionEffectType.Hybrid;
             _listenerState = CreateIdentityState();
 
             var contextSettings = new IPL.ContextSettings
@@ -202,12 +212,12 @@ namespace TS.Audio
             {
                 Flags = IPL.SimulationFlags.Direct | IPL.SimulationFlags.Reflections,
                 SceneType = IPL.SceneType.Default,
-                ReflectionType = IPL.ReflectionEffectType.Parametric,
+                ReflectionType = ReflectionType,
                 MaxNumOcclusionSamples = 32,
                 MaxNumRays = 256,
                 NumDiffuseSamples = 64,
-                MaxDuration = 1.5f,
-                MaxOrder = 1,
+                MaxDuration = ReflectionDurationSeconds,
+                MaxOrder = ReflectionOrder,
                 MaxNumSources = 128,
                 NumThreads = Math.Max(1, Environment.ProcessorCount - 1),
                 RayBatchSize = 64,
@@ -324,8 +334,8 @@ namespace TS.Audio
                 },
                 NumRays = 256,
                 NumBounces = 2,
-                Duration = 1.5f,
-                Order = 1,
+                Duration = ReflectionDurationSeconds,
+                Order = ReflectionOrder,
                 IrradianceMinDistance = 1.0f
             };
 
@@ -407,20 +417,29 @@ namespace TS.Audio
             var roomFlags = Volatile.Read(ref spatial.RoomFlags);
             var hasRoom = (roomFlags & AudioSourceSpatialParams.RoomHasProfile) != 0;
 
+            if (reflections.Ir.Handle != IntPtr.Zero && reflections.IrSize > 0 && reflections.NumChannels > 0)
+            {
+                handle.ApplyReflectionIr(reflections.Ir.Handle, reflections.IrSize, reflections.NumChannels);
+            }
+            else
+            {
+                handle.ClearReflectionIr();
+            }
+
             if (!hasRoom)
             {
-                if (reflections.Type != IPL.ReflectionEffectType.Parametric &&
-                    reflections.Type != IPL.ReflectionEffectType.Hybrid)
-                    return;
-
-                var timeLow = reflections.ReverbTimes[0];
-                var timeMid = reflections.ReverbTimes[1];
-                var timeHigh = reflections.ReverbTimes[2];
-                var eqLow = reflections.Eq[0];
-                var eqMid = reflections.Eq[1];
-                var eqHigh = reflections.Eq[2];
-                var delay = reflections.Delay;
-                handle.ApplyReflectionSimulation(timeLow, timeMid, timeHigh, eqLow, eqMid, eqHigh, delay);
+                if (reflections.Type == IPL.ReflectionEffectType.Parametric ||
+                    reflections.Type == IPL.ReflectionEffectType.Hybrid)
+                {
+                    var timeLow = reflections.ReverbTimes[0];
+                    var timeMid = reflections.ReverbTimes[1];
+                    var timeHigh = reflections.ReverbTimes[2];
+                    var eqLow = reflections.Eq[0];
+                    var eqMid = reflections.Eq[1];
+                    var eqHigh = reflections.Eq[2];
+                    var delay = reflections.Delay;
+                    handle.ApplyReflectionSimulation(timeLow, timeMid, timeHigh, eqLow, eqMid, eqHigh, delay);
+                }
                 return;
             }
 

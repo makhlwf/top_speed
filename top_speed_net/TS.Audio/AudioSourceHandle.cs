@@ -34,6 +34,9 @@ namespace TS.Audio
         public float ReverbEqHigh = 1.0f;
         public int ReverbDelay = 0;
         public float ReflectionWet = 0.35f;
+        public long ReflectionIrHandle = 0;
+        public int ReflectionIrSize = 0;
+        public int ReflectionIrChannels = 0;
         public int RoomFlags = 0;
         public float RoomReverbTimeSeconds = 0f;
         public float RoomReverbGain = 0f;
@@ -291,6 +294,27 @@ namespace TS.Audio
             Volatile.Write(ref _spatial.SimulationFlags, _spatial.SimulationFlags | AudioSourceSpatialParams.SimReflections);
         }
 
+        internal void ApplyReflectionIr(IntPtr irHandle, int irSize, int irChannels)
+        {
+            if (irHandle == IntPtr.Zero || irSize <= 0 || irChannels <= 0)
+            {
+                ClearReflectionIr();
+                return;
+            }
+
+            Volatile.Write(ref _spatial.ReflectionIrHandle, irHandle.ToInt64());
+            Volatile.Write(ref _spatial.ReflectionIrSize, irSize);
+            Volatile.Write(ref _spatial.ReflectionIrChannels, irChannels);
+            Volatile.Write(ref _spatial.SimulationFlags, _spatial.SimulationFlags | AudioSourceSpatialParams.SimReflections);
+        }
+
+        internal void ClearReflectionIr()
+        {
+            Volatile.Write(ref _spatial.ReflectionIrHandle, 0);
+            Volatile.Write(ref _spatial.ReflectionIrSize, 0);
+            Volatile.Write(ref _spatial.ReflectionIrChannels, 0);
+        }
+
         public void SetReflectionWet(float wet)
         {
             if (wet < 0f) wet = 0f;
@@ -361,6 +385,7 @@ namespace TS.Audio
             // MiniAudio defaults to right-handed with forward = -Z.
             return new ma_vec3f { x = value.X, y = value.Y, z = -value.Z };
         }
+
 
         public int InputChannels => _channels;
         public int InputSampleRate => _sampleRate;

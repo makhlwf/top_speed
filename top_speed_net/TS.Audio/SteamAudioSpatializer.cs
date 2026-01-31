@@ -12,10 +12,10 @@ namespace TS.Audio
         private readonly HrtfDownmixMode _downmixMode;
         private IPL.BinauralEffect _binauralLeft;
         private IPL.BinauralEffect _binauralRight;
+        private IPL.AmbisonicsBinauralEffect _ambisonicsBinaural;
         private IPL.DirectEffect _directLeft;
         private IPL.DirectEffect _directRight;
         private IPL.ReflectionEffect _reflection;
-        private IPL.ReflectionMixer _reflectionMixer;
         private readonly float[] _mono;
         private readonly float[] _outL;
         private readonly float[] _outR;
@@ -27,8 +27,14 @@ namespace TS.Audio
         private readonly float[] _outLeftR;
         private readonly float[] _outRightL;
         private readonly float[] _outRightR;
-        private readonly float[] _reverbMono;
+        private readonly float[] _reverbAmbi;
+        private readonly float[] _reverbWetL;
+        private readonly float[] _reverbWetR;
         private readonly int _frameSize;
+        private readonly int _reflectionOrder;
+        private readonly int _reflectionChannels;
+        private readonly int _reflectionIrSize;
+        private readonly IPL.ReflectionEffectType _reflectionType;
 
         public SteamAudioSpatializer(SteamAudioContext context, uint frameSize, bool trueStereo, HrtfDownmixMode downmixMode)
         {
@@ -36,6 +42,10 @@ namespace TS.Audio
             _trueStereo = trueStereo;
             _downmixMode = downmixMode;
             _frameSize = (int)frameSize;
+            _reflectionOrder = Math.Max(1, _ctx.ReflectionOrder);
+            _reflectionChannels = Math.Max(1, _ctx.ReflectionChannels);
+            _reflectionIrSize = Math.Max(1, _ctx.ReflectionIrSize);
+            _reflectionType = _ctx.ReflectionType;
 
             var audioSettings = new IPL.AudioSettings
             {
@@ -56,6 +66,16 @@ namespace TS.Audio
             if (error != IPL.Error.Success)
                 throw new InvalidOperationException("Failed to create binaural effect: " + error);
 
+            var ambiSettings = new IPL.AmbisonicsBinauralEffectSettings
+            {
+                Hrtf = _ctx.Hrtf,
+                MaxOrder = _reflectionOrder
+            };
+
+            error = IPL.AmbisonicsBinauralEffectCreate(_ctx.Context, in audioSettings, in ambiSettings, out _ambisonicsBinaural);
+            if (error != IPL.Error.Success)
+                throw new InvalidOperationException("Failed to create ambisonics binaural effect: " + error);
+
             var directSettingsMono = new IPL.DirectEffectSettings { NumChannels = 1 };
             error = IPL.DirectEffectCreate(_ctx.Context, in audioSettings, in directSettingsMono, out _directLeft);
             if (error != IPL.Error.Success)
@@ -67,18 +87,14 @@ namespace TS.Audio
 
             var reflectionSettings = new IPL.ReflectionEffectSettings
             {
-                Type = IPL.ReflectionEffectType.Parametric,
-                NumChannels = 1,
-                IrSize = 0
+                Type = _reflectionType,
+                NumChannels = _reflectionChannels,
+                IrSize = _reflectionIrSize
             };
 
             error = IPL.ReflectionEffectCreate(_ctx.Context, in audioSettings, in reflectionSettings, out _reflection);
             if (error != IPL.Error.Success)
                 throw new InvalidOperationException("Failed to create reflection effect: " + error);
-
-            error = IPL.ReflectionMixerCreate(_ctx.Context, in audioSettings, in reflectionSettings, out _reflectionMixer);
-            if (error != IPL.Error.Success)
-                throw new InvalidOperationException("Failed to create reflection mixer: " + error);
 
             _mono = new float[_frameSize];
             _outL = new float[_frameSize];
@@ -91,7 +107,9 @@ namespace TS.Audio
             _outLeftR = new float[_frameSize];
             _outRightL = new float[_frameSize];
             _outRightR = new float[_frameSize];
-            _reverbMono = new float[_frameSize];
+            _reverbAmbi = new float[_frameSize * _reflectionChannels];
+            _reverbWetL = new float[_frameSize];
+            _reverbWetR = new float[_frameSize];
         }
 
         public unsafe void Process(NativeArray<float> framesIn, UInt32 frameCountIn, NativeArray<float> framesOut, ref UInt32 frameCountOut, UInt32 channels, AudioSourceSpatialParams spatial)
@@ -113,7 +131,8 @@ namespace TS.Audio
             fixed (float* pOutRL = _outRightL)
             fixed (float* pOutRR = _outRightR)
             fixed (float* pMono = _mono)
-            fixed (float* pReverb = _reverbMono)
+            fixed (float* pReverbL = _reverbWetL)
+            fixed (float* pReverbR = _reverbWetR)
             {
                 for (int i = 0; i < frames; i++)
                 {
@@ -121,7 +140,8 @@ namespace TS.Audio
                     pInL[i] = framesIn[idx];
                     pInR[i] = framesIn[idx + 1];
                     pMono[i] = 0.5f * (pInL[i] + pInR[i]);
-                    pReverb[i] = 0f;
+                    pReverbL[i] = 0f;
+                    pReverbR[i] = 0f;
                 }
 
                 var attenuation = GetAttenuationAndDirection(spatial, out var direction);
@@ -222,7 +242,7 @@ namespace TS.Audio
 
                 if ((simFlags & AudioSourceSpatialParams.SimReflections) != 0)
                 {
-                    ApplyReflections(frames, spatial);
+                    ApplyReflections(frames, spatial, pReverbL, pReverbR);
                     float wetScale = Volatile.Read(ref spatial.ReflectionWet);
                     var roomFlags = Volatile.Read(ref spatial.RoomFlags);
                     if ((roomFlags & AudioSourceSpatialParams.RoomHasProfile) != 0)
@@ -232,9 +252,8 @@ namespace TS.Audio
                     for (int i = 0; i < frames; i++)
                     {
                         int idx = i * (int)channels;
-                        float wet = pReverb[i] * wetScale;
-                        framesOut[idx] += wet;
-                        framesOut[idx + 1] += wet;
+                        framesOut[idx] += pReverbL[i] * wetScale;
+                        framesOut[idx + 1] += pReverbR[i] * wetScale;
                     }
                 }
 
@@ -248,14 +267,14 @@ namespace TS.Audio
                 IPL.BinauralEffectRelease(ref _binauralLeft);
             if (_binauralRight.Handle != IntPtr.Zero)
                 IPL.BinauralEffectRelease(ref _binauralRight);
+            if (_ambisonicsBinaural.Handle != IntPtr.Zero)
+                IPL.AmbisonicsBinauralEffectRelease(ref _ambisonicsBinaural);
             if (_directLeft.Handle != IntPtr.Zero)
                 IPL.DirectEffectRelease(ref _directLeft);
             if (_directRight.Handle != IntPtr.Zero)
                 IPL.DirectEffectRelease(ref _directRight);
             if (_reflection.Handle != IntPtr.Zero)
                 IPL.ReflectionEffectRelease(ref _reflection);
-            if (_reflectionMixer.Handle != IntPtr.Zero)
-                IPL.ReflectionMixerRelease(ref _reflectionMixer);
         }
 
         private unsafe void ProcessMono(NativeArray<float> framesIn, UInt32 frameCountIn, NativeArray<float> framesOut, ref UInt32 frameCountOut, UInt32 channels, AudioSourceSpatialParams spatial)
@@ -265,14 +284,16 @@ namespace TS.Audio
             fixed (float* pMono = _mono)
             fixed (float* pOutL = _outL)
             fixed (float* pOutR = _outR)
-            fixed (float* pReverb = _reverbMono)
+            fixed (float* pReverbL = _reverbWetL)
+            fixed (float* pReverbR = _reverbWetR)
             {
                 int chCount = (int)channels;
                 for (int i = 0; i < frames; i++)
                 {
                     int idx = i * chCount;
                     pMono[i] = DownmixSample(framesIn, idx, chCount);
-                    pReverb[i] = 0f;
+                    pReverbL[i] = 0f;
+                    pReverbR[i] = 0f;
                 }
 
                 var attenuation = GetAttenuationAndDirection(spatial, out var direction);
@@ -364,7 +385,7 @@ namespace TS.Audio
 
                 if ((simFlags & AudioSourceSpatialParams.SimReflections) != 0)
                 {
-                    ApplyReflections(frames, spatial);
+                    ApplyReflections(frames, spatial, pReverbL, pReverbR);
                     float wetScale = Volatile.Read(ref spatial.ReflectionWet);
                     var roomFlags = Volatile.Read(ref spatial.RoomFlags);
                     if ((roomFlags & AudioSourceSpatialParams.RoomHasProfile) != 0)
@@ -374,10 +395,9 @@ namespace TS.Audio
                     for (int i = 0; i < frames; i++)
                     {
                         int idx = i * (int)channels;
-                        float wet = pReverb[i] * wetScale;
-                        framesOut[idx] += wet;
+                        framesOut[idx] += pReverbL[i] * wetScale;
                         if (channels > 1)
-                            framesOut[idx + 1] += wet;
+                            framesOut[idx + 1] += pReverbR[i] * wetScale;
                     }
                 }
 
@@ -385,13 +405,34 @@ namespace TS.Audio
             }
         }
 
-        private unsafe void ApplyReflections(int frames, AudioSourceSpatialParams spatial)
+        private unsafe void ApplyReflections(int frames, AudioSourceSpatialParams spatial, float* outL, float* outR)
         {
+            var irPtrValue = Volatile.Read(ref spatial.ReflectionIrHandle);
+            var irSize = Volatile.Read(ref spatial.ReflectionIrSize);
+            var irChannels = Volatile.Read(ref spatial.ReflectionIrChannels);
+
+            if (irPtrValue == 0 || irSize <= 0 || irChannels <= 0)
+            {
+                for (int i = 0; i < frames; i++)
+                {
+                    outL[i] = 0f;
+                    outR[i] = 0f;
+                }
+                return;
+            }
+
+            int channels = Math.Min(irChannels, _reflectionChannels);
+            int irSamples = Math.Min(irSize, _reflectionIrSize);
+            int order = OrderFromChannels(channels);
+            if (order < 0 || order > _reflectionOrder)
+                order = _reflectionOrder;
+
             var reflectionParams = new IPL.ReflectionEffectParams
             {
-                Type = IPL.ReflectionEffectType.Parametric,
-                NumChannels = 1,
-                IrSize = 0,
+                Type = _reflectionType,
+                NumChannels = channels,
+                IrSize = irSamples,
+                Ir = new IPL.ReflectionEffectIR(new IntPtr(irPtrValue)),
                 Delay = Volatile.Read(ref spatial.ReverbDelay)
             };
 
@@ -402,22 +443,55 @@ namespace TS.Audio
             reflectionParams.Eq[1] = Volatile.Read(ref spatial.ReverbEqMid);
             reflectionParams.Eq[2] = Volatile.Read(ref spatial.ReverbEqHigh);
 
-            var inPtr = stackalloc IntPtr[1];
-            var outPtr = stackalloc IntPtr[1];
-
             fixed (float* pIn = _mono)
-            fixed (float* pOut = _reverbMono)
+            fixed (float* pAmbi = _reverbAmbi)
             {
+                for (int ch = 0; ch < channels; ch++)
+                {
+                    float* chPtr = pAmbi + ch * _frameSize;
+                    for (int i = 0; i < frames; i++)
+                        chPtr[i] = 0f;
+                }
+                for (int i = 0; i < frames; i++)
+                {
+                    outL[i] = 0f;
+                    outR[i] = 0f;
+                }
+
+                var inPtr = stackalloc IntPtr[1];
                 inPtr[0] = (IntPtr)pIn;
-                outPtr[0] = (IntPtr)pOut;
+                var outPtr = stackalloc IntPtr[channels];
+                for (int ch = 0; ch < channels; ch++)
+                    outPtr[ch] = (IntPtr)(pAmbi + ch * _frameSize);
 
                 var inBuffer = new IPL.AudioBuffer { NumChannels = 1, NumSamples = frames, Data = (IntPtr)inPtr };
-                var outBuffer = new IPL.AudioBuffer { NumChannels = 1, NumSamples = frames, Data = (IntPtr)outPtr };
+                var outBuffer = new IPL.AudioBuffer { NumChannels = channels, NumSamples = frames, Data = (IntPtr)outPtr };
 
-                IPL.ReflectionMixerReset(_reflectionMixer);
-                IPL.ReflectionEffectApply(_reflection, ref reflectionParams, ref inBuffer, ref outBuffer, _reflectionMixer);
-                IPL.ReflectionMixerApply(_reflectionMixer, ref reflectionParams, ref outBuffer);
+                IPL.ReflectionEffectApply(_reflection, ref reflectionParams, ref inBuffer, ref outBuffer, default);
+
+                var ambiParams = new IPL.AmbisonicsBinauralEffectParams
+                {
+                    Hrtf = _ctx.Hrtf,
+                    Order = order
+                };
+
+                var ambiOutPtr = stackalloc IntPtr[2];
+                ambiOutPtr[0] = (IntPtr)outL;
+                ambiOutPtr[1] = (IntPtr)outR;
+                var ambiOutBuffer = new IPL.AudioBuffer { NumChannels = 2, NumSamples = frames, Data = (IntPtr)ambiOutPtr };
+
+                IPL.AmbisonicsBinauralEffectApply(_ambisonicsBinaural, ref ambiParams, ref outBuffer, ref ambiOutBuffer);
             }
+        }
+
+        private static int OrderFromChannels(int channels)
+        {
+            if (channels <= 0)
+                return -1;
+            int root = (int)Math.Round(Math.Sqrt(channels));
+            if (root * root != channels)
+                return -1;
+            return root - 1;
         }
 
         private float GetAttenuationAndDirection(AudioSourceSpatialParams spatial, out IPL.Vector3 direction)
