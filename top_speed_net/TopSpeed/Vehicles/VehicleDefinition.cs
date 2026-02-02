@@ -49,6 +49,9 @@ namespace TopSpeed.Vehicles
         public float TrackWidthM { get; set; } = 0f;
         public float WidthM { get; set; } = 1.8f;
         public float LengthM { get; set; } = 4.5f;
+        public float VehicleHeightM { get; set; } = 0f;
+        public float HornHeightM { get; set; } = 0f;
+        public float EngineHeightM { get; set; } = 0f;
         public VehicleDynamicsModel DynamicsModel { get; set; } = VehicleDynamicsModel.FourWheel;
         public float SteerInputRate { get; set; } = 0f;
         public float SteerReturnRate { get; set; } = 0f;

@@ -50,6 +50,9 @@ namespace TopSpeed.Data
         public float TrackWidthM { get; }
         public float WidthM { get; }
         public float LengthM { get; }
+        public float VehicleHeightM { get; }
+        public float HornHeightM { get; }
+        public float EngineHeightM { get; }
         public VehicleDynamicsModel DynamicsModel { get; }
         public float PowerFactor { get; }
         public float[]? GearRatios { get; }
@@ -148,7 +151,10 @@ namespace TopSpeed.Data
             float downforceCoefficient = 0f,
             float downforceFrontBias = 0f,
             float longitudinalStiffnessFront = 0f,
-            float longitudinalStiffnessRear = 0f)
+            float longitudinalStiffnessRear = 0f,
+            float vehicleHeightM = 0f,
+            float hornHeightM = 0f,
+            float engineHeightM = 0f)
         {
             Name = name;
             _sounds[(int)VehicleAction.Engine] = engineSound;
@@ -197,6 +203,9 @@ namespace TopSpeed.Data
             TrackWidthM = trackWidthM;
             WidthM = widthM;
             LengthM = lengthM;
+            VehicleHeightM = vehicleHeightM;
+            HornHeightM = hornHeightM;
+            EngineHeightM = engineHeightM;
             DynamicsModel = dynamicsModel;
             PowerFactor = powerFactor;
             GearRatios = gearRatios;
@@ -273,7 +282,8 @@ namespace TopSpeed.Data
                 corneringStiffnessRear: CorneringStiffness(1774f, 1.0f, 1.0f, 6.5f),
                 maxSteerLowDeg: 32f, maxSteerHighDeg: 8f, steerSpeedKph: 90f,
                 steerInputRate: 0.85f, steerReturnRate: 1.20f,
-                powerFactor: 0.7f, gearRatios: GtrRatios),
+                powerFactor: 0.7f, gearRatios: GtrRatios,
+                vehicleHeightM: 1.02f, hornHeightM: 1.02f, engineHeightM: 0.40f),
 
             // Vehicle 2: Racing car - very responsive, high-revving
             new VehicleParameters("Porsche 911 GT3 RS", null, null, null, null, null, null, null, null,
@@ -290,7 +300,8 @@ namespace TopSpeed.Data
                 corneringStiffnessRear: CorneringStiffness(1450f, 1.05f, 1.0f, 7.5f),
                 maxSteerLowDeg: 30f, maxSteerHighDeg: 7f, steerSpeedKph: 90f,
                 steerInputRate: 0.90f, steerReturnRate: 1.25f,
-                powerFactor: 0.75f, gearRatios: Gt3RsRatios),
+                powerFactor: 0.75f, gearRatios: Gt3RsRatios,
+                vehicleHeightM: 0.99f, hornHeightM: 0.99f, engineHeightM: 0.38f),
 
             // Vehicle 3: Small car - slow acceleration, economical
             new VehicleParameters("Fiat 500", null, null, null, null, null, null, null, null,
@@ -307,7 +318,8 @@ namespace TopSpeed.Data
                 corneringStiffnessRear: CorneringStiffness(865f, 0.88f, 1.0f, 4.8f),
                 maxSteerLowDeg: 38f, maxSteerHighDeg: 12f, steerSpeedKph: 70f,
                 steerInputRate: 0.70f, steerReturnRate: 1.00f,
-                powerFactor: 0.35f, gearRatios: Fiat500Ratios),
+                powerFactor: 0.35f, gearRatios: Fiat500Ratios,
+                vehicleHeightM: 1.02f, hornHeightM: 1.02f, engineHeightM: 0.40f),
 
             // Vehicle 4: Small sporty car - better than Fiat but not racing
             new VehicleParameters("Mini Cooper S", null, null, null, null, null, null, null, null,
@@ -324,7 +336,8 @@ namespace TopSpeed.Data
                 corneringStiffnessRear: CorneringStiffness(1265f, 0.95f, 1.0f, 5.3f),
                 maxSteerLowDeg: 36f, maxSteerHighDeg: 11f, steerSpeedKph: 75f,
                 steerInputRate: 0.75f, steerReturnRate: 1.05f,
-                powerFactor: 0.45f, gearRatios: MiniCooperSRatios),
+                powerFactor: 0.45f, gearRatios: MiniCooperSRatios,
+                vehicleHeightM: 1.03f, hornHeightM: 1.03f, engineHeightM: 0.40f),
 
             // Vehicle 5: Classic muscle car - torquey but heavy
             new VehicleParameters("Ford Mustang 1969", null, null, null, null, null, null, null, null,
@@ -341,7 +354,8 @@ namespace TopSpeed.Data
                 corneringStiffnessRear: CorneringStiffness(1440f, 0.90f, 1.0f, 5.1f),
                 maxSteerLowDeg: 35f, maxSteerHighDeg: 9f, steerSpeedKph: 80f,
                 steerInputRate: 0.65f, steerReturnRate: 0.95f,
-                powerFactor: 0.4f, gearRatios: Mustang69Ratios),
+                powerFactor: 0.4f, gearRatios: Mustang69Ratios,
+                vehicleHeightM: 1.05f, hornHeightM: 1.05f, engineHeightM: 0.45f),
 
             // Vehicle 6: Common sedan - comfortable, not sporty
             new VehicleParameters("Toyota Camry", null, null, null, null, null, null, null, null,
@@ -358,7 +372,8 @@ namespace TopSpeed.Data
                 corneringStiffnessRear: CorneringStiffness(1470f, 0.90f, 1.0f, 5.0f),
                 maxSteerLowDeg: 36f, maxSteerHighDeg: 9f, steerSpeedKph: 85f,
                 steerInputRate: 0.70f, steerReturnRate: 1.00f,
-                powerFactor: 0.5f, gearRatios: CamryRatios),
+                powerFactor: 0.5f, gearRatios: CamryRatios,
+                vehicleHeightM: 1.05f, hornHeightM: 1.05f, engineHeightM: 0.45f),
 
             // Vehicle 7: Supercar - fastest acceleration, high power
             new VehicleParameters("Lamborghini Aventador", null, null, null, null, null, null, null, null,
@@ -375,7 +390,8 @@ namespace TopSpeed.Data
                 corneringStiffnessRear: CorneringStiffness(1640f, 1.05f, 1.0f, 7.0f),
                 maxSteerLowDeg: 30f, maxSteerHighDeg: 7f, steerSpeedKph: 100f,
                 steerInputRate: 0.90f, steerReturnRate: 1.25f,
-                powerFactor: 0.8f, gearRatios: AventadorRatios),
+                powerFactor: 0.8f, gearRatios: AventadorRatios,
+                vehicleHeightM: 0.98f, hornHeightM: 0.98f, engineHeightM: 0.35f),
 
             // Vehicle 8: Premium sedan - balanced performance
             new VehicleParameters("BMW 3 Series", null, null, null, null, null, null, null, null,
@@ -392,7 +408,8 @@ namespace TopSpeed.Data
                 corneringStiffnessRear: CorneringStiffness(1524f, 0.93f, 1.0f, 5.5f),
                 maxSteerLowDeg: 35f, maxSteerHighDeg: 10f, steerSpeedKph: 85f,
                 steerInputRate: 0.75f, steerReturnRate: 1.05f,
-                powerFactor: 0.55f, gearRatios: Bmw3SeriesRatios),
+                powerFactor: 0.55f, gearRatios: Bmw3SeriesRatios,
+                vehicleHeightM: 1.05f, hornHeightM: 1.05f, engineHeightM: 0.45f),
 
             // Vehicle 9: Bus/Van - very slow acceleration, heavy
             new VehicleParameters("Mercedes Sprinter", null, null, null, null, null, null, null, null,
@@ -409,7 +426,8 @@ namespace TopSpeed.Data
                 corneringStiffnessRear: CorneringStiffness(1970f, 0.82f, 1.0f, 4.0f),
                 maxSteerLowDeg: 40f, maxSteerHighDeg: 9f, steerSpeedKph: 75f,
                 steerInputRate: 0.60f, steerReturnRate: 0.90f,
-                powerFactor: 0.3f, gearRatios: SprinterRatios),
+                powerFactor: 0.3f, gearRatios: SprinterRatios,
+                vehicleHeightM: 1.25f, hornHeightM: 1.25f, engineHeightM: 0.60f),
 
             // Vehicle 10: Sport motorcycle - quick, light, high-revving
             new VehicleParameters("Kawasaki Ninja ZX-10R", null, null, null, null, null, null, null, null,
@@ -428,7 +446,8 @@ namespace TopSpeed.Data
                 steerInputRate: 1.00f, steerReturnRate: 1.40f, steerGamma: 1.7f,
                 maxSteerLowDeg: 32f, maxSteerHighDeg: 8f, steerSpeedKph: 55f, steerSpeedExponent: 1.4f,
                 dynamicsModel: VehicleDynamicsModel.Bicycle,
-                powerFactor: 0.85f, gearRatios: Zx10rRatios),
+                powerFactor: 0.85f, gearRatios: Zx10rRatios,
+                vehicleHeightM: 1.05f, hornHeightM: 1.05f, engineHeightM: 0.35f),
 
             // Vehicle 11: Superbike - fastest motorcycle
             new VehicleParameters("Ducati Panigale V4", null, null, null, null, null, null, null, null,
@@ -447,7 +466,8 @@ namespace TopSpeed.Data
                 steerInputRate: 1.00f, steerReturnRate: 1.40f, steerGamma: 1.7f,
                 maxSteerLowDeg: 32f, maxSteerHighDeg: 8f, steerSpeedKph: 55f, steerSpeedExponent: 1.4f,
                 dynamicsModel: VehicleDynamicsModel.Bicycle,
-                powerFactor: 0.9f, gearRatios: PanigaleV4Ratios),
+                powerFactor: 0.9f, gearRatios: PanigaleV4Ratios,
+                vehicleHeightM: 1.05f, hornHeightM: 1.05f, engineHeightM: 0.35f),
 
             // Vehicle 12: Sport motorcycle - balanced
             new VehicleParameters("Yamaha YZF-R1", null, null, null, null, null, null, null, null,
@@ -466,7 +486,8 @@ namespace TopSpeed.Data
                 steerInputRate: 1.00f, steerReturnRate: 1.40f, steerGamma: 1.7f,
                 maxSteerLowDeg: 32f, maxSteerHighDeg: 8f, steerSpeedKph: 55f, steerSpeedExponent: 1.4f,
                 dynamicsModel: VehicleDynamicsModel.Bicycle,
-                powerFactor: 0.8f, gearRatios: R1Ratios)
+                powerFactor: 0.8f, gearRatios: R1Ratios,
+                vehicleHeightM: 1.05f, hornHeightM: 1.05f, engineHeightM: 0.35f)
         };
     }
 }

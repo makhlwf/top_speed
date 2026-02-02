@@ -217,6 +217,34 @@ namespace TopSpeed.Tracks.Map
             return _areaManager.Contains(area, position);
         }
 
+        public bool TryGetCeilingHeight(Vector3 worldPosition, out float ceilingHeight)
+        {
+            ceilingHeight = 0f;
+            if (_areaManager == null)
+                return false;
+
+            var position = new Vector2(worldPosition.X, worldPosition.Z);
+            var areas = _areaManager.FindAreasContaining(position);
+            if (areas.Count == 0)
+                return false;
+
+            float? minCeiling = null;
+            foreach (var area in areas)
+            {
+                if (area == null || !area.CeilingHeightMeters.HasValue)
+                    continue;
+                var value = area.CeilingHeightMeters.Value;
+                if (!minCeiling.HasValue || value < minCeiling.Value)
+                    minCeiling = value;
+            }
+
+            if (!minCeiling.HasValue)
+                return false;
+
+            ceilingHeight = minCeiling.Value;
+            return true;
+        }
+
         public bool TryGetSectorRules(
             Vector3 worldPosition,
             float headingDegrees,

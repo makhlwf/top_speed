@@ -977,7 +977,14 @@ namespace TopSpeed.Race
 
             var driverOffsetX = -_car.WidthM * 0.25f;
             var driverOffsetZ = _car.LengthM * 0.1f;
-            var worldPosition = _car.WorldPosition + (right * driverOffsetX) + (forward * driverOffsetZ);
+            var listenerHeight = Math.Max(0f, _car.VehicleHeightM);
+            var worldPosition = _car.WorldPosition + (right * driverOffsetX) + (forward * driverOffsetZ) + (up * listenerHeight);
+            if (_track.TryGetCeilingHeight(worldPosition, out var ceilingHeight))
+            {
+                var maxY = ceilingHeight - 0.1f;
+                if (worldPosition.Y > maxY)
+                    worldPosition = new Vector3(worldPosition.X, maxY, worldPosition.Z);
+            }
 
             var worldVelocity = _car.WorldVelocity;
             if (_listenerInitialized && elapsed > 0f)

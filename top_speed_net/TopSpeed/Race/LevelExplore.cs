@@ -25,6 +25,7 @@ namespace TopSpeed.Race
         private static readonly float[] StepSizes = { 1f, 5f, 10f, 20f, 30f, 50f, 100f };
         private const float ApproachBeaconRangeMeters = 50f;
         private const float DefaultApproachToleranceDegrees = 10f;
+        private const float ExploreListenerHeightM = 1.0f;
 
         private readonly AudioManager _audio;
         private readonly SpeechService _speech;
@@ -264,14 +265,21 @@ namespace TopSpeed.Race
         {
             var forward = _listenerForward.LengthSquared() > 0.0001f ? Vector3.Normalize(_listenerForward) : Vector3.UnitZ;
             var up = Vector3.UnitY;
+            var listenerPosition = _worldPosition + (up * ExploreListenerHeightM);
+            if (TryGetCeilingHeight(listenerPosition, out var ceilingHeight))
+            {
+                var maxY = ceilingHeight - 0.1f;
+                if (listenerPosition.Y > maxY)
+                    listenerPosition = new Vector3(listenerPosition.X, maxY, listenerPosition.Z);
+            }
+
             var velocity = Vector3.Zero;
             if (_listenerInitialized && elapsed > 0f)
-                velocity = (_worldPosition - _lastListenerPosition) / elapsed;
-
-            _lastListenerPosition = _worldPosition;
+                velocity = (listenerPosition - _lastListenerPosition) / elapsed;
+            _lastListenerPosition = listenerPosition;
             _listenerInitialized = true;
 
-            var position = AudioWorld.ToMeters(_worldPosition);
+            var position = AudioWorld.ToMeters(listenerPosition);
             var velocityMeters = AudioWorld.ToMeters(velocity);
             _audio.UpdateListener(position, forward, up, velocityMeters);
             UpdateRoomAcoustics(_worldPosition);
@@ -286,6 +294,34 @@ namespace TopSpeed.Race
                 _currentRoomAcoustics = acoustics;
                 _hasRoomAcoustics = true;
             }
+        }
+
+        private bool TryGetCeilingHeight(Vector3 worldPosition, out float ceilingHeight)
+        {
+            ceilingHeight = 0f;
+            if (_areaManager == null)
+                return false;
+
+            var position = new Vector2(worldPosition.X, worldPosition.Z);
+            var areas = _areaManager.FindAreasContaining(position);
+            if (areas.Count == 0)
+                return false;
+
+            float? minCeiling = null;
+            foreach (var area in areas)
+            {
+                if (area == null || !area.CeilingHeightMeters.HasValue)
+                    continue;
+                var value = area.CeilingHeightMeters.Value;
+                if (!minCeiling.HasValue || value < minCeiling.Value)
+                    minCeiling = value;
+            }
+
+            if (!minCeiling.HasValue)
+                return false;
+
+            ceilingHeight = minCeiling.Value;
+            return true;
         }
 
         private RoomAcoustics ResolveRoomAcoustics(Vector2 position)

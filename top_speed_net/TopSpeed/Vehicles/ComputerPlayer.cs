@@ -93,6 +93,9 @@ namespace TopSpeed.Vehicles
         private BicycleDynamicsParameters _bicycleParams;
         private float _widthM;
         private float _lengthM;
+        private float _vehicleHeightM;
+        private float _hornHeightM;
+        private float _engineHeightM;
         private int _idleFreq;
         private int _topFreq;
         private int _shiftFreq;
@@ -219,6 +222,9 @@ namespace TopSpeed.Vehicles
             _maxSteerDeg = Math.Max(5f, Math.Min(60f, definition.MaxSteerDeg));
             _widthM = Math.Max(0.5f, definition.WidthM);
             _lengthM = Math.Max(0.5f, definition.LengthM);
+            _vehicleHeightM = VehicleAudioHeights.ResolveVehicleHeight(definition);
+            _hornHeightM = VehicleAudioHeights.ResolveHornHeight(definition, _vehicleHeightM);
+            _engineHeightM = VehicleAudioHeights.ResolveEngineHeight(definition);
             var dynamicsSetup = VehicleDynamicsSetupBuilder.Build(
                 definition,
                 _massKg,
@@ -1087,7 +1093,9 @@ namespace TopSpeed.Vehicles
         private void UpdateSpatialAudio(float listenerX, float listenerY, float trackLength, float elapsed)
         {
             var worldPos = _worldPosition;
-            var position = AudioWorld.ToMeters(worldPos);
+            var vehiclePos = worldPos + (Vector3.UnitY * _vehicleHeightM);
+            var enginePos = worldPos + (Vector3.UnitY * _engineHeightM);
+            var hornPos = worldPos + (Vector3.UnitY * _hornHeightM);
 
             var velocity = Vector3.Zero;
             if (_audioInitialized && elapsed > 0f)
@@ -1098,14 +1106,14 @@ namespace TopSpeed.Vehicles
             _lastAudioPosition = worldPos;
             _audioInitialized = true;
 
-            SetSpatial(_soundEngine, position, velocity);
-            SetSpatial(_soundStart, position, velocity);
-            SetSpatial(_soundHorn, position, velocity);
-            SetSpatial(_soundCrash, position, velocity);
-            SetSpatial(_soundBrake, position, velocity);
-            SetSpatial(_soundBackfire, position, velocity);
-            SetSpatial(_soundBump, position, velocity);
-            SetSpatial(_soundMiniCrash, position, velocity);
+            SetSpatial(_soundEngine, AudioWorld.ToMeters(enginePos), velocity);
+            SetSpatial(_soundStart, AudioWorld.ToMeters(enginePos), velocity);
+            SetSpatial(_soundHorn, AudioWorld.ToMeters(hornPos), velocity);
+            SetSpatial(_soundCrash, AudioWorld.ToMeters(vehiclePos), velocity);
+            SetSpatial(_soundBrake, AudioWorld.ToMeters(vehiclePos), velocity);
+            SetSpatial(_soundBackfire, AudioWorld.ToMeters(enginePos), velocity);
+            SetSpatial(_soundBump, AudioWorld.ToMeters(vehiclePos), velocity);
+            SetSpatial(_soundMiniCrash, AudioWorld.ToMeters(vehiclePos), velocity);
         }
 
         private static string NormalizeMaterialId(string? materialId)

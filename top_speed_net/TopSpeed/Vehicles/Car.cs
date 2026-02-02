@@ -101,6 +101,9 @@ namespace TopSpeed.Vehicles
         private BicycleDynamicsParameters _bicycleParams;
         private float _widthM;
         private float _lengthM;
+        private float _vehicleHeightM;
+        private float _hornHeightM;
+        private float _engineHeightM;
         private int _idleFreq;
         private int _topFreq;
         private int _shiftFreq;
@@ -254,6 +257,9 @@ namespace TopSpeed.Vehicles
             _maxSteerDeg = Math.Max(5f, Math.Min(60f, SanitizeFinite(definition.MaxSteerDeg, 35f)));
             _widthM = Math.Max(0.5f, SanitizeFinite(definition.WidthM, 0.5f));
             _lengthM = Math.Max(0.5f, SanitizeFinite(definition.LengthM, 0.5f));
+            _vehicleHeightM = VehicleAudioHeights.ResolveVehicleHeight(definition);
+            _hornHeightM = VehicleAudioHeights.ResolveHornHeight(definition, _vehicleHeightM);
+            _engineHeightM = VehicleAudioHeights.ResolveEngineHeight(definition);
             var dynamicsSetup = VehicleDynamicsSetupBuilder.Build(
                 definition,
                 _massKg,
@@ -408,6 +414,7 @@ namespace TopSpeed.Vehicles
         public string VehicleName { get; private set; } = "Vehicle";
         public float WidthM => _widthM;
         public float LengthM => _lengthM;
+        public float VehicleHeightM => _vehicleHeightM;
 
         // Engine simulation properties for reporting
         public float SpeedKmh => _engine.SpeedKmh;
@@ -1616,13 +1623,18 @@ namespace TopSpeed.Vehicles
             else
                 rightVec = Vector3.Normalize(rightVec);
 
-            var enginePos = worldPos + (forward * engineOffsetZ);
-            var brakePos = worldPos + (forward * brakeOffsetZ);
-            var vehiclePos = worldPos;
+            var vehicleUp = up * _vehicleHeightM;
+            var engineUp = up * _engineHeightM;
+            var hornUp = up * _hornHeightM;
+
+            var enginePos = worldPos + (forward * engineOffsetZ) + engineUp;
+            var hornPos = worldPos + (forward * engineOffsetZ) + hornUp;
+            var brakePos = worldPos + (forward * brakeOffsetZ) + vehicleUp;
+            var vehiclePos = worldPos + vehicleUp;
 
             SetSpatial(_soundEngine, AudioWorld.ToMeters(enginePos), velocity);
             SetSpatial(_soundThrottle, AudioWorld.ToMeters(enginePos), velocity);
-            SetSpatial(_soundHorn, AudioWorld.ToMeters(enginePos), velocity);
+            SetSpatial(_soundHorn, AudioWorld.ToMeters(hornPos), velocity);
             SetSpatial(_soundBrake, AudioWorld.ToMeters(brakePos), velocity);
             SetSpatial(_soundBackfire, AudioWorld.ToMeters(enginePos), velocity);
             SetSpatial(_soundStart, AudioWorld.ToMeters(enginePos), velocity);
@@ -1632,7 +1644,7 @@ namespace TopSpeed.Vehicles
             SetSpatial(_soundBadSwitch, AudioWorld.ToMeters(enginePos), velocity);
             SetSpatial(_soundWipers, AudioWorld.ToMeters(vehiclePos), velocity);
 
-            SetSpatial(_surfaceSound, AudioWorld.ToMeters(vehiclePos), velocity);
+            SetSpatial(_surfaceSound, AudioWorld.ToMeters(worldPos), velocity);
         }
 
         private static string NormalizeMaterialId(string? materialId)

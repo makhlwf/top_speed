@@ -55,11 +55,17 @@ namespace CodeGenerator
 			Console.WriteLine($"NOTE: To run this generator, you may need a Windows machine and Visual Studio with C++ Development packages installed.");
 
 			try {
-				if (args.Length == 0) {
+				if (!args.Contains("--force")) {
+					Console.WriteLine("Code generation is disabled by default. Re-run with --force <outputPath> to proceed.");
+					return;
+				}
+
+				var filteredArgs = args.Where(a => a != "--force").ToArray();
+				if (filteredArgs.Length == 0) {
 					throw new ArgumentException("An output path must be provided in command line arguments.");
 				}
 
-				ProcessFile("../Natives/steamaudio/include/phonon.h", Path.GetFullPath(args[0]), "IPL.Generated.cs", "SteamAudio", "IPL");
+				ProcessFile("../Natives/steamaudio/include/phonon.h", Path.GetFullPath(filteredArgs[0]), "IPL.Generated.cs", "SteamAudio", "IPL");
 
 				Console.WriteLine("Success.");
 				Thread.Sleep(500);

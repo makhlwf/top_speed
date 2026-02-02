@@ -269,7 +269,7 @@ namespace TS.Audio
                 SceneType = IPL.SceneType.Default,
                 ReflectionType = ReflectionType,
                 MaxNumOcclusionSamples = 32,
-                MaxNumRays = 256,
+                MaxNumRays = 4096,
                 NumDiffuseSamples = 64,
                 MaxDuration = ReflectionDurationSeconds,
                 MaxOrder = ReflectionOrder,
@@ -424,7 +424,7 @@ namespace TS.Audio
                     Up = listener.Up,
                     Ahead = listener.Ahead
                 },
-                NumRays = 256,
+                NumRays = 4096,
                 NumBounces = 2,
                 Duration = ReflectionDurationSeconds,
                 Order = ReflectionOrder,
