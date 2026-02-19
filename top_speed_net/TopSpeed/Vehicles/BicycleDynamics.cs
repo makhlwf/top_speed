@@ -68,11 +68,13 @@ namespace TopSpeed.Vehicles
                 prevSpeed,
                 dt);
 
-            var driveForce = Math.Max(0f, input.DriveForce);
+            var driveForce = IsFinite(input.DriveForce) ? input.DriveForce : 0f;
             var brakeForce = Math.Max(0f, input.BrakeForce);
             var engineBrakeForce = Math.Max(0f, input.EngineBrakeForce);
             var speedMpsInitial = prevSpeed / 3.6f;
-            if (speedMpsInitial < 0.05f && driveForce <= 1f && (brakeForce + engineBrakeForce) > 0f)
+            var totalBrakeForce = brakeForce + engineBrakeForce;
+            var reverseSlip = state.VelLong < -0.1f || driveForce < -1f;
+            if (speedMpsInitial < 0.35f && Math.Abs(driveForce) <= 1f && totalBrakeForce > 0f)
             {
                 state.VelLong = 0f;
                 state.VelLat = 0f;
@@ -90,7 +92,9 @@ namespace TopSpeed.Vehicles
             var resistSign = speedForward > 0.25f ? Math.Sign(state.VelLong) : 0;
             var resistForce = (dragForce + rollingForce) * resistSign;
 
-            var speedSign = Math.Abs(state.VelLong) > 0.1f ? Math.Sign(state.VelLong) : 0f;
+            var speedSign = Math.Abs(state.VelLong) > 0.1f
+                ? Math.Sign(state.VelLong)
+                : (Math.Abs(driveForce) > 0.1f ? Math.Sign(driveForce) : 0f);
             var fxDrive = driveForce;
             var fxBrake = -(brakeForce + engineBrakeForce) * speedSign;
             var fxTotal = fxDrive + fxBrake - resistForce;
@@ -130,12 +134,16 @@ namespace TopSpeed.Vehicles
 
             var a = p.CgToFrontM;
             var b = p.CgToRearM;
-            var vxSafe = Math.Abs(vx) < 0.5f ? 0.5f * Math.Sign(vx == 0f ? 1f : vx) : vx;
+            var vxSafe = Math.Abs(vx);
+            if (vxSafe < 0.5f)
+                vxSafe = 0.5f;
 
-            var alphaF = (float)Math.Atan2(vy + (a * r), vxSafe) - state.SteerWheelAngleRad;
+            var steer = state.SteerWheelAngleRad;
+            var lateralScale = reverseSlip ? 0.7f : 1f;
+            var alphaF = (float)Math.Atan2(vy + (a * r), vxSafe) - steer;
             var alphaR = (float)Math.Atan2(vy - (b * r), vxSafe);
-            var fyFront = -p.CorneringStiffnessFront * alphaF;
-            var fyRear = -p.CorneringStiffnessRear * alphaR;
+            var fyFront = -(p.CorneringStiffnessFront * lateralScale) * alphaF;
+            var fyRear = -(p.CorneringStiffnessRear * lateralScale) * alphaR;
 
             fyFront = ClampFrictionEllipse(fyFront, fxFront, muFront * frontLoad);
             fyRear = ClampFrictionEllipse(fyRear, fxRear, muRear * rearLoad);
@@ -165,6 +173,18 @@ namespace TopSpeed.Vehicles
             }
 
             state.Yaw += state.YawRate * dt;
+
+            if (brakeForce > 0f && Math.Abs(state.VelLong) < 3.0f)
+            {
+                state.VelLat = VehicleMath.Approach(state.VelLat, 0f, 6.0f * dt);
+                state.YawRate = VehicleMath.Approach(state.YawRate, 0f, 8.0f * dt);
+                if (Math.Abs(state.VelLong) < 0.25f && Math.Abs(driveForce) < 0.5f)
+                {
+                    state.VelLong = 0f;
+                    state.VelLat = 0f;
+                    state.YawRate = 0f;
+                }
+            }
 
             speedMps = (float)Math.Sqrt(state.VelLong * state.VelLong + state.VelLat * state.VelLat);
             if (p.MaxSpeedKph > 0f)

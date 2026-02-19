@@ -33,8 +33,10 @@ namespace TopSpeed.Race
         private int _nComputerPlayers;
         private StartGridLayout? _startGrid;
         private bool _wasInFinish;
+        private float _lastLapTriggerDistance;
         private bool[]? _botWasInFinish;
         private int[]? _botLaps;
+        private float[]? _botLastLapTriggerDistance;
         private bool _pauseKeyReleased = true;
         private float _raceStartDelay;
         private bool _botsScheduled;
@@ -115,12 +117,14 @@ namespace TopSpeed.Race
             }
             var playerPosition = CalculateStartPosition(_playerNumber, _car.WidthM, rowSpacing);
             _car.SetPosition(playerPosition.X, playerPosition.Z);
+            _lastLapTriggerDistance = _car.DistanceMeters;
 
             if (_track.HasFinishArea)
             {
                 _wasInFinish = _track.IsInsideFinishArea(_car.WorldPosition);
                 _botWasInFinish = new bool[MaxComputerPlayers];
                 _botLaps = new int[MaxComputerPlayers];
+                _botLastLapTriggerDistance = new float[MaxComputerPlayers];
             }
 
             for (var i = 0; i < _nComputerPlayers; i++)
@@ -131,7 +135,13 @@ namespace TopSpeed.Race
                 var botPosition = CalculateStartPosition(bot.PlayerNumber, bot.WidthM, rowSpacing);
                 bot.Initialize(botPosition.X, botPosition.Z, _track.Length);
                 if (_track.HasFinishArea && _botWasInFinish != null)
+                {
                     _botWasInFinish[i] = _track.IsInsideFinishArea(bot.WorldPosition);
+                    if (_botLaps != null)
+                        _botLaps[i] = 1;
+                    if (_botLastLapTriggerDistance != null)
+                        _botLastLapTriggerDistance[i] = bot.DistanceMeters;
+                }
             }
 
             for (var i = 0; i <= _nComputerPlayers; i++)
@@ -201,7 +211,21 @@ namespace TopSpeed.Race
                     case RaceEventType.RaceStart:
                         _raceTime = 0;
                         _stopwatch.Restart();
-                        _lap = 0;
+                        _lap = 1;
+                        _lastLapTriggerDistance = _car.DistanceMeters;
+                        if (_botLastLapTriggerDistance != null)
+                        {
+                            for (var botIndex = 0; botIndex < _nComputerPlayers; botIndex++)
+                            {
+                                var bot = _computerPlayers[botIndex];
+                                if (bot != null)
+                                {
+                                    _botLastLapTriggerDistance[botIndex] = bot.DistanceMeters;
+                                    if (_botLaps != null)
+                                        _botLaps[botIndex] = 1;
+                                }
+                            }
+                        }
                         _started = true;
                         if (!_botsScheduled)
                         {
@@ -252,8 +276,8 @@ namespace TopSpeed.Race
                 bot.Run(elapsed, playerPosition.X, playerPosition.Z);
                 if (_track.HasFinishArea)
                 {
-                    if (_botWasInFinish != null && _botLaps != null &&
-                        UpdateLapFromFinishArea(bot.WorldPosition, ref _botWasInFinish[botIndex]))
+                    if (_botWasInFinish != null && _botLaps != null && _botLastLapTriggerDistance != null &&
+                        UpdateLapFromFinishArea(bot.WorldPosition, ref _botWasInFinish[botIndex], bot.DistanceMeters, ref _botLastLapTriggerDistance[botIndex]))
                     {
                         _botLaps[botIndex]++;
                         if (_botLaps[botIndex] > _nrOfLaps && !bot.Finished)
@@ -288,7 +312,7 @@ namespace TopSpeed.Race
 
             if (_track.HasFinishArea)
             {
-                if (UpdateLapFromFinishArea(_car.WorldPosition, ref _wasInFinish))
+                if (UpdateLapFromFinishArea(_car.WorldPosition, ref _wasInFinish, _car.DistanceMeters, ref _lastLapTriggerDistance))
                 {
                     _lap++;
                     if (_lap > _nrOfLaps)
@@ -524,32 +548,28 @@ namespace TopSpeed.Race
                 return;
             }
 
-            if (inFrontDist < onTailDist)
+            var hasFront = inFront != -1 && inFrontDist <= RivalCalloutRangeMeters;
+            var hasTail = onTail != -1 && onTailDist <= RivalCalloutRangeMeters;
+            if (hasFront && (!hasTail || inFrontDist < onTailDist))
             {
-                if (inFront != -1)
-                {
-                    var bot = _computerPlayers[inFront]!;
-                    Speak(_soundPlayerNr[bot.PlayerNumber]!, true);
-                    var sound = _randomSounds[(int)RandomSound.Front][Algorithm.RandomInt(_totalRandomSounds[(int)RandomSound.Front])];
-                    if (sound != null)
-                        Speak(sound, true);
-                    return;
-                }
+                var bot = _computerPlayers[inFront]!;
+                Speak(_soundPlayerNr[bot.PlayerNumber]!, true);
+                var sound = _randomSounds[(int)RandomSound.Front][Algorithm.RandomInt(_totalRandomSounds[(int)RandomSound.Front])];
+                if (sound != null)
+                    Speak(sound, true);
+                return;
             }
-            else
+            if (hasTail)
             {
-                if (onTail != -1)
-                {
-                    var bot = _computerPlayers[onTail]!;
-                    Speak(_soundPlayerNr[bot.PlayerNumber]!, true);
-                    var sound = _randomSounds[(int)RandomSound.Tail][Algorithm.RandomInt(_totalRandomSounds[(int)RandomSound.Tail])];
-                    if (sound != null)
-                        Speak(sound, true);
-                    return;
-                }
+                var bot = _computerPlayers[onTail]!;
+                Speak(_soundPlayerNr[bot.PlayerNumber]!, true);
+                var sound = _randomSounds[(int)RandomSound.Tail][Algorithm.RandomInt(_totalRandomSounds[(int)RandomSound.Tail])];
+                if (sound != null)
+                    Speak(sound, true);
+                return;
             }
 
-            if (inFront == -1 && onTail == -1 && !automatic)
+            if (!automatic)
             {
                 if (position == _nComputerPlayers + 1)
                     Speak(_soundPosition[_nComputerPlayers]!, true);

@@ -55,6 +55,9 @@ namespace TopSpeed.Vehicles
                 RollingResistanceCoefficient = parameters.RollingResistanceCoefficient,
                 LaunchRpm = parameters.LaunchRpm,
                 FinalDriveRatio = parameters.FinalDriveRatio,
+                ReverseMaxSpeedKph = parameters.ReverseMaxSpeedKph,
+                ReversePowerFactor = parameters.ReversePowerFactor,
+                ReverseGearRatio = parameters.ReverseGearRatio,
                 TireCircumferenceM = parameters.TireCircumferenceM,
                 LateralGripCoefficient = parameters.LateralGripCoefficient,
                 HighSpeedStability = parameters.HighSpeedStability,
@@ -152,6 +155,9 @@ namespace TopSpeed.Vehicles
             var rollingResistance = ReadFloat(settings, "rolling_resistance", 0.015f);
             var launchRpm = ReadFloat(settings, "launch_rpm", 1800f);
             var finalDriveRatio = ReadFloat(settings, "final_drive", 3.5f);      
+            var reverseMaxSpeedKph = ReadFloat(settings, "reverse_max_speed", 35f);
+            var reversePowerFactor = ReadFloat(settings, "reverse_power_factor", 0.55f);
+            var reverseGearRatio = ReadFloat(settings, "reverse_gear_ratio", 3.2f);
             var powerFactor = ReadFloat(settings, "power_factor", 0.5f);
             var gearRatios = ReadFloatArray(settings, "gear_ratios");
             var brakeStrength = ReadFloat(settings, "brake_strength", 1.0f);     
@@ -236,6 +242,9 @@ namespace TopSpeed.Vehicles
                 RollingResistanceCoefficient = rollingResistance,
                 LaunchRpm = launchRpm,
                 FinalDriveRatio = finalDriveRatio,
+                ReverseMaxSpeedKph = reverseMaxSpeedKph,
+                ReversePowerFactor = reversePowerFactor,
+                ReverseGearRatio = reverseGearRatio,
                 TireCircumferenceM = tireCircumferenceM,
                 LateralGripCoefficient = lateralGrip,
                 HighSpeedStability = highSpeedStability,

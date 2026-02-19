@@ -23,6 +23,8 @@ namespace TopSpeed.Vehicles
         private const float AutoShiftHysteresis = 0.05f;
         private const float AutoShiftCooldownSeconds = 0.15f;
         private const float YieldSpeedKph = 10.0f;
+        private const float AiTurnApproachMeters = 80.0f;
+        private const float AiCruiseMinSpeedKph = 35.0f;
         private enum SurfaceKind
         {
             Asphalt,
@@ -101,7 +103,6 @@ namespace TopSpeed.Vehicles
         private int _shiftFreq;
         private int _gears;
 
-        private int _random;
         private int _prevFrequency;
         private int _frequency;
         private int _prevBrakeFrequency;
@@ -123,6 +124,10 @@ namespace TopSpeed.Vehicles
         private bool _horning;
         private bool _backfirePlayedAuto;
         private bool _networkBackfireActive;
+        private float _aiMistakeCooldown;
+        private float _aiMistakeRemaining;
+        private float _aiMistakeSteerBias;
+        private float _aiMistakeThrottleScale;
         private int _frame;
         private Vector3 _lastAudioPosition;
         private Vector3 _worldPosition;
@@ -189,8 +194,11 @@ namespace TopSpeed.Vehicles
             _speed = 0;
             _frame = 1;
             _finished = false;
-            _random = Algorithm.RandomInt(100);
             _networkBackfireActive = false;
+            _aiMistakeCooldown = 1.0f;
+            _aiMistakeRemaining = 0f;
+            _aiMistakeSteerBias = 0f;
+            _aiMistakeThrottleScale = 1f;
 
             var definition = VehicleLoader.LoadOfficial(vehicleIndex, track.Weather);
             _dynamicsModel = definition.DynamicsModel;
@@ -476,7 +484,7 @@ namespace TopSpeed.Vehicles
 
             if (_state == ComputerState.Running && _started())
             {
-                AI();
+                AI(elapsed);
 
                 _currentSurfaceTractionFactor = _surfaceTractionFactor;
                 _currentDeceleration = _deceleration;
@@ -890,133 +898,186 @@ namespace TopSpeed.Vehicles
             _soundBackfire?.Dispose();
         }
 
-        private void AI()
+        private void AI(float elapsed)
         {
             var road = _track.RoadAt(_mapState);
-            _relPos = (_positionX - road.Left) / (_laneWidth * 2.0f);
-            var nextRoad = road;
-            if (_track.NextRoad(_mapState, _speed, 0, out var upcomingRoad))
-                nextRoad = upcomingRoad;
-            _nextRelPos = (_positionX - nextRoad.Left) / (_laneWidth * 2.0f);
-            _currentThrottle = 100;
-            _currentSteering = 0;
+            var roadWidth = Math.Max(1f, road.Right - road.Left);
+            _laneWidth = roadWidth * 0.5f;
+            _relPos = (_positionX - road.Left) / roadWidth;
+            _nextRelPos = _relPos;
 
-            if (road.Type == TrackType.HairpinLeft || nextRoad.Type == TrackType.HairpinLeft ||
-                road.Type == TrackType.Left || nextRoad.Type == TrackType.Left ||
-                road.Type == TrackType.EasyLeft || nextRoad.Type == TrackType.EasyLeft ||
-                road.Type == TrackType.HardLeft || nextRoad.Type == TrackType.HardLeft)
+            _currentSteering = 0;
+            _currentThrottle = 100;
+            _currentBrake = 0;
+
+            var currentHeading = NormalizeDegrees(_dynamicsState.Yaw * 180.0f / (float)Math.PI);
+            var targetCruiseSpeed = Math.Max(AiCruiseMinSpeedKph, _topSpeed * ResolveDifficultyCruiseFactor());
+            var desiredSpeed = targetCruiseSpeed;
+            var inTurnWindow = false;
+            var guidanceActive = false;
+
+            if (_track.TryGetTurnGuidance(_worldPosition, currentHeading, out var guidance) && !guidance.Passed)
             {
-                switch (_difficulty)
+                var distanceToTurn = Math.Max(0f, guidance.DistanceMeters);
+                inTurnWindow = guidance.InTurnWindow;
+                var activationRange = AiTurnApproachMeters;
+                if (guidance.GuidanceRangeMeters > 0f)
+                    activationRange = Math.Min(activationRange, guidance.GuidanceRangeMeters);
+                guidanceActive = inTurnWindow || distanceToTurn <= activationRange;
+
+                if (guidanceActive)
                 {
-                    case 0:
-                        if (_relPos > 0.65f)
-                            _currentSteering = -100;
-                        break;
-                    case 1:
-                        if (_relPos > 0.55f)
-                            _currentSteering = -100;
-                        _currentThrottle = 66;
-                        break;
-                    case 2:
-                        if (_relPos > 0.55f)
-                            _currentSteering = -100;
-                        _currentThrottle = 33;
-                        break;
+                    var headingDelta = SignedDeltaDegrees(currentHeading, guidance.TurnHeadingDegrees);
+                    var absHeadingDelta = Math.Abs(headingDelta);
+                    var turnSeverity = Clamp(absHeadingDelta / 95f, 0f, 1f);
+
+                    if (inTurnWindow)
+                    {
+                        var inWindowCap = Lerp(65f, 28f, turnSeverity);
+                        desiredSpeed = Math.Min(desiredSpeed, inWindowCap);
+                    }
+                    else if (distanceToTurn <= AiTurnApproachMeters)
+                    {
+                        var approach = 1f - Clamp(distanceToTurn / AiTurnApproachMeters, 0f, 1f);
+                        var turnCap = Lerp(130f, 32f, turnSeverity);
+                        desiredSpeed = Math.Min(desiredSpeed, Lerp(targetCruiseSpeed, turnCap, approach));
+                    }
+
+                    var steerGain = inTurnWindow ? 1.25f : 0.9f;
+                    var steerCommand = (headingDelta / 45f) * 100f * steerGain;
+                    if (!inTurnWindow && distanceToTurn > 20f)
+                    {
+                        var laneCenterBias = Clamp((0.5f - _relPos) * 120f, -35f, 35f);
+                        steerCommand += laneCenterBias * 0.25f;
+                    }
+
+                    var steerLimit = _speed < 25f ? 45f : 100f;
+                    _currentSteering = (int)Math.Round(Clamp(steerCommand, -steerLimit, steerLimit));
                 }
             }
-            else if (road.Type == TrackType.HairpinRight || nextRoad.Type == TrackType.HairpinRight ||
-                     road.Type == TrackType.Right || nextRoad.Type == TrackType.Right ||
-                     road.Type == TrackType.EasyRight || nextRoad.Type == TrackType.EasyRight ||
-                     road.Type == TrackType.HardRight || nextRoad.Type == TrackType.HardRight)
+
+            if (!guidanceActive)
             {
-                switch (_difficulty)
+                var laneCenterError = 0.5f - _relPos;
+                var laneSteer = Clamp(laneCenterError * 200f, -100f, 100f);
+                _currentSteering = (int)Math.Round(laneSteer);
+            }
+
+            // Keep spacing from player to reduce bot-player collisions.
+            var toPlayer = new Vector2(-_diffX, -_diffY);
+            var forward2 = new Vector2(_worldForward.X, _worldForward.Z);
+            if (forward2.LengthSquared() < 0.0001f)
+            {
+                var headingRad = _dynamicsState.Yaw;
+                forward2 = new Vector2((float)Math.Sin(headingRad), (float)Math.Cos(headingRad));
+            }
+            if (forward2.LengthSquared() > 0.0001f)
+            {
+                forward2 = Vector2.Normalize(forward2);
+                var right2 = new Vector2(forward2.Y, -forward2.X);
+                var along = Vector2.Dot(toPlayer, forward2);
+                var side = Vector2.Dot(toPlayer, right2);
+                if (along > -2f && along < 14f && Math.Abs(side) < 4.5f)
                 {
-                    case 0:
-                        if (_relPos < 0.35f)
-                            _currentSteering = 100;
-                        break;
-                    case 1:
-                        if (_relPos < 0.45f)
-                            _currentSteering = 100;
-                        _currentThrottle = 66;
-                        break;
-                    case 2:
-                        if (_relPos < 0.45f)
-                            _currentSteering = 100;
-                        _currentThrottle = 33;
-                        break;
+                    desiredSpeed = Math.Min(desiredSpeed, Math.Max(8f, along * 1.5f));
+                    var avoidSteer = side >= 0f ? -20f : 20f;
+                    _currentSteering = (int)Math.Round(Clamp(_currentSteering + avoidSteer, -100f, 100f));
                 }
             }
-            else if (_relPos < 0.40f)
+
+            UpdateAiMistake(elapsed);
+            if (_aiMistakeRemaining > 0f)
             {
-                if (_relPos > 0.2f)
-                {
-                    switch (_difficulty)
-                    {
-                        case 0:
-                            _currentSteering = 100 - _random / 5;
-                            break;
-                        case 1:
-                            _currentSteering = 100 - _random / 10;
-                            break;
-                        case 2:
-                            _currentSteering = 100 - _random / 25;
-                            break;
-                    }
-                }
-                else
-                {
-                    switch (_difficulty)
-                    {
-                        case 0:
-                            _currentSteering = 100 - _random / 10;
-                            break;
-                        case 1:
-                            _currentSteering = 100 - _random / 20;
-                            _currentThrottle = 75;
-                            break;
-                        case 2:
-                            _currentSteering = 100;
-                            _currentThrottle = 50;
-                            break;
-                    }
-                }
+                var steer = _currentSteering + _aiMistakeSteerBias;
+                _currentSteering = (int)Math.Round(Clamp(steer, -100f, 100f));
+                desiredSpeed *= _aiMistakeThrottleScale;
             }
-            else if (_relPos > 0.6f)
+
+            desiredSpeed = Clamp(desiredSpeed, AiCruiseMinSpeedKph, _topSpeed);
+            var speedError = desiredSpeed - _speed;
+            if (speedError >= 6f)
             {
-                if (_relPos < 0.8f)
-                {
-                    switch (_difficulty)
-                    {
-                        case 0:
-                            _currentSteering = -100 + _random / 5;
-                            break;
-                        case 1:
-                            _currentSteering = -100 + _random / 10;
-                            break;
-                        case 2:
-                            _currentSteering = -100 + _random / 25;
-                            break;
-                    }
-                }
-                else
-                {
-                    switch (_difficulty)
-                    {
-                        case 0:
-                            _currentSteering = -100 + _random / 10;
-                            break;
-                        case 1:
-                            _currentSteering = -100 + _random / 20;
-                            _currentThrottle = 75;
-                            break;
-                        case 2:
-                            _currentSteering = -100;
-                            _currentThrottle = 50;
-                            break;
-                    }
-                }
+                _currentBrake = 0;
+                _currentThrottle = (int)Math.Round(Clamp(40f + (speedError * 2.5f), 45f, 100f));
             }
+            else if (speedError <= -2f)
+            {
+                _currentThrottle = 0;
+                var brakeBase = Clamp((-speedError * 3f) + (inTurnWindow ? 18f : 0f), 18f, 100f);
+                _currentBrake = -(int)Math.Round(brakeBase);
+            }
+            else
+            {
+                _currentBrake = 0;
+                _currentThrottle = (int)Math.Round(Clamp(30f + (speedError * 2f), 20f, 55f));
+            }
+        }
+
+        private void UpdateAiMistake(float elapsed)
+        {
+            _aiMistakeCooldown = Math.Max(0f, _aiMistakeCooldown - elapsed);
+            if (_aiMistakeRemaining > 0f)
+            {
+                _aiMistakeRemaining = Math.Max(0f, _aiMistakeRemaining - elapsed);
+                if (_aiMistakeRemaining <= 0f)
+                {
+                    _aiMistakeSteerBias = 0f;
+                    _aiMistakeThrottleScale = 1f;
+                }
+                return;
+            }
+
+            if (_aiMistakeCooldown > 0f)
+                return;
+
+            var triggerChance = _difficulty switch
+            {
+                0 => 45,
+                1 => 25,
+                _ => 10
+            };
+
+            if (Algorithm.RandomInt(100) < triggerChance)
+            {
+                var steerBiasBase = _difficulty switch
+                {
+                    0 => 30f,
+                    1 => 22f,
+                    _ => 14f
+                };
+                var steerBiasRange = _difficulty switch
+                {
+                    0 => 25f,
+                    1 => 18f,
+                    _ => 12f
+                };
+                var direction = Algorithm.RandomInt(2) == 0 ? -1f : 1f;
+                _aiMistakeSteerBias = direction * (steerBiasBase + ((Algorithm.RandomInt(100) / 100f) * steerBiasRange));
+                _aiMistakeThrottleScale = _difficulty switch
+                {
+                    0 => 0.6f + (Algorithm.RandomInt(50) / 100f),
+                    1 => 0.75f + (Algorithm.RandomInt(40) / 100f),
+                    _ => 0.85f + (Algorithm.RandomInt(25) / 100f)
+                };
+                _aiMistakeRemaining = 0.35f + (Algorithm.RandomInt(85) / 100f);
+            }
+
+            _aiMistakeCooldown = _difficulty switch
+            {
+                0 => 2.0f + (Algorithm.RandomInt(80) / 100f),
+                1 => 3.0f + (Algorithm.RandomInt(110) / 100f),
+                _ => 4.0f + (Algorithm.RandomInt(140) / 100f)
+            };
+        }
+
+        private float ResolveDifficultyCruiseFactor()
+        {
+            return _difficulty switch
+            {
+                0 => 0.70f,
+                1 => 0.80f,
+                _ => 0.90f
+            };
         }
 
         private void Horn()
@@ -1173,6 +1234,36 @@ namespace TopSpeed.Vehicles
                 return;
             sound.SetPosition(position);
             sound.SetVelocity(velocity);
+        }
+
+        private static float Clamp(float value, float min, float max)
+        {
+            if (value < min)
+                return min;
+            if (value > max)
+                return max;
+            return value;
+        }
+
+        private static float Lerp(float a, float b, float t)
+        {
+            return a + ((b - a) * Clamp(t, 0f, 1f));
+        }
+
+        private static float NormalizeDegrees(float degrees)
+        {
+            degrees %= 360f;
+            if (degrees < 0f)
+                degrees += 360f;
+            return degrees;
+        }
+
+        private static float SignedDeltaDegrees(float current, float target)
+        {
+            var delta = NormalizeDegrees(target - current);
+            if (delta > 180f)
+                delta -= 360f;
+            return delta;
         }
 
         private AudioSourceHandle CreateRequiredSound(string? path, string label, bool looped = false)

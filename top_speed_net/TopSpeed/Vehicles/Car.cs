@@ -27,6 +27,7 @@ namespace TopSpeed.Vehicles
         private const float AutoShiftHysteresis = 0.05f;
         private const float AutoShiftCooldownSeconds = 0.15f;
         private const float YieldSpeedKph = 10.0f;
+        private const float EngineGuidancePanDistanceM = 10.0f;
         private static bool s_stickReleased;
         private enum SurfaceKind
         {
@@ -58,6 +59,7 @@ namespace TopSpeed.Vehicles
         private float _positionY;
         private MapMovementState _mapState;
         private bool _manualTransmission;
+        private bool _reverseActive;
         private bool _backfirePlayed;
         private bool _backfirePlayedAuto;
         private int _hasWipers;
@@ -81,6 +83,9 @@ namespace TopSpeed.Vehicles
         private float _idleRpm;
         private float _revLimiter;
         private float _finalDriveRatio;
+        private float _reverseMaxSpeedKph;
+        private float _reversePowerFactor;
+        private float _reverseGearRatio;
         private float _powerFactor;
         private VehiclePowertrainParameters _powertrainParams;
         private float _peakTorqueNm;
@@ -119,6 +124,7 @@ namespace TopSpeed.Vehicles
         private float _laneWidth;
         private float _relPos;
         private int _panPos;
+        private int? _enginePanOverride;
         private int _currentSteering;
         private int _currentThrottle;
         private int _currentBrake;
@@ -192,6 +198,7 @@ namespace TopSpeed.Vehicles
             _gear = 1;
             _state = CarState.Stopped;
             _manualTransmission = false;
+            _reverseActive = false;
             _hasWipers = 0;
             _switchingGear = 0;
             _speed = 0;
@@ -206,6 +213,7 @@ namespace TopSpeed.Vehicles
             _laneWidth = track.LaneWidth * 2;
             _relPos = 0f;
             _panPos = 0;
+            _enginePanOverride = null;
             _currentSteering = 0;
             _currentThrottle = 0;
             _currentBrake = 0;
@@ -243,6 +251,9 @@ namespace TopSpeed.Vehicles
             _idleRpm = Math.Max(0f, SanitizeFinite(definition.IdleRpm, 0f));
             _revLimiter = Math.Max(_idleRpm, SanitizeFinite(definition.RevLimiter, _idleRpm));
             _finalDriveRatio = Math.Max(0.1f, SanitizeFinite(definition.FinalDriveRatio, 0.1f));
+            _reverseMaxSpeedKph = Math.Max(5f, SanitizeFinite(definition.ReverseMaxSpeedKph, 35f));
+            _reversePowerFactor = Math.Max(0.1f, SanitizeFinite(definition.ReversePowerFactor, 0.55f));
+            _reverseGearRatio = Math.Max(0.1f, SanitizeFinite(definition.ReverseGearRatio, 3.2f));
             _powerFactor = Math.Max(0.1f, SanitizeFinite(definition.PowerFactor, 0.1f));
             _peakTorqueNm = Math.Max(0f, SanitizeFinite(definition.PeakTorqueNm, 0f));
             _peakTorqueRpm = Math.Max(_idleRpm + 100f, SanitizeFinite(definition.PeakTorqueRpm, _idleRpm + 100f));
@@ -395,7 +406,7 @@ namespace TopSpeed.Vehicles
         public Vector3 WorldUp => _worldUp;
         public Vector3 WorldVelocity => _worldVelocity;
         public int Frequency => _frequency;
-        public int Gear => _gear;
+        public int Gear => _reverseActive ? -1 : _gear;
         public bool ManualTransmission
         {
             get => _manualTransmission;
@@ -481,6 +492,17 @@ namespace TopSpeed.Vehicles
             _worldPosition = pose.Position;
         }
 
+        public void SetEnginePanOverride(int? pan)
+        {
+            if (!pan.HasValue)
+            {
+                _enginePanOverride = null;
+                return;
+            }
+
+            _enginePanOverride = ClampPan(pan.Value);
+        }
+
         public void FinalizeCar()
         {
             _soundEngine.Stop();
@@ -515,7 +537,9 @@ namespace TopSpeed.Vehicles
             _prevSurfaceFrequency = 0;
             _surfaceFrequency = 0;
             _switchingGear = 0;
+            _reverseActive = false;
             _throttleVolume = 0.0f;
+            _enginePanOverride = null;
             SetSurfaceSoundFrequency(_surfaceFrequency);
             _state = CarState.Starting;
             _listener?.OnStart();
@@ -553,7 +577,9 @@ namespace TopSpeed.Vehicles
             _prevSurfaceFrequency = 0;
             _surfaceFrequency = 0;
             _switchingGear = 0;
+            _reverseActive = false;
             _throttleVolume = 0.0f;
+            _enginePanOverride = null;
             SetSurfaceSoundFrequency(_surfaceFrequency);
             _state = CarState.Starting;
             _listener?.OnStart();
@@ -569,10 +595,12 @@ namespace TopSpeed.Vehicles
             _soundCrash.Restart(loop: false);
             _soundEngine.Stop();
             _soundEngine.SeekToStart();
+            _soundEngine.SetPanPercent(0);
             if (_soundThrottle != null)
             {
                 _soundThrottle.Stop();
                 _soundThrottle.SeekToStart();
+                _soundThrottle.SetPanPercent(0);
             }
             _soundStart.SetPanPercent(0);
             StopSurfaceSound();
@@ -592,6 +620,8 @@ namespace TopSpeed.Vehicles
             _soundHorn.SetPanPercent(0);
             _gear = 1;
             _switchingGear = 0;
+            _reverseActive = false;
+            _enginePanOverride = null;
             _state = CarState.Crashing;
             // Transition to Crashed state after crash animation completes (player must manually restart)
             PushEvent(CarEventType.CrashComplete, _soundCrash.GetLengthSeconds() + 1.25f);
@@ -739,8 +769,19 @@ namespace TopSpeed.Vehicles
                 _currentSteering = steeringCommand;
                 _currentThrottle = _input.GetThrottle();
                 _currentBrake = _input.GetBrake();
+                var reverseRequested = _input.GetReverseRequested();
                 var gearUp = _input.GetGearUp();
                 var gearDown = _input.GetGearDown();
+
+                if (!reverseRequested && _currentThrottle > 0 && _currentBrake < 0)
+                {
+                    // When both pedals are held, treat it as braking to avoid contradictory commands.
+                    _currentThrottle = 0;
+                }
+                else if (reverseRequested && _currentThrottle <= 0)
+                {
+                    _currentThrottle = 100;
+                }
 
                 _currentSurfaceTractionFactor = _surfaceTractionFactor;
                 _currentDeceleration = _deceleration;
@@ -799,6 +840,25 @@ namespace TopSpeed.Vehicles
                     }
                 }
 
+                if (reverseRequested)
+                {
+                    if (_dynamicsState.VelLong > 0.75f)
+                    {
+                        _reverseActive = false;
+                        _currentThrottle = 0;
+                        _currentBrake = -100;
+                    }
+                    else
+                    {
+                        _reverseActive = true;
+                        _currentBrake = 0;
+                    }
+                }
+                else
+                {
+                    _reverseActive = false;
+                }
+
                 if (_soundThrottle != null)
                 {
                     if (_soundEngine.IsPlaying)
@@ -847,13 +907,12 @@ namespace TopSpeed.Vehicles
                     }
                 }
 
-                _thrust = _currentThrottle;
-                if (_currentThrottle == 0)
-                    _thrust = _currentBrake;
-                else if (_currentBrake == 0)
+                if (_currentThrottle > 0)
                     _thrust = _currentThrottle;
-                else if (-_currentBrake > _currentThrottle)
+                else if (_currentBrake < 0)
                     _thrust = _currentBrake;
+                else
+                    _thrust = 0f;
 
                 var throttle = Math.Max(0f, Math.Min(100f, _currentThrottle)) / 100f;
                 var brakeInput = Math.Max(0f, Math.Min(100f, -_currentBrake)) / 100f;
@@ -862,16 +921,26 @@ namespace TopSpeed.Vehicles
                     : 1.0f;
 
                 var speedForwardMps = Math.Abs(_dynamicsState.VelLong);
+                var reverseSpeedKph = Math.Max(0f, -_dynamicsState.VelLong * 3.6f);
                 var driveForce = 0f;
                 if (_thrust > 10)
                 {
-                    var driveRpm = VehiclePowertrainMath.CalculateDriveRpm(_engine, _gear, speedForwardMps, throttle, _powertrainParams);
-                    var engineTorque = VehiclePowertrainMath.CalculateEngineTorqueNm(driveRpm, _powertrainParams) * throttle * _powerFactor;
-                    var gearRatio = _engine.GetGearRatio(_gear);
+                    var driveGear = _reverseActive ? 1 : _gear;
+                    var driveRpm = VehiclePowertrainMath.CalculateDriveRpm(_engine, driveGear, speedForwardMps, throttle, _powertrainParams);
+                    var torqueFactor = _reverseActive ? _reversePowerFactor : _powerFactor;
+                    var engineTorque = VehiclePowertrainMath.CalculateEngineTorqueNm(driveRpm, _powertrainParams) * throttle * torqueFactor;
+                    var gearRatio = _reverseActive ? _reverseGearRatio : _engine.GetGearRatio(_gear);
                     var wheelTorque = engineTorque * gearRatio * _finalDriveRatio * _drivetrainEfficiency;
                     driveForce = wheelTorque / _wheelRadiusM;
+                    if (_reverseActive)
+                    {
+                        if (reverseSpeedKph >= _reverseMaxSpeedKph)
+                            driveForce = 0f;
+                        else
+                            driveForce = -driveForce;
+                    }
                     driveForce *= (_factor1 / 100f);
-                    _lastDriveRpm = VehiclePowertrainMath.CalculateDriveRpm(_engine, _gear, speedForwardMps, throttle, _powertrainParams);
+                    _lastDriveRpm = VehiclePowertrainMath.CalculateDriveRpm(_engine, driveGear, speedForwardMps, throttle, _powertrainParams);
                     if (_backfirePlayed)
                         _backfirePlayed = false;
                 }
@@ -886,7 +955,7 @@ namespace TopSpeed.Vehicles
                     : 0f;
                 var engineBrakeForce = throttle > 0.05f
                     ? 0f
-                    : _massKg * (VehiclePowertrainMath.CalculateEngineBrakingDecel(_engine, _gear, surfaceDecelMod, _powertrainParams) / 3.6f);
+                    : _massKg * (VehiclePowertrainMath.CalculateEngineBrakingDecel(_engine, _reverseActive ? 1 : _gear, surfaceDecelMod, _powertrainParams) / 3.6f);
 
                 var inputs = new VehicleDynamicsInputs
                 {
@@ -917,17 +986,18 @@ namespace TopSpeed.Vehicles
                 var speedForGearKph = Math.Abs(_dynamicsState.VelLong) * 3.6f;
                 if (_manualTransmission)
                 {
-                    var gearMax = _engine.GetGearMaxSpeedKmh(_gear);
+                    var gearMax = _reverseActive ? _reverseMaxSpeedKph : _engine.GetGearMaxSpeedKmh(_gear);
                     if (speedForGearKph > gearMax)
                         speedForGearKph = gearMax;
                 }
                 else
                 {
-                    UpdateAutomaticGear(elapsed, speedForGearKph / 3.6f, throttle, surfaceTractionMod, longitudinalGripFactor);
+                    if (!_reverseActive)
+                        UpdateAutomaticGear(elapsed, speedForGearKph / 3.6f, throttle, surfaceTractionMod, longitudinalGripFactor);
                 }
 
                 // Update engine model for RPM and distance tracking (reporting only)
-                _engine.SyncFromSpeed(speedForGearKph, _gear, elapsed, _currentThrottle);
+                _engine.SyncFromSpeed(speedForGearKph, _reverseActive ? 1 : _gear, elapsed, _currentThrottle);
                 if (_lastDriveRpm > 0f && _lastDriveRpm > _engine.Rpm)
                     _engine.OverrideRpm(_lastDriveRpm);
 
@@ -962,7 +1032,7 @@ namespace TopSpeed.Vehicles
                     SetSurfaceSoundVolume(90);
                 }
                 var headingDegrees = MapMovement.HeadingFromYaw(_dynamicsState.Yaw);
-                var distanceMeters = (_speed / 3.6f) * elapsed;
+                var distanceMeters = _dynamicsState.VelLong * elapsed;
                 var previousPosition = _worldPosition;
 
                 var yaw = _dynamicsState.Yaw;
@@ -1014,11 +1084,13 @@ namespace TopSpeed.Vehicles
                 if (canMove)
                 {
                     if (blockedByMesh || hasSurface)
-                        distanceMeters = Vector3.Distance(previousPosition, nextPosition);
+                        distanceMeters = Vector3.Dot(nextPosition - previousPosition, forward);
                     _worldPosition = nextPosition;
                     _mapState.WorldPosition = _worldPosition;
                     _mapState.HeadingDegrees = headingDegrees;
                     _mapState.DistanceMeters += distanceMeters;
+                    if (_mapState.DistanceMeters < 0f)
+                        _mapState.DistanceMeters = 0f;
                     ApplySectorSpeedRules(nextPosition, headingDegrees);
                 }
                 else
@@ -1342,7 +1414,7 @@ namespace TopSpeed.Vehicles
 
         private void UpdateEngineFreq()
         {
-            var gearForSound = _gear;
+            var gearForSound = _reverseActive ? 1 : _gear;
             if (gearForSound > _gears)
                 gearForSound = _gears;
             if (gearForSound < 1)
@@ -1353,10 +1425,11 @@ namespace TopSpeed.Vehicles
 
         private void UpdateEngineFreqManual()
         {
-            var gearRange = _engine.GetGearRangeKmh(_gear);
-            var gearMin = _engine.GetGearMinSpeedKmh(_gear);
+            var activeGear = _reverseActive ? 1 : _gear;
+            var gearRange = _engine.GetGearRangeKmh(activeGear);
+            var gearMin = _engine.GetGearMinSpeedKmh(activeGear);
 
-            if (_gear == 1)
+            if (activeGear == 1)
             {
                 // Gear 1: frequency scales with speed relative to gear range   
                 if (_speed < (4.0f / 3.0f) * gearRange)
@@ -1540,11 +1613,19 @@ namespace TopSpeed.Vehicles
 
         private void ApplyPan(int pan)
         {
+            var enginePan = ResolveEnginePan(pan);
+            _soundEngine.SetPanPercent(enginePan);
+            _soundThrottle?.SetPanPercent(enginePan);
             _soundHorn.SetPanPercent(pan);
             _soundBrake.SetPanPercent(pan);
             _soundBackfire?.SetPanPercent(pan);
             _soundWipers?.SetPanPercent(pan);
             SetSurfaceSoundPan(pan);
+        }
+
+        private int ResolveEnginePan(int fallbackPan)
+        {
+            return _enginePanOverride.HasValue ? _enginePanOverride.Value : fallbackPan;
         }
 
         private static int CalculatePan(float relPos)
@@ -1553,6 +1634,15 @@ namespace TopSpeed.Vehicles
             if (pan < -100.0f) pan = -100.0f;
             if (pan > 100.0f) pan = 100.0f;
             return (int)pan;
+        }
+
+        private static int ClampPan(int pan)
+        {
+            if (pan < -100)
+                return -100;
+            if (pan > 100)
+                return 100;
+            return pan;
         }
 
         private static float NormalizeDegrees(float degrees)
@@ -1697,6 +1787,19 @@ namespace TopSpeed.Vehicles
             var hornUp = up * _hornHeightM;
 
             var enginePos = worldPos + (forward * engineOffsetZ) + engineUp;
+            if (_enginePanOverride.HasValue)
+            {
+                var pan = ClampPan(_enginePanOverride.Value);
+                var angleRadians = (pan / 100f) * ((float)Math.PI * 0.5f);
+                var panDirection = (forward * (float)Math.Cos(angleRadians)) + (rightVec * (float)Math.Sin(angleRadians));
+                if (panDirection.LengthSquared() > 0.0001f)
+                    panDirection = Vector3.Normalize(panDirection);
+                else
+                    panDirection = forward;
+
+                var cueDistance = Math.Max(_lengthM * 0.6f, EngineGuidancePanDistanceM);
+                enginePos = worldPos + (panDirection * cueDistance) + engineUp;
+            }
             var hornPos = worldPos + (forward * engineOffsetZ) + hornUp;
             var brakePos = worldPos + (forward * brakeOffsetZ) + vehicleUp;
             var vehiclePos = worldPos + vehicleUp;

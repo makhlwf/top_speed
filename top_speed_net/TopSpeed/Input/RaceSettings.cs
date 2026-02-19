@@ -121,6 +121,7 @@ namespace TopSpeed.Input
         public bool MenuWrapNavigation { get; set; }
         public string MenuSoundPreset { get; set; } = "1";
         public bool MenuNavigatePanning { get; set; }
+        public bool PanInversion { get; set; }
 
         public bool UseJoystick
         {
@@ -201,6 +202,7 @@ namespace TopSpeed.Input
             MenuWrapNavigation = true;
             MenuSoundPreset = "1";
             MenuNavigatePanning = false;
+            PanInversion = false;
         }
     }
 }

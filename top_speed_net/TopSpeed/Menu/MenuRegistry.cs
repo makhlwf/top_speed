@@ -530,6 +530,11 @@ namespace TopSpeed.Menu
                     () => (int)_settings.Difficulty,
                     value => _actions.UpdateSetting(() => _settings.Difficulty = (RaceDifficulty)value),
                     hint: "Choose the difficulty level for single races. Use LEFT or RIGHT to change."),
+                new CheckBox(
+                    "Pan inversion",
+                    () => _settings.PanInversion,
+                    value => _actions.UpdateSetting(() => _settings.PanInversion = value),
+                    hint: "When checked, engine pan follows nearby walls. When unchecked, engine pan points toward the open direction. Press ENTER to toggle."),
                 BackItem()
             };
             return _menu.CreateMenu("options_race", items);

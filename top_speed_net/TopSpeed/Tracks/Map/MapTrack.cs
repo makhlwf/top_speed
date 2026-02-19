@@ -1941,7 +1941,9 @@ namespace TopSpeed.Tracks.Map
             if (!IsWithinTrack(startWorld))
                 return false;
 
-            var stepSize = Math.Max(0.1f, WallProbeStepMeters);
+            var baseStepSize = Math.Max(0.1f, WallProbeStepMeters);
+            // Keep long-range boundary scans affordable while preserving near-range precision.
+            var stepSize = Math.Max(baseStepSize, maxDistance / 900f);
             var steps = Math.Max(1, (int)Math.Ceiling(maxDistance / stepSize));
             var step = maxDistance / steps;
             var pos = origin;

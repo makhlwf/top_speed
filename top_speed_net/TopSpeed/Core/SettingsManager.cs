@@ -175,6 +175,7 @@ namespace TopSpeed.Core
             AppendValue(lines, (int)settings.KeyReportHeading);
             AppendValue(lines, (int)settings.JoystickReportSurface);
             AppendValue(lines, (int)settings.KeyReportSurface);
+            AppendValue(lines, settings.PanInversion ? 1 : 0);
 
             try
             {
@@ -266,6 +267,7 @@ namespace TopSpeed.Core
             if (TryNext(values, ref index, out value)) settings.KeyReportHeading = AsKey(value, settings.KeyReportHeading);
             if (TryNext(values, ref index, out value)) settings.JoystickReportSurface = AsJoystick(value, settings.JoystickReportSurface);
             if (TryNext(values, ref index, out value)) settings.KeyReportSurface = AsKey(value, settings.KeyReportSurface);
+            if (TryNext(values, ref index, out value)) settings.PanInversion = value != 0;
         }
 
         private static int ClampPort(int value, int fallback)

@@ -27,6 +27,17 @@ namespace TopSpeed.Race
         protected const float TurnGuidanceRangeMeters = 60.0f;
         protected const float TurnGuidanceCooldownSeconds = 4.0f;
         protected const float TurnGuidanceNowThresholdMeters = 5.0f;
+        private static readonly float[] WallOpenProbeAnglesDegrees =
+        {
+            0f,
+            -15f, 15f,
+            -30f, 30f,
+            -45f, 45f,
+            -60f, 60f,
+            -75f, 75f,
+            -90f, 90f
+        };
+        protected const float RivalCalloutRangeMeters = 120.0f;
         protected const float SteerAlignToleranceDegrees = 2.0f;
         protected const float SteerHoldStepDegrees = 10.0f;
         protected const float SteerAlignGain = 0.6f;
@@ -58,7 +69,7 @@ namespace TopSpeed.Race
         private const float WallPingTtcCriticalSeconds = 2.0f;
         private const float WallPingMinClosingSpeedMps = 0.5f;
         private const float WallPingDetectMinRangeMeters = 60.0f;
-        private const float WallPingDetectMaxRangeMeters = 400.0f;
+        private const float WallPingDetectMaxRangeMeters = 1500.0f;
         private const float WallPingDetectBufferMeters = 15.0f;
         private const float WallPingMinIntervalSeconds = 0.15f;
         private const float WallPingMaxIntervalSeconds = 2.0f;
@@ -119,15 +130,38 @@ namespace TopSpeed.Race
         protected float _sayTimeLength;
         protected float _speakTime;
         protected int _unkeyQueue;
+        private const float LapValidationMinProgressFraction = 0.55f;
+        private const float LapValidationMinProgressMeters = 40.0f;
 
-        protected bool UpdateLapFromFinishArea(Vector3 worldPosition, ref bool wasInside)
+        protected bool UpdateLapFromFinishArea(
+            Vector3 worldPosition,
+            ref bool wasInside,
+            float distanceMeters,
+            ref float lastLapTriggerDistanceMeters)
         {
             if (!_track.HasFinishArea)
                 return false;
+
             var inside = _track.IsInsideFinishArea(worldPosition);
             var crossed = inside && !wasInside;
             wasInside = inside;
-            return crossed;
+            if (!crossed)
+                return false;
+
+            var minProgressMeters = GetLapValidationProgressMeters();
+            var progressSinceLast = distanceMeters - lastLapTriggerDistanceMeters;
+            if (progressSinceLast < minProgressMeters)
+                return false;
+
+            lastLapTriggerDistanceMeters = distanceMeters;
+            return true;
+        }
+
+        protected float GetLapValidationProgressMeters()
+        {
+            if (_track.Length > 0f)
+                return Math.Max(LapValidationMinProgressMeters, _track.Length * LapValidationMinProgressFraction);
+            return LapValidationMinProgressMeters;
         }
         protected TrackRoad _currentRoad;
         protected long _oldStopwatchMs;
@@ -385,7 +419,10 @@ namespace TopSpeed.Race
             {
                 _acceptCurrentRaceInfo = false;
                 var gear = _car.Gear;
-                SpeakText($"Gear {gear}");
+                if (gear < 0)
+                    SpeakText("Reverse");
+                else
+                    SpeakText($"Gear {gear}");
                 PushEvent(RaceEventType.AcceptCurrentRaceInfo, 0.5f);
             }
         }
@@ -1076,7 +1113,10 @@ namespace TopSpeed.Race
         protected void UpdateWallPing(float elapsed)
         {
             if (_soundWallPing == null)
+            {
+                _car.SetEnginePanOverride(null);
                 return;
+            }
 
             if (!_started || _finished || _car.State != CarState.Running)
             {
@@ -1147,6 +1187,11 @@ namespace TopSpeed.Race
                 cuePosition = carPosition + (toHitDirection * cueDistance);
             }
 
+            var wallPan = CalculateWallPan(toHit, forward, _car.WorldUp);
+            var openPan = CalculateOpenDirectionPan(carPosition, forward, _car.WorldUp, detectRange);
+            var enginePan = _settings.PanInversion ? wallPan : openPan;
+            _car.SetEnginePanOverride(enginePan);
+
             _soundWallPing.SetPosition(AudioWorld.ToMeters(cuePosition));
             _soundWallPing.SetVelocity(Vector3.Zero);
             _soundWallPing.SetVolume(volume);
@@ -1190,8 +1235,95 @@ namespace TopSpeed.Race
         private void ResetWallPing()
         {
             _wallPingCooldown = 0f;
+            _car.SetEnginePanOverride(null);
             if (_soundWallPing != null && _soundWallPing.IsPlaying)
                 _soundWallPing.Stop();
+        }
+
+        private static int CalculateWallPan(Vector3 toWall, Vector3 forward, Vector3 up)
+        {
+            if (toWall.LengthSquared() < 0.0001f || forward.LengthSquared() < 0.0001f)
+                return 0;
+
+            var upAxis = up.LengthSquared() < 0.0001f
+                ? Vector3.UnitY
+                : Vector3.Normalize(up);
+
+            var planarForward = forward - (upAxis * Vector3.Dot(forward, upAxis));
+            if (planarForward.LengthSquared() < 0.0001f)
+                planarForward = new Vector3(forward.X, 0f, forward.Z);
+            if (planarForward.LengthSquared() < 0.0001f)
+                planarForward = new Vector3(0f, 0f, 1f);
+            planarForward = Vector3.Normalize(planarForward);
+
+            var planarToWall = toWall - (upAxis * Vector3.Dot(toWall, upAxis));
+            if (planarToWall.LengthSquared() < 0.0001f)
+                planarToWall = new Vector3(toWall.X, 0f, toWall.Z);
+            if (planarToWall.LengthSquared() < 0.0001f)
+                return 0;
+            planarToWall = Vector3.Normalize(planarToWall);
+
+            var right = Vector3.Cross(upAxis, planarForward);
+            if (right.LengthSquared() < 0.0001f)
+                right = Vector3.UnitX;
+            else
+                right = Vector3.Normalize(right);
+
+            var forwardDot = Clamp(Vector3.Dot(planarToWall, planarForward), -1f, 1f);
+            var rightDot = Clamp(Vector3.Dot(planarToWall, right), -1f, 1f);
+            var signedAngleDegrees = (float)(Math.Atan2(rightDot, forwardDot) * (180.0 / Math.PI));
+            var clampedAngle = Clamp(signedAngleDegrees, -90f, 90f);
+            var pan = (int)Math.Round((clampedAngle / 90f) * 100f);
+            return Math.Max(-100, Math.Min(100, pan));
+        }
+
+        private int CalculateOpenDirectionPan(Vector3 worldPosition, Vector3 forward, Vector3 up, float detectRange)
+        {
+            if (forward.LengthSquared() < 0.0001f || detectRange <= 0.001f)
+                return 0;
+
+            var upAxis = up.LengthSquared() < 0.0001f
+                ? Vector3.UnitY
+                : Vector3.Normalize(up);
+            var planarForward = forward - (upAxis * Vector3.Dot(forward, upAxis));
+            if (planarForward.LengthSquared() < 0.0001f)
+                planarForward = new Vector3(forward.X, 0f, forward.Z);
+            if (planarForward.LengthSquared() < 0.0001f)
+                planarForward = new Vector3(0f, 0f, 1f);
+            planarForward = Vector3.Normalize(planarForward);
+
+            var right = Vector3.Cross(upAxis, planarForward);
+            if (right.LengthSquared() < 0.0001f)
+                right = Vector3.UnitX;
+            else
+                right = Vector3.Normalize(right);
+
+            var bestAngle = 0f;
+            var bestClearance = float.MinValue;
+            foreach (var angle in WallOpenProbeAnglesDegrees)
+            {
+                var radians = angle * ((float)Math.PI / 180f);
+                var direction = (planarForward * (float)Math.Cos(radians)) + (right * (float)Math.Sin(radians));
+                if (direction.LengthSquared() < 0.0001f)
+                    continue;
+                direction = Vector3.Normalize(direction);
+
+                var hasHit = _track.TryGetWallProximity(worldPosition, direction, detectRange, out _, out var distance, out _, out _);
+                var clearance = hasHit ? distance : detectRange;
+                if (clearance > bestClearance + 0.05f)
+                {
+                    bestClearance = clearance;
+                    bestAngle = angle;
+                    continue;
+                }
+
+                if (Math.Abs(clearance - bestClearance) <= 0.05f && Math.Abs(angle) < Math.Abs(bestAngle))
+                    bestAngle = angle;
+            }
+
+            var clampedAngle = Clamp(bestAngle, -90f, 90f);
+            var pan = (int)Math.Round((clampedAngle / 90f) * 100f);
+            return Math.Max(-100, Math.Min(100, pan));
         }
 
         protected float GetRelativeTrackDelta(float otherDistanceMeters)

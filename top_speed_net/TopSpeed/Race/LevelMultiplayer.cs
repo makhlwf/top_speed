@@ -56,6 +56,7 @@ namespace TopSpeed.Race
         private PlayerState _currentState;
         private StartGridLayout? _startGrid;
         private bool _wasInFinish;
+        private float _lastLapTriggerDistance;
 
         public LevelMultiplayer(
             AudioManager audio,
@@ -101,6 +102,7 @@ namespace TopSpeed.Race
                 _startGrid = layout;
             var startPosition = CalculateStartPosition(_playerNumber, _car.WidthM, rowSpacing);
             _car.SetPosition(startPosition.X, startPosition.Z);
+            _lastLapTriggerDistance = _car.DistanceMeters;
             if (_track.HasFinishArea)
                 _wasInFinish = _track.IsInsideFinishArea(_car.WorldPosition);
 
@@ -170,7 +172,8 @@ namespace TopSpeed.Race
                     case RaceEventType.RaceStart:
                         _raceTime = 0;
                         _stopwatch.Restart();
-                        _lap = 0;
+                        _lap = 1;
+                        _lastLapTriggerDistance = _car.DistanceMeters;
                         _started = true;
                         if (!_sentStart)
                         {
@@ -220,7 +223,7 @@ namespace TopSpeed.Race
 
             if (_track.HasFinishArea)
             {
-                if (UpdateLapFromFinishArea(_car.WorldPosition, ref _wasInFinish))
+                if (UpdateLapFromFinishArea(_car.WorldPosition, ref _wasInFinish, _car.DistanceMeters, ref _lastLapTriggerDistance))
                 {
                     _lap++;
                     if (_lap > _nrOfLaps)
@@ -522,30 +525,30 @@ namespace TopSpeed.Race
                 return;
             }
 
-            if (inFrontDist < onTailDist)
+            var hasFront = inFrontNumber != -1 && inFrontDist <= RivalCalloutRangeMeters;
+            var hasTail = onTailNumber != -1 && onTailDist <= RivalCalloutRangeMeters;
+            if (hasFront && (!hasTail || inFrontDist < onTailDist))
             {
-                if (inFrontNumber != -1 && inFrontNumber < _soundPlayerNr.Length)
-                {
-                    Speak(_soundPlayerNr[inFrontNumber]!, true);
-                    var sound = _randomSounds[(int)RandomSound.Front][Algorithm.RandomInt(_totalRandomSounds[(int)RandomSound.Front])];
-                    if (sound != null)
-                        Speak(sound, true);
+                if (inFrontNumber >= _soundPlayerNr.Length)
                     return;
-                }
+                Speak(_soundPlayerNr[inFrontNumber]!, true);
+                var sound = _randomSounds[(int)RandomSound.Front][Algorithm.RandomInt(_totalRandomSounds[(int)RandomSound.Front])];
+                if (sound != null)
+                    Speak(sound, true);
+                return;
             }
-            else
+            if (hasTail)
             {
-                if (onTailNumber != -1 && onTailNumber < _soundPlayerNr.Length)
-                {
-                    Speak(_soundPlayerNr[onTailNumber]!, true);
-                    var sound = _randomSounds[(int)RandomSound.Tail][Algorithm.RandomInt(_totalRandomSounds[(int)RandomSound.Tail])];
-                    if (sound != null)
-                        Speak(sound, true);
+                if (onTailNumber >= _soundPlayerNr.Length)
                     return;
-                }
+                Speak(_soundPlayerNr[onTailNumber]!, true);
+                var sound = _randomSounds[(int)RandomSound.Tail][Algorithm.RandomInt(_totalRandomSounds[(int)RandomSound.Tail])];
+                if (sound != null)
+                    Speak(sound, true);
+                return;
             }
 
-            if (inFrontNumber == -1 && onTailNumber == -1 && !automatic)
+            if (!automatic)
             {
                 if (position - 1 < _soundPosition.Length)
                     Speak(_soundPosition[position - 1]!, true);

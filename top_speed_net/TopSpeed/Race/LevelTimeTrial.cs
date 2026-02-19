@@ -16,6 +16,7 @@ namespace TopSpeed.Race
         private const string HighscoreFile = "highscore.cfg";
         private bool _pauseKeyReleased = true;
         private bool _wasInFinish;
+        private float _lastLapTriggerDistance;
 
         public LevelTimeTrial(
             AudioManager audio,
@@ -39,6 +40,7 @@ namespace TopSpeed.Race
             _soundPause = LoadLanguageSound("race\\pause");
             _soundUnpause = LoadLanguageSound("race\\unpause");
             _soundTheme4.SetVolumePercent((int)Math.Round(_settings.MusicVolume * 100f));
+            _lastLapTriggerDistance = _car.DistanceMeters;
             if (_track.HasFinishArea)
                 _wasInFinish = _track.IsInsideFinishArea(_car.WorldPosition);
         }
@@ -68,7 +70,8 @@ namespace TopSpeed.Race
                     case RaceEventType.RaceStart:
                         _raceTime = 0;
                         _stopwatch.Restart();
-                        _lap = 0;
+                        _lap = 1;
+                        _lastLapTriggerDistance = _car.DistanceMeters;
                         _started = true;
                         break;
                     case RaceEventType.RaceFinish:
@@ -125,7 +128,7 @@ namespace TopSpeed.Race
 
             if (_track.HasFinishArea)
             {
-                if (UpdateLapFromFinishArea(_car.WorldPosition, ref _wasInFinish))
+                if (UpdateLapFromFinishArea(_car.WorldPosition, ref _wasInFinish, _car.DistanceMeters, ref _lastLapTriggerDistance))
                 {
                     _lap++;
                     if (_lap > _nrOfLaps)
