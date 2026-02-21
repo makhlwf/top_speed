@@ -106,7 +106,18 @@ namespace TopSpeed.Core
             var root = Path.Combine(AssetPaths.Root, "Tracks");
             if (!Directory.Exists(root))
                 return Array.Empty<string>();
-            return Directory.EnumerateFiles(root, "track.tsm", SearchOption.AllDirectories);
+
+            var trackFiles = new List<string>();
+            foreach (var directory in Directory.EnumerateDirectories(root, "*", SearchOption.AllDirectories))
+            {
+                var firstTrack = Directory.EnumerateFiles(directory, "*.tsm", SearchOption.TopDirectoryOnly)
+                    .OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase)
+                    .FirstOrDefault();
+                if (!string.IsNullOrWhiteSpace(firstTrack))
+                    trackFiles.Add(firstTrack);
+            }
+
+            return trackFiles;
         }
 
         public IReadOnlyList<TrackInfo> GetCustomTrackInfo()

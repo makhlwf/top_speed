@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace TopSpeed.Data
 {
@@ -14,9 +15,9 @@ namespace TopSpeed.Data
 
             if (Directory.Exists(trimmed))
             {
-                var fromDirectory = Path.Combine(trimmed, "track.tsm");
-                if (IsFolderTrackPath(fromDirectory))
-                    return Path.GetFullPath(fromDirectory);
+                var fromDirectory = TryResolveFirstTrackFile(trimmed);
+                if (fromDirectory != null)
+                    return fromDirectory;
             }
 
             if (File.Exists(trimmed))
@@ -31,13 +32,19 @@ namespace TopSpeed.Data
                 Path.Combine(tracksRoot, trimmed)
             };
 
-            if (!Path.HasExtension(trimmed))
-                candidates.Add(Path.Combine(tracksRoot, trimmed, "track.tsm"));
+            if (Path.HasExtension(trimmed))
+                candidates.Add(Path.Combine(tracksRoot, Path.GetFileName(trimmed)));
 
             foreach (var candidate in candidates)
             {
                 var fullPath = Path.GetFullPath(candidate);
-                if (IsFolderTrackPath(fullPath))
+                if (Directory.Exists(fullPath))
+                {
+                    var fromDirectory = TryResolveFirstTrackFile(fullPath);
+                    if (fromDirectory != null)
+                        return fromDirectory;
+                }
+                else if (IsFolderTrackPath(fullPath))
                     return fullPath;
             }
 
@@ -49,11 +56,27 @@ namespace TopSpeed.Data
             if (!File.Exists(path))
                 return false;
 
-            if (!string.Equals(Path.GetFileName(path), "track.tsm", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(Path.GetExtension(path), ".tsm", StringComparison.OrdinalIgnoreCase))
                 return false;
 
             var directory = Path.GetDirectoryName(path);
-            return !string.IsNullOrWhiteSpace(directory);
+            return !string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory);
+        }
+
+        private static string? TryResolveFirstTrackFile(string directory)
+        {
+            if (!Directory.Exists(directory))
+                return null;
+
+            var first = Directory.EnumerateFiles(directory, "*.tsm", SearchOption.TopDirectoryOnly)
+                .OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault();
+
+            if (string.IsNullOrWhiteSpace(first))
+                return null;
+
+            var fullPath = Path.GetFullPath(first);
+            return IsFolderTrackPath(fullPath) ? fullPath : null;
         }
     }
 }

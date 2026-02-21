@@ -244,11 +244,11 @@ namespace TopSpeed.Vehicles
         public void Initialize(float positionX, float positionY, float trackLength)
         {
             _positionX = positionX;
-            _positionY = positionY;
+            _positionY = Math.Max(0f, positionY);
             _trackLength = trackLength;
             _laneWidth = _track.LaneWidth;
             _audioInitialized = false;
-            _lastAudioPosition = new Vector3(positionX, 0f, positionY);
+            _lastAudioPosition = new Vector3(positionX, 0f, _positionY);
             _lastAudioUpdateTime = 0f;
         }
 
@@ -323,6 +323,8 @@ namespace TopSpeed.Vehicles
             {
                 _speed -= bumpSpeed;
                 _positionY += bumpY;
+                if (_positionY < 0f)
+                    _positionY = 0f;
             }
 
             if (bumpX > 0)
@@ -358,6 +360,9 @@ namespace TopSpeed.Vehicles
 
         public void Run(float elapsed, float playerX, float playerY)
         {
+            if (_positionY < 0f)
+                _positionY = 0f;
+
             _diffX = _positionX - playerX;
             _diffY = _positionY - playerY;
             _diffY = ((_diffY % _trackLength) + _trackLength) % _trackLength;
@@ -627,7 +632,7 @@ namespace TopSpeed.Vehicles
             float trackLength)
         {
             _positionX = positionX;
-            _positionY = positionY;
+            _positionY = Math.Max(0f, positionY);
             _speed = speed;
             _trackLength = trackLength;
             _state = ComputerState.Running;

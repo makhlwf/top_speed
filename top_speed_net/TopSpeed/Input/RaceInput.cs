@@ -428,6 +428,10 @@ namespace TopSpeed.Input
             return UseKeyboard && _lastState.IsDown(_kbBrake) ? -100 : 0;
         }
 
+        public bool GetReverseRequested() => UseKeyboard && WasPressed(Key.Z);
+
+        public bool GetForwardRequested() => UseKeyboard && WasPressed(Key.A);
+
         public bool GetGearUp() => (UseKeyboard && _lastState.IsDown(_kbGearUp)) || (UseJoystick && GetAxis(_gearUp) > 50);
 
         public bool GetGearDown() => (UseKeyboard && _lastState.IsDown(_kbGearDown)) || (UseJoystick && GetAxis(_gearDown) > 50);

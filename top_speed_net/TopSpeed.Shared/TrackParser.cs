@@ -62,7 +62,7 @@ namespace TopSpeed.Data
                 issueList.Add(new TrackTsmIssue(
                     TrackTsmIssueSeverity.Error,
                     0,
-                    $"Track path must point to '<track_folder>{Path.DirectorySeparatorChar}track.tsm': {filename}"));
+                    $"Track path must point to a .tsm file inside a track folder: {filename}"));
                 return false;
             }
 

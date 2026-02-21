@@ -298,7 +298,7 @@ namespace TopSpeed.Race
             {
                 _acceptCurrentRaceInfo = false;
                 var gear = _car.Gear;
-                SpeakText($"Gear {gear}");
+                SpeakText(_car.InReverseGear ? "Gear reverse" : $"Gear {gear}");
                 PushEvent(RaceEventType.AcceptCurrentRaceInfo, 0.5f);
             }
         }

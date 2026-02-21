@@ -41,6 +41,9 @@ namespace TopSpeed.Vehicles
         public float RollingResistanceCoefficient { get; set; } = 0.015f;       
         public float LaunchRpm { get; set; } = 1800f;
         public float FinalDriveRatio { get; set; } = 3.5f;
+        public float ReverseMaxSpeedKph { get; set; } = 35f;
+        public float ReversePowerFactor { get; set; } = 0.55f;
+        public float ReverseGearRatio { get; set; } = 3.2f;
         public float TireCircumferenceM { get; set; } = 2.0f;
         public float LateralGripCoefficient { get; set; } = 1.0f;
         public float HighSpeedStability { get; set; } = 0.0f;

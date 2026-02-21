@@ -394,7 +394,8 @@ namespace TopSpeed.Tracks
         {
             if (_lapDistance <= 0)
                 return 1;
-            return (int)(position / _lapDistance) + 1;
+            var lap = (int)Math.Floor(position / _lapDistance) + 1;
+            return lap < 1 ? 1 : lap;
         }
 
 
@@ -545,8 +546,8 @@ namespace TopSpeed.Tracks
             if (_lapDistance == 0)
                 Initialize();
 
-            var lap = (int)(position / _lapDistance);
-            var pos = position % _lapDistance;
+            var lap = (int)Math.Floor(position / _lapDistance);
+            var pos = WrapPosition(position);
             var dist = 0.0f;
             var center = lap * _lapCenter;
 
@@ -580,8 +581,8 @@ namespace TopSpeed.Tracks
             if (_lapDistance == 0)
                 Initialize();
 
-            var lap = (int)(position / _lapDistance);
-            var pos = position % _lapDistance;
+            var lap = (int)Math.Floor(position / _lapDistance);
+            var pos = WrapPosition(position);
             var dist = 0.0f;
             var center = lap * _lapCenter;
             var relPos = 0.0f;
@@ -653,7 +654,7 @@ namespace TopSpeed.Tracks
             if (_lapDistance == 0)
                 Initialize();
 
-            var pos = position % _lapDistance;
+            var pos = WrapPosition(position);
             var dist = 0.0f;
             for (var i = 0; i < _segmentCount; i++)
             {

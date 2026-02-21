@@ -55,6 +55,9 @@ namespace TopSpeed.Vehicles
                 RollingResistanceCoefficient = parameters.RollingResistanceCoefficient,
                 LaunchRpm = parameters.LaunchRpm,
                 FinalDriveRatio = parameters.FinalDriveRatio,
+                ReverseMaxSpeedKph = parameters.ReverseMaxSpeedKph,
+                ReversePowerFactor = parameters.ReversePowerFactor,
+                ReverseGearRatio = parameters.ReverseGearRatio,
                 TireCircumferenceM = parameters.TireCircumferenceM,
                 LateralGripCoefficient = parameters.LateralGripCoefficient,
                 HighSpeedStability = parameters.HighSpeedStability,
@@ -125,6 +128,9 @@ namespace TopSpeed.Vehicles
             var rollingResistance = ReadFloat(settings, "rollingresistance", 0.015f);
             var launchRpm = ReadFloat(settings, "launchrpm", 1800f);
             var finalDriveRatio = ReadFloat(settings, "finaldrive", 3.5f);      
+            var reverseMaxSpeedKph = ReadFloatAny(settings, 35f, "reverse_max_speed", "reversemaxspeed");
+            var reversePowerFactor = ReadFloatAny(settings, 0.55f, "reverse_power_factor", "reversepowerfactor");
+            var reverseGearRatio = ReadFloatAny(settings, 3.2f, "reverse_gear_ratio", "reversegearratio");
             var powerFactor = ReadFloat(settings, "powerfactor", 0.5f);
             var gearRatios = ReadFloatArray(settings, "gearratios");
             var brakeStrength = ReadFloat(settings, "brakestrength", 1.0f);     
@@ -181,6 +187,9 @@ namespace TopSpeed.Vehicles
                 RollingResistanceCoefficient = rollingResistance,
                 LaunchRpm = launchRpm,
                 FinalDriveRatio = finalDriveRatio,
+                ReverseMaxSpeedKph = reverseMaxSpeedKph,
+                ReversePowerFactor = reversePowerFactor,
+                ReverseGearRatio = reverseGearRatio,
                 TireCircumferenceM = tireCircumferenceM,
                 LateralGripCoefficient = lateralGrip,
                 HighSpeedStability = highSpeedStability,
@@ -333,6 +342,17 @@ namespace TopSpeed.Vehicles
         {
             if (values.TryGetValue(key, out var raw) && float.TryParse(raw, out var value))
                 return value;
+            return defaultValue;
+        }
+
+        private static float ReadFloatAny(Dictionary<string, string> values, float defaultValue, params string[] keys)
+        {
+            for (var i = 0; i < keys.Length; i++)
+            {
+                if (values.TryGetValue(keys[i], out var raw) && float.TryParse(raw, out var value))
+                    return value;
+            }
+
             return defaultValue;
         }
 

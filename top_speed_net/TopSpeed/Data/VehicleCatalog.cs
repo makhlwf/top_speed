@@ -41,6 +41,9 @@ namespace TopSpeed.Data
         public float RollingResistanceCoefficient { get; }
         public float LaunchRpm { get; }
         public float FinalDriveRatio { get; }
+        public float ReverseMaxSpeedKph { get; }
+        public float ReversePowerFactor { get; }
+        public float ReverseGearRatio { get; }
         public float TireCircumferenceM { get; }
         public float LateralGripCoefficient { get; }
         public float HighSpeedStability { get; }
@@ -90,6 +93,9 @@ namespace TopSpeed.Data
             float rollingResistanceCoefficient = 0.015f,
             float launchRpm = 1800f,
             float finalDriveRatio = 3.5f,
+            float reverseMaxSpeedKph = 35f,
+            float reversePowerFactor = 0.55f,
+            float reverseGearRatio = 3.2f,
             float tireCircumferenceM = 2.0f,
             float lateralGripCoefficient = 1.0f,
             float highSpeedStability = 0.0f,
@@ -140,6 +146,9 @@ namespace TopSpeed.Data
             RollingResistanceCoefficient = rollingResistanceCoefficient;        
             LaunchRpm = launchRpm;
             FinalDriveRatio = finalDriveRatio;
+            ReverseMaxSpeedKph = reverseMaxSpeedKph;
+            ReversePowerFactor = reversePowerFactor;
+            ReverseGearRatio = reverseGearRatio;
             TireCircumferenceM = tireCircumferenceM;
             LateralGripCoefficient = lateralGripCoefficient;
             HighSpeedStability = highSpeedStability;
