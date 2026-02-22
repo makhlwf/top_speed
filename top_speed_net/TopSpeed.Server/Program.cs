@@ -22,11 +22,14 @@ namespace TopSpeed.Server
 
             var loggingEnabled = args.Length > 0;
             var levels = loggingEnabled ? ParseLogLevels(args) : LogLevel.None;
-            var logFile = loggingEnabled ? BuildLogFilePath() : null;
+            var configuredLogFile = GetArgumentValue(args, "--log-file");
+            var logFile = loggingEnabled && !string.IsNullOrWhiteSpace(configuredLogFile)
+                ? BuildLogFilePath(configuredLogFile!)
+                : null;
             using var logger = new Logger(levels, logFile, writeToConsole: loggingEnabled);
             if (loggingEnabled)
             {
-                logger.InfoAlways($"Logging enabled. Levels: {FormatLogLevels(levels)}.");
+                logger.InfoAlways($"Logging enabled. Levels: {FormatLogLevels(levels)}. File: {(string.IsNullOrWhiteSpace(logFile) ? "none" : logFile)}.");
                 logger.Info("TopSpeed.Server starting.");
             }
 
@@ -140,6 +143,7 @@ namespace TopSpeed.Server
             Console.WriteLine("  --max-players <number>  Max connected players (1-255).");
             Console.WriteLine("  --motd <text>           Message of the day.");
             Console.WriteLine("  --log <levels>          Comma-separated levels: error,warning,info,debug,all.");
+            Console.WriteLine("  --log-file <path>       Output log file path (e.g. log.txt).");
             Console.WriteLine("  -h, --help              Show this help.");
         }
 
@@ -181,11 +185,13 @@ namespace TopSpeed.Server
             return null;
         }
 
-        private static string BuildLogFilePath()
+        private static string BuildLogFilePath(string configuredPath)
         {
-            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
-            var logsRoot = Path.Combine(AppContext.BaseDirectory, "Logs");
-            return Path.Combine(logsRoot, $"server_{timestamp}.log");
+            var trimmed = configuredPath.Trim().Trim('"');
+            if (Path.IsPathRooted(trimmed))
+                return trimmed;
+
+            return Path.GetFullPath(trimmed, AppContext.BaseDirectory);
         }
 
         private static void ApplyArgumentOverrides(ServerSettings settings, string[] args, Logger logger)

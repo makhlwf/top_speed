@@ -210,8 +210,9 @@ namespace TopSpeed.Race
             UpdatePositions();
             _car.Run(elapsed);
             _track.Run(_car.PositionY);
+            var spatialTrackLength = GetSpatialTrackLength();
             foreach (var remote in _remotePlayers.Values)
-                remote.Player.UpdateRemoteAudio(_car.PositionX, _car.PositionY, _track.Length, elapsed);
+                remote.Player.UpdateRemoteAudio(_car.PositionX, _car.PositionY, spatialTrackLength, elapsed);
 
             if (_started
                 && !_sentFinish
@@ -381,7 +382,7 @@ namespace TopSpeed.Race
             {
                 var vehicleIndex = data.Car == CarType.CustomVehicle ? 0 : (int)data.Car;
                 var bot = new ComputerPlayer(_audio, _track, _settings, vehicleIndex, data.PlayerNumber, () => _elapsedTotal, () => _started);
-                bot.Initialize(data.RaceData.PositionX, data.RaceData.PositionY, _track.Length);
+                bot.Initialize(data.RaceData.PositionX, data.RaceData.PositionY, GetSpatialTrackLength());
                 remote = new RemotePlayer(bot);
                 _remotePlayers[data.PlayerNumber] = remote;
             }
@@ -409,7 +410,7 @@ namespace TopSpeed.Race
                 data.Backfiring,
                 _car.PositionX,
                 _car.PositionY,
-                _track.Length);
+                GetSpatialTrackLength());
         }
 
         public void ApplyBump(PacketPlayerBumped bump)
@@ -499,7 +500,7 @@ namespace TopSpeed.Race
                     position++;
                 }
 
-                var delta = GetRelativeTrackDelta(bot.PositionY);
+                var delta = GetRelativeRaceDelta(bot.PositionY);
                 if (delta > 0f)
                 {
                     var dist = delta;
@@ -586,6 +587,29 @@ namespace TopSpeed.Race
             if (perc < 0)
                 perc = 0;
             return perc;
+        }
+
+        private float GetRaceDistance()
+        {
+            if (_track.Length <= 0f)
+                return 0f;
+
+            var laps = _nrOfLaps > 0 ? _nrOfLaps : 1;
+            return _track.Length * laps;
+        }
+
+        private float GetSpatialTrackLength()
+        {
+            // Multiplayer race positions are linear across all laps. Double race length prevents wrap inversion.
+            var raceDistance = GetRaceDistance();
+            if (raceDistance <= 0f)
+                return _track.Length;
+            return raceDistance * 2f;
+        }
+
+        private float GetRelativeRaceDelta(float otherPositionY)
+        {
+            return otherPositionY - _car.PositionY;
         }
 
         private string GetVehicleNameForPlayer(int playerIndex)

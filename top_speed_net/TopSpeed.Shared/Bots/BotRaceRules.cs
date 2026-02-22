@@ -12,6 +12,7 @@ namespace TopSpeed.Bots
         public const float FullCrashMinSpeedKph = 50.0f;
         public const float DefaultBotEngineStartSeconds = 1.35f;
         public const float DefaultBotCrashRecoverySeconds = 2.5f;
+        public const float DefaultBotRestartDelaySeconds = 1.25f;
 
         public static float GetLaneHalfWidthForTrack(string? trackName)
         {
