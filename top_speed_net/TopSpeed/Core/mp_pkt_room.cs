@@ -11,9 +11,9 @@ namespace TopSpeed.Core
         {
             _mpPktReg.Add("room", Command.PlayerJoined, HandleMpPlayerJoinedPacket);
             _mpPktReg.Add("room", Command.LoadCustomTrack, HandleMpLoadCustomTrackPacket);
-            _mpPktReg.Add("room", Command.RoomPrepareRace, HandleMpRoomPrepareRacePacket);
             _mpPktReg.Add("room", Command.RoomList, HandleMpRoomListPacket);
             _mpPktReg.Add("room", Command.RoomState, HandleMpRoomStatePacket);
+            _mpPktReg.Add("room", Command.RoomEvent, HandleMpRoomEventPacket);
         }
 
         private bool HandleMpPlayerJoinedPacket(IncomingPacket packet)
@@ -52,12 +52,6 @@ namespace TopSpeed.Core
             return true;
         }
 
-        private bool HandleMpRoomPrepareRacePacket(IncomingPacket _)
-        {
-            _multiplayerCoordinator.BeginRaceLoadoutSelection();
-            return true;
-        }
-
         private bool HandleMpRoomListPacket(IncomingPacket packet)
         {
             if (ClientPacketSerializer.TryReadRoomList(packet.Payload, out var roomList))
@@ -69,6 +63,13 @@ namespace TopSpeed.Core
         {
             if (ClientPacketSerializer.TryReadRoomState(packet.Payload, out var roomState))
                 _multiplayerCoordinator.HandleRoomState(roomState);
+            return true;
+        }
+
+        private bool HandleMpRoomEventPacket(IncomingPacket packet)
+        {
+            if (ClientPacketSerializer.TryReadRoomEvent(packet.Payload, out var roomEvent))
+                _multiplayerCoordinator.HandleRoomEvent(roomEvent);
             return true;
         }
     }

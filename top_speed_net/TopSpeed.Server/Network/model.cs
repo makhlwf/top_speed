@@ -83,6 +83,7 @@ namespace TopSpeed.Server.Network
         }
 
         public uint Id { get; }
+        public uint Version { get; set; }
         public string Name { get; set; }
         public GameRoomType RoomType { get; set; }
         public byte PlayersToStart { get; set; }

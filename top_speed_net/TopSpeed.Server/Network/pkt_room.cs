@@ -9,6 +9,14 @@ namespace TopSpeed.Server.Network
         private void RegisterRoomPackets()
         {
             _pktReg.Add("room", Command.RoomListRequest, (player, _, _) => SendRoomList(player));
+            _pktReg.Add("room", Command.RoomStateRequest, (player, _, _) => HandleRoomStateRequest(player));
+            _pktReg.Add("room", Command.RoomGetRequest, (player, payload, endPoint) =>
+            {
+                if (PacketSerializer.TryReadRoomGetRequest(payload, out var get))
+                    HandleRoomGetRequest(player, get);
+                else
+                    PacketFail(endPoint, Command.RoomGetRequest);
+            });
             _pktReg.Add("room", Command.RoomCreate, (player, payload, endPoint) =>
             {
                 if (PacketSerializer.TryReadRoomCreate(payload, out var create))

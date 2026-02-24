@@ -201,6 +201,16 @@ namespace TopSpeed.Network
             SafeSendStream(ClientPacketSerializer.WriteRoomListRequest(), PacketStream.Room);
         }
 
+        public void SendRoomStateRequest()
+        {
+            SafeSendStream(ClientPacketSerializer.WriteRoomStateRequest(), PacketStream.Room);
+        }
+
+        public void SendRoomGetRequest(uint roomId)
+        {
+            SafeSendStream(ClientPacketSerializer.WriteRoomGetRequest(roomId), PacketStream.Room);
+        }
+
         public void SendRoomCreate(string roomName, GameRoomType roomType, byte playersToStart)
         {
             SafeSendStream(ClientPacketSerializer.WriteRoomCreate(roomName, roomType, playersToStart), PacketStream.Room);

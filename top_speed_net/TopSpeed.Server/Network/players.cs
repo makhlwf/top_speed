@@ -12,7 +12,16 @@ namespace TopSpeed.Server.Network
                 name = name.Substring(0, ProtocolConstants.MaxPlayerNameLength);
             player.Name = name;
             if (player.RoomId.HasValue && _rooms.TryGetValue(player.RoomId.Value, out var room))
-                BroadcastRoomState(room);
+            {
+                TouchRoomVersion(room);
+                EmitRoomParticipantEvent(
+                    room,
+                    RoomEventKind.ParticipantStateChanged,
+                    player.Id,
+                    player.PlayerNumber,
+                    player.State,
+                    string.IsNullOrWhiteSpace(player.Name) ? $"Player {player.PlayerNumber + 1}" : player.Name);
+            }
         }
 
         private void HandlePlayerState(PlayerConnection player, PacketPlayerState state)
@@ -49,7 +58,17 @@ namespace TopSpeed.Server.Network
 
             if (previousState != player.State)
                 _logger.Debug($"Player state transition: room={room.Id}, player={player.Id}, {previousState} -> {player.State} (packet={state.State}).");
-            BroadcastRoomState(room);
+            if (previousState != player.State)
+            {
+                TouchRoomVersion(room);
+                EmitRoomParticipantEvent(
+                    room,
+                    RoomEventKind.ParticipantStateChanged,
+                    player.Id,
+                    player.PlayerNumber,
+                    player.State,
+                    string.IsNullOrWhiteSpace(player.Name) ? $"Player {player.PlayerNumber + 1}" : player.Name);
+            }
         }
 
         private void HandlePlayerData(PlayerConnection player, PacketPlayerData data)

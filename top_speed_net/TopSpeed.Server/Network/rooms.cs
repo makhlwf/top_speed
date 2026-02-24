@@ -11,6 +11,31 @@ namespace TopSpeed.Server.Network
 {
     internal sealed partial class RaceServer
     {
+        private void HandleRoomStateRequest(PlayerConnection player)
+        {
+            if (!player.RoomId.HasValue)
+            {
+                SendRoomState(player, null);
+                return;
+            }
+
+            if (_rooms.TryGetValue(player.RoomId.Value, out var room))
+                SendRoomState(player, room);
+            else
+                SendRoomState(player, null);
+        }
+
+        private void HandleRoomGetRequest(PlayerConnection player, PacketRoomGetRequest packet)
+        {
+            if (!_rooms.TryGetValue(packet.RoomId, out var room))
+            {
+                SendRoomGet(player, null);
+                return;
+            }
+
+            SendRoomGet(player, room);
+        }
+
         private void HandleCreateRoom(PlayerConnection player, PacketRoomCreate packet)
         {
             var roomName = (packet.RoomName ?? string.Empty).Trim();
@@ -29,7 +54,7 @@ namespace TopSpeed.Server.Network
             SetTrack(room, room.TrackName);
             JoinRoom(player, room);
             SendProtocolMessage(player, ProtocolMessageCode.Ok, $"Created {room.Name}.");
-            BroadcastRoomList();
+            EmitRoomLifecycleEvent(room, RoomEventKind.RoomCreated);
             BroadcastLobbyAnnouncement($"{DescribePlayer(player)} created game room {room.Name}.");
             _logger.Info($"Room created: room={room.Id} \"{room.Name}\", host={player.Id}, type={room.RoomType}, playersToStart={room.PlayersToStart}.");
         }
@@ -58,7 +83,7 @@ namespace TopSpeed.Server.Network
 
             JoinRoom(player, room);
             SendProtocolMessage(player, ProtocolMessageCode.Ok, $"Joined {room.Name}.");
-            BroadcastRoomList();
+            EmitRoomLifecycleEvent(room, RoomEventKind.RoomSummaryUpdated);
             _logger.Info($"Player joined room: room={room.Id} \"{room.Name}\", player={player.Id}, participants={GetRoomParticipantCount(room)}/{room.PlayersToStart}.");
         }
 
@@ -81,6 +106,7 @@ namespace TopSpeed.Server.Network
             var oldNumber = player.PlayerNumber;
             var leftName = DescribePlayer(player);
             room.PlayerIds.Remove(player.Id);
+            var previousHostId = room.HostId;
             player.RoomId = null;
             player.PlayerNumber = 0;
             player.State = PlayerState.NotReady;
@@ -103,6 +129,7 @@ namespace TopSpeed.Server.Network
             if (room.PlayerIds.Count == 0)
             {
                 _rooms.Remove(room.Id);
+                EmitRoomRemovedEvent(roomId, room.Name);
                 _logger.Info($"Room closed: room={room.Id} \"{room.Name}\".");
             }
             else
@@ -113,10 +140,12 @@ namespace TopSpeed.Server.Network
                     StopRace(room);
                 if (room.PreparingRace)
                     TryStartRaceAfterLoadout(room);
-                BroadcastRoomState(room);
+                TouchRoomVersion(room);
+                EmitRoomParticipantEvent(room, RoomEventKind.ParticipantLeft, player.Id, oldNumber, PlayerState.NotReady, leftName);
+                if (previousHostId != room.HostId)
+                    EmitRoomLifecycleEvent(room, RoomEventKind.HostChanged);
+                EmitRoomLifecycleEvent(room, RoomEventKind.RoomSummaryUpdated);
             }
-
-            BroadcastRoomList();
             _logger.Info($"Player left room: room={room.Id} \"{room.Name}\", player={player.Id}, notify={notify}.");
         }
 
@@ -141,7 +170,8 @@ namespace TopSpeed.Server.Network
 
             SetTrack(room, trackName);
             SendTrackToNotReady(room);
-            BroadcastRoomState(room);
+            TouchRoomVersion(room);
+            EmitRoomLifecycleEvent(room, RoomEventKind.TrackChanged);
         }
 
         private void HandleSetLaps(PlayerConnection player, PacketRoomSetLaps packet)
@@ -166,7 +196,8 @@ namespace TopSpeed.Server.Network
             if (room.TrackSelected)
                 SetTrack(room, room.TrackName);
             SendTrackToNotReady(room);
-            BroadcastRoomState(room);
+            TouchRoomVersion(room);
+            EmitRoomLifecycleEvent(room, RoomEventKind.LapsChanged);
         }
 
         private void HandleStartRace(PlayerConnection player)
@@ -196,10 +227,11 @@ namespace TopSpeed.Server.Network
             room.PendingLoadouts.Clear();
             AssignRandomBotLoadouts(room);
             AnnounceBotsReady(room);
+            TouchRoomVersion(room);
             _logger.Info($"Race prepare started: room={room.Id} \"{room.Name}\", requestedBy={player.Id}, humans={room.PlayerIds.Count}, bots={room.Bots.Count}, required={room.PlayersToStart}.");
 
             SendProtocolMessageToRoom(room, $"{DescribePlayer(player)} is about to start the game. Choose your vehicle and transmission mode.");
-            SendToRoomOnStream(room, PacketSerializer.WriteGeneral(Command.RoomPrepareRace), PacketStream.Room);
+            EmitRoomLifecycleEvent(room, RoomEventKind.PrepareStarted);
             TryStartRaceAfterLoadout(room);
         }
 
@@ -258,8 +290,9 @@ namespace TopSpeed.Server.Network
             }
 
             room.PlayersToStart = value;
-            BroadcastRoomState(room);
-            BroadcastRoomList();
+            TouchRoomVersion(room);
+            EmitRoomLifecycleEvent(room, RoomEventKind.PlayersToStartChanged);
+            EmitRoomLifecycleEvent(room, RoomEventKind.RoomSummaryUpdated);
         }
 
         private void HandleAddBot(PlayerConnection player)
@@ -288,8 +321,9 @@ namespace TopSpeed.Server.Network
 
             var bot = CreateBot(room);
             room.Bots.Add(bot);
-            BroadcastRoomState(room);
-            BroadcastRoomList();
+            TouchRoomVersion(room);
+            EmitRoomParticipantEvent(room, RoomEventKind.BotAdded, bot.Id, bot.PlayerNumber, bot.State, FormatBotDisplayName(bot));
+            EmitRoomLifecycleEvent(room, RoomEventKind.RoomSummaryUpdated);
             SendToRoomOnStream(room, PacketSerializer.WritePlayerJoined(new PacketPlayerJoined
             {
                 PlayerId = bot.Id,
@@ -327,8 +361,9 @@ namespace TopSpeed.Server.Network
             var bot = room.Bots.OrderByDescending(b => b.AddedOrder).First();
             room.Bots.Remove(bot);
             SendToRoomOnStream(room, PacketSerializer.WritePlayer(Command.PlayerDisconnected, bot.Id, bot.PlayerNumber), PacketStream.Room);
-            BroadcastRoomState(room);
-            BroadcastRoomList();
+            TouchRoomVersion(room);
+            EmitRoomParticipantEvent(room, RoomEventKind.BotRemoved, bot.Id, bot.PlayerNumber, bot.State, FormatBotDisplayName(bot));
+            EmitRoomLifecycleEvent(room, RoomEventKind.RoomSummaryUpdated);
             SendProtocolMessage(player, ProtocolMessageCode.Ok, $"Removed bot {bot.Name}.");
             if (room.RaceStarted && CountActiveRaceParticipants(room) == 0)
                 StopRace(room);
@@ -378,7 +413,15 @@ namespace TopSpeed.Server.Network
             SendStream(player, PacketSerializer.WritePlayerNumber(player.Id, player.PlayerNumber), PacketStream.Control);
             SendTrack(room, player);
             SyncMediaTo(room, player);
-            BroadcastRoomState(room);
+            TouchRoomVersion(room);
+            SendRoomState(player, room);
+            EmitRoomParticipantEvent(
+                room,
+                RoomEventKind.ParticipantJoined,
+                player.Id,
+                player.PlayerNumber,
+                player.State,
+                string.IsNullOrWhiteSpace(player.Name) ? $"Player {player.PlayerNumber + 1}" : player.Name);
 
             var joinedName = string.IsNullOrWhiteSpace(player.Name)
                 ? $"Player {player.PlayerNumber + 1}"
@@ -470,7 +513,9 @@ namespace TopSpeed.Server.Network
             SendTrackToRoom(room);
             SendToRoomOnStream(room, PacketSerializer.WriteGeneral(Command.StartRace), PacketStream.RaceEvent);
             SendRaceSnapshot(room, DeliveryMethod.ReliableOrdered);
-            BroadcastRoomState(room);
+            TouchRoomVersion(room);
+            EmitRoomLifecycleEvent(room, RoomEventKind.RaceStarted);
+            EmitRoomLifecycleEvent(room, RoomEventKind.RoomSummaryUpdated);
             _logger.Info($"Race started: room={room.Id} \"{room.Name}\", track={room.TrackName}, laps={room.Laps}, humans={room.PlayerIds.Count}, bots={room.Bots.Count}.");
         }
 
@@ -519,7 +564,9 @@ namespace TopSpeed.Server.Network
                 };
             }
 
-            BroadcastRoomState(room);
+            TouchRoomVersion(room);
+            EmitRoomLifecycleEvent(room, RoomEventKind.RaceStopped);
+            EmitRoomLifecycleEvent(room, RoomEventKind.RoomSummaryUpdated);
             _logger.Info($"Race stopped: room={room.Id} \"{room.Name}\", results={string.Join(",", results)}.");
         }
 
@@ -562,43 +609,44 @@ namespace TopSpeed.Server.Network
         {
             var list = new PacketRoomList
             {
-                Rooms = _rooms.Values.OrderBy(r => r.Id).Take(ProtocolConstants.MaxRoomListEntries).Select(r => new PacketRoomSummary
-                {
-                    RoomId = r.Id,
-                    RoomName = r.Name,
-                    RoomType = r.RoomType,
-                    PlayerCount = (byte)GetRoomParticipantCount(r),
-                    PlayersToStart = r.PlayersToStart,
-                    RaceStarted = r.RaceStarted,
-                    TrackName = r.TrackName
-                }).ToArray()
+                Rooms = _rooms.Values
+                    .OrderBy(r => r.Id)
+                    .Take(ProtocolConstants.MaxRoomListEntries)
+                    .Select(BuildRoomSummary)
+                    .ToArray()
             };
 
             SendStream(player, PacketSerializer.WriteRoomList(list), PacketStream.Room);
         }
 
-        private void BroadcastRoomList()
-        {
-            foreach (var player in _players.Values)
-                SendRoomList(player);
-        }
-
-        private void SendRoomState(PlayerConnection player, RaceRoom? room)
+        private uint TouchRoomVersion(RaceRoom room)
         {
             if (room == null)
-            {
-                SendStream(player, PacketSerializer.WriteRoomState(new PacketRoomState
-                {
-                    InRoom = false,
-                    HostPlayerId = 0,
-                    RoomType = GameRoomType.BotsRace,
-                    PlayersToStart = 0,
-                    Players = Array.Empty<PacketRoomPlayer>()
-                }), PacketStream.Room);
-                return;
-            }
+                return 0;
 
-            var players = room.PlayerIds
+            room.Version++;
+            if (room.Version == 0)
+                room.Version = 1;
+            return room.Version;
+        }
+
+        private PacketRoomSummary BuildRoomSummary(RaceRoom room)
+        {
+            return new PacketRoomSummary
+            {
+                RoomId = room.Id,
+                RoomName = room.Name,
+                RoomType = room.RoomType,
+                PlayerCount = (byte)Math.Min(ProtocolConstants.MaxPlayers, GetRoomParticipantCount(room)),
+                PlayersToStart = room.PlayersToStart,
+                RaceStarted = room.RaceStarted,
+                TrackName = room.TrackName
+            };
+        }
+
+        private PacketRoomPlayer[] BuildRoomPlayers(RaceRoom room)
+        {
+            return room.PlayerIds
                 .Where(id => _players.ContainsKey(id))
                 .Select(id => _players[id])
                 .Select(p => new PacketRoomPlayer
@@ -617,9 +665,104 @@ namespace TopSpeed.Server.Network
                 }))
                 .OrderBy(p => p.PlayerNumber)
                 .ToArray();
+        }
+
+        private PacketRoomEvent CreateRoomEvent(RaceRoom room, RoomEventKind kind)
+        {
+            return new PacketRoomEvent
+            {
+                RoomId = room.Id,
+                RoomVersion = room.Version,
+                Kind = kind,
+                HostPlayerId = room.HostId,
+                RoomType = room.RoomType,
+                PlayerCount = (byte)Math.Min(ProtocolConstants.MaxPlayers, GetRoomParticipantCount(room)),
+                PlayersToStart = room.PlayersToStart,
+                RaceStarted = room.RaceStarted,
+                PreparingRace = room.PreparingRace,
+                TrackName = room.TrackName,
+                Laps = room.Laps,
+                RoomName = room.Name
+            };
+        }
+
+        private void EmitRoomLifecycleEvent(RaceRoom room, RoomEventKind kind)
+        {
+            var evt = CreateRoomEvent(room, kind);
+            var payload = PacketSerializer.WriteRoomEvent(evt);
+            var roomOnly =
+                kind == RoomEventKind.HostChanged ||
+                kind == RoomEventKind.TrackChanged ||
+                kind == RoomEventKind.LapsChanged ||
+                kind == RoomEventKind.PlayersToStartChanged ||
+                kind == RoomEventKind.PrepareStarted ||
+                kind == RoomEventKind.PrepareCancelled;
+
+            if (roomOnly)
+            {
+                foreach (var id in room.PlayerIds)
+                {
+                    if (_players.TryGetValue(id, out var player))
+                        SendStream(player, payload, PacketStream.Room);
+                }
+                return;
+            }
+
+            foreach (var player in _players.Values)
+                SendStream(player, payload, PacketStream.Room);
+        }
+
+        private void EmitRoomParticipantEvent(RaceRoom room, RoomEventKind kind, uint playerId, byte playerNumber, PlayerState state, string name)
+        {
+            var evt = CreateRoomEvent(room, kind);
+            evt.SubjectPlayerId = playerId;
+            evt.SubjectPlayerNumber = playerNumber;
+            evt.SubjectPlayerState = state;
+            evt.SubjectPlayerName = name ?? string.Empty;
+            var payload = PacketSerializer.WriteRoomEvent(evt);
+
+            foreach (var id in room.PlayerIds)
+            {
+                if (_players.TryGetValue(id, out var player))
+                    SendStream(player, payload, PacketStream.Room);
+            }
+        }
+
+        private void EmitRoomRemovedEvent(uint roomId, string roomName)
+        {
+            var evt = new PacketRoomEvent
+            {
+                RoomId = roomId,
+                RoomVersion = 0,
+                Kind = RoomEventKind.RoomRemoved,
+                RoomName = roomName ?? string.Empty
+            };
+
+            var payload = PacketSerializer.WriteRoomEvent(evt);
+            foreach (var player in _players.Values)
+                SendStream(player, payload, PacketStream.Room);
+        }
+
+        private void SendRoomState(PlayerConnection player, RaceRoom? room)
+        {
+            if (room == null)
+            {
+                SendStream(player, PacketSerializer.WriteRoomState(new PacketRoomState
+                {
+                    RoomVersion = 0,
+                    InRoom = false,
+                    HostPlayerId = 0,
+                    RoomType = GameRoomType.BotsRace,
+                    PlayersToStart = 0,
+                    PreparingRace = false,
+                    Players = Array.Empty<PacketRoomPlayer>()
+                }), PacketStream.Room);
+                return;
+            }
 
             SendStream(player, PacketSerializer.WriteRoomState(new PacketRoomState
             {
+                RoomVersion = room.Version,
                 RoomId = room.Id,
                 HostPlayerId = room.HostId,
                 RoomName = room.Name,
@@ -628,19 +771,40 @@ namespace TopSpeed.Server.Network
                 InRoom = true,
                 IsHost = room.HostId == player.Id,
                 RaceStarted = room.RaceStarted,
+                PreparingRace = room.PreparingRace,
                 TrackName = room.TrackName,
                 Laps = room.Laps,
-                Players = players
+                Players = BuildRoomPlayers(room)
             }), PacketStream.Room);
         }
 
-        private void BroadcastRoomState(RaceRoom room)
+        private void SendRoomGet(PlayerConnection player, RaceRoom? room)
         {
-            foreach (var id in room.PlayerIds)
+            if (room == null)
             {
-                if (_players.TryGetValue(id, out var player))
-                    SendRoomState(player, room);
+                SendStream(player, PacketSerializer.WriteRoomGet(new PacketRoomGet
+                {
+                    Found = false,
+                    Players = Array.Empty<PacketRoomPlayer>()
+                }), PacketStream.Room);
+                return;
             }
+
+            SendStream(player, PacketSerializer.WriteRoomGet(new PacketRoomGet
+            {
+                Found = true,
+                RoomVersion = room.Version,
+                RoomId = room.Id,
+                HostPlayerId = room.HostId,
+                RoomName = room.Name,
+                RoomType = room.RoomType,
+                PlayersToStart = room.PlayersToStart,
+                RaceStarted = room.RaceStarted,
+                PreparingRace = room.PreparingRace,
+                TrackName = room.TrackName,
+                Laps = room.Laps,
+                Players = BuildRoomPlayers(room)
+            }), PacketStream.Room);
         }
 
         private void AssignRandomBotLoadouts(RaceRoom room)
@@ -669,6 +833,8 @@ namespace TopSpeed.Server.Network
             {
                 room.PreparingRace = false;
                 room.PendingLoadouts.Clear();
+                TouchRoomVersion(room);
+                EmitRoomLifecycleEvent(room, RoomEventKind.PrepareCancelled);
                 SendProtocolMessageToRoom(room, "Race start cancelled because there are not enough players.");
                 _logger.Info($"Race prepare cancelled: room={room.Id} \"{room.Name}\", participants={GetRoomParticipantCount(room)}, required={room.PlayersToStart}.");
                 return;

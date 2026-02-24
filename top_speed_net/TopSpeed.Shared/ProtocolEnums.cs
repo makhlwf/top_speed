@@ -77,7 +77,11 @@ namespace TopSpeed.Protocol
         PlayerMediaBegin = 34,
         PlayerMediaChunk = 35,
         PlayerMediaEnd = 36,
-        RaceSnapshot = 37
+        RaceSnapshot = 37,
+        RoomStateRequest = 38,
+        RoomEvent = 39,
+        RoomGetRequest = 40,
+        RoomGet = 41
     }
 
     public enum ProtocolMessageCode : byte
@@ -98,5 +102,26 @@ namespace TopSpeed.Protocol
     {
         BotsRace = 0,
         OneOnOne = 1
+    }
+
+    public enum RoomEventKind : byte
+    {
+        None = 0,
+        RoomCreated = 1,
+        RoomRemoved = 2,
+        RoomSummaryUpdated = 3,
+        HostChanged = 4,
+        TrackChanged = 5,
+        LapsChanged = 6,
+        PlayersToStartChanged = 7,
+        ParticipantJoined = 8,
+        ParticipantLeft = 9,
+        ParticipantStateChanged = 10,
+        BotAdded = 11,
+        BotRemoved = 12,
+        PrepareStarted = 13,
+        PrepareCancelled = 14,
+        RaceStarted = 15,
+        RaceStopped = 16
     }
 }

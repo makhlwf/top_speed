@@ -46,7 +46,6 @@ namespace TopSpeed.Server.Network
                 SendStream(endpoint, PacketSerializer.WriteServerInfo(new PacketServerInfo { Motd = _config.Motd }), PacketStream.Control);
 
             SendRoomState(player, null);
-            SendRoomList(player);
             _logger.Info($"Connection established: playerId={player.Id}, endpoint={endpoint}.");
             return player;
         }

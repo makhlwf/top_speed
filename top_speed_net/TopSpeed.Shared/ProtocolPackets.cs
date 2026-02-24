@@ -148,6 +148,11 @@ namespace TopSpeed.Protocol
         public uint RoomId;
     }
 
+    public sealed class PacketRoomGetRequest
+    {
+        public uint RoomId;
+    }
+
     public sealed class PacketRoomSetTrack
     {
         public string TrackName = string.Empty;
@@ -179,6 +184,7 @@ namespace TopSpeed.Protocol
 
     public sealed class PacketRoomState
     {
+        public uint RoomVersion;
         public uint RoomId;
         public uint HostPlayerId;
         public string RoomName = string.Empty;
@@ -187,9 +193,46 @@ namespace TopSpeed.Protocol
         public bool InRoom;
         public bool IsHost;
         public bool RaceStarted;
+        public bool PreparingRace;
         public string TrackName = string.Empty;
         public byte Laps;
         public PacketRoomPlayer[] Players = Array.Empty<PacketRoomPlayer>();
+    }
+
+    public sealed class PacketRoomGet
+    {
+        public bool Found;
+        public uint RoomVersion;
+        public uint RoomId;
+        public uint HostPlayerId;
+        public string RoomName = string.Empty;
+        public GameRoomType RoomType;
+        public byte PlayersToStart;
+        public bool RaceStarted;
+        public bool PreparingRace;
+        public string TrackName = string.Empty;
+        public byte Laps;
+        public PacketRoomPlayer[] Players = Array.Empty<PacketRoomPlayer>();
+    }
+
+    public sealed class PacketRoomEvent
+    {
+        public uint RoomId;
+        public uint RoomVersion;
+        public RoomEventKind Kind;
+        public uint HostPlayerId;
+        public GameRoomType RoomType;
+        public byte PlayerCount;
+        public byte PlayersToStart;
+        public bool RaceStarted;
+        public bool PreparingRace;
+        public string TrackName = string.Empty;
+        public byte Laps;
+        public string RoomName = string.Empty;
+        public uint SubjectPlayerId;
+        public byte SubjectPlayerNumber;
+        public PlayerState SubjectPlayerState;
+        public string SubjectPlayerName = string.Empty;
     }
 
     public sealed class PacketProtocolMessage
