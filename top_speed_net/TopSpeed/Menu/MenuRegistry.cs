@@ -14,6 +14,7 @@ namespace TopSpeed.Menu
         void SaveMusicVolume(float volume);
         void QueueRaceStart(RaceMode mode);
         void StartServerDiscovery();
+        void OpenSavedServersManager();
         void BeginManualServerEntry();
         void DisconnectFromServer();
         void SpeakNotImplemented();
@@ -73,6 +74,10 @@ namespace TopSpeed.Menu
 
             _menu.Register(BuildMultiplayerMenu());
             _menu.Register(BuildMultiplayerServersMenu());
+            _menu.Register(BuildMultiplayerSavedServersMenu());
+            _menu.Register(BuildMultiplayerSavedServerFormMenu());
+            _menu.Register(BuildMultiplayerSavedServerDiscardMenu());
+            _menu.Register(BuildMultiplayerSavedServerDeleteMenu());
             _menu.Register(BuildMultiplayerLobbyMenu());
             _menu.Register(BuildMultiplayerRoomsMenu());
             _menu.Register(BuildMultiplayerCreateRoomMenu());
@@ -145,6 +150,7 @@ namespace TopSpeed.Menu
             var items = new List<MenuItem>
             {
                 new MenuItem("Join a game on the local network", MenuAction.None, onActivate: _actions.StartServerDiscovery),
+                new MenuItem("Manage saved servers", MenuAction.None, onActivate: _actions.OpenSavedServersManager),
                 new MenuItem("Enter the IP address or domain manually", MenuAction.None, onActivate: _actions.BeginManualServerEntry),
                 BackItem()
             };
@@ -170,6 +176,46 @@ namespace TopSpeed.Menu
                 new MenuItem("Disconnect", MenuAction.None, onActivate: _actions.DisconnectFromServer)
             };
             return _menu.CreateMenu("multiplayer_lobby", items, string.Empty);
+        }
+
+        private MenuScreen BuildMultiplayerSavedServersMenu()
+        {
+            var items = new List<MenuItem>
+            {
+                new MenuItem("Add a new server", MenuAction.None),
+                BackItem()
+            };
+            return _menu.CreateMenu("multiplayer_saved_servers", items, string.Empty);
+        }
+
+        private MenuScreen BuildMultiplayerSavedServerFormMenu()
+        {
+            var items = new List<MenuItem>
+            {
+                new MenuItem("Server form is loading", MenuAction.None),
+                BackItem()
+            };
+            return _menu.CreateMenu("multiplayer_saved_server_form", items, "Server details");
+        }
+
+        private MenuScreen BuildMultiplayerSavedServerDiscardMenu()
+        {
+            var items = new List<MenuItem>
+            {
+                new MenuItem("Save changes", MenuAction.None),
+                new MenuItem("Discard changes", MenuAction.None)
+            };
+            return _menu.CreateMenu("multiplayer_saved_server_discard", items, "Save changes before closing?");
+        }
+
+        private MenuScreen BuildMultiplayerSavedServerDeleteMenu()
+        {
+            var items = new List<MenuItem>
+            {
+                new MenuItem("Yes, delete this server", MenuAction.None),
+                new MenuItem("No, keep this server", MenuAction.Back)
+            };
+            return _menu.CreateMenu("multiplayer_saved_server_delete", items, "Delete this server?");
         }
 
         private MenuScreen BuildMultiplayerRoomsMenu()

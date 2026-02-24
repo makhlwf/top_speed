@@ -1,5 +1,6 @@
 using SharpDX.DirectInput;
 using TopSpeed.Common;
+using System.Collections.Generic;
 
 namespace TopSpeed.Input
 {
@@ -115,6 +116,7 @@ namespace TopSpeed.Input
         public bool MenuWrapNavigation { get; set; }
         public string MenuSoundPreset { get; set; } = "1";
         public bool MenuNavigatePanning { get; set; }
+        public List<SavedServerEntry> SavedServers { get; set; } = new List<SavedServerEntry>();
 
         public bool UseJoystick
         {
@@ -189,6 +191,14 @@ namespace TopSpeed.Input
             MenuWrapNavigation = true;
             MenuSoundPreset = "1";
             MenuNavigatePanning = false;
+            SavedServers = new List<SavedServerEntry>();
         }
+    }
+
+    internal sealed class SavedServerEntry
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Host { get; set; } = string.Empty;
+        public int Port { get; set; }
     }
 }

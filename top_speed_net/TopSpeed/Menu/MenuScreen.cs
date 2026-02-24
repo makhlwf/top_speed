@@ -50,6 +50,7 @@ namespace TopSpeed.Menu
         private bool _disposed;
         private string? _menuSoundPresetRoot;
         private bool _titlePending;
+        private int _activeActionIndex = NoSelection;
         private readonly Dictionary<string, string> _menuSoundPathCache =
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private string? _cachedMusicFile;
@@ -248,25 +249,46 @@ namespace TopSpeed.Menu
                 }
             }
 
+            if (_index != NoSelection)
+            {
+                var currentItem = _items[_index];
+                if (currentItem.HasActions)
+                {
+                    if (moveRight && TryBrowseItemActions(currentItem, +1))
+                        return MenuUpdateResult.None;
+
+                    if (moveLeft && _activeActionIndex != NoSelection && TryBrowseItemActions(currentItem, -1))
+                        return MenuUpdateResult.None;
+                }
+                else
+                {
+                    _activeActionIndex = NoSelection;
+                }
+            }
+
             if (_index == NoSelection)
             {
                 if (moveDown)
                 {
+                    _activeActionIndex = NoSelection;
                     MoveToIndex(0);
                     _autoFocusPending = false;
                 }
                 else if (moveUp)
                 {
+                    _activeActionIndex = NoSelection;
                     MoveToIndex(_items.Count - 1);
                     _autoFocusPending = false;
                 }
                 else if (moveHome)
                 {
+                    _activeActionIndex = NoSelection;
                     MoveToIndex(0);
                     _autoFocusPending = false;
                 }
                 else if (moveEnd)
                 {
+                    _activeActionIndex = NoSelection;
                     MoveToIndex(_items.Count - 1);
                     _autoFocusPending = false;
                 }
@@ -275,18 +297,22 @@ namespace TopSpeed.Menu
             {
                 if (moveUp)
                 {
+                    _activeActionIndex = NoSelection;
                     MoveSelectionAndAnnounce(-1);
                 }
                 else if (moveDown)
                 {
+                    _activeActionIndex = NoSelection;
                     MoveSelectionAndAnnounce(1);
                 }
                 else if (moveHome)
                 {
+                    _activeActionIndex = NoSelection;
                     MoveToIndex(0);
                 }
                 else if (moveEnd)
                 {
+                    _activeActionIndex = NoSelection;
                     MoveToIndex(_items.Count - 1);
                 }
             }
@@ -304,6 +330,16 @@ namespace TopSpeed.Menu
             {
                 if (_index == NoSelection)
                     return MenuUpdateResult.None;
+                if (_activeActionIndex != NoSelection)
+                {
+                    var item = _items[_index];
+                    if (item.TryActivateAction(_activeActionIndex))
+                    {
+                        PlaySfx(_activateSound);
+                        CancelHint();
+                        return MenuUpdateResult.None;
+                    }
+                }
                 PlaySfx(_activateSound);
                 return MenuUpdateResult.Activated(_items[_index]);
             }
@@ -326,6 +362,7 @@ namespace TopSpeed.Menu
         public void ResetSelection()
         {
             _index = NoSelection;
+            _activeActionIndex = NoSelection;
             _justEntered = true;
             _autoFocusPending = true;
             CancelHint();
@@ -343,12 +380,14 @@ namespace TopSpeed.Menu
             if (preserveSelection && hadSelection && _items.Count > 0)
             {
                 _index = Math.Max(0, Math.Min(previousIndex, _items.Count - 1));
+                _activeActionIndex = NoSelection;
                 _justEntered = false;
                 _autoFocusPending = false;
                 return;
             }
 
             _index = NoSelection;
+            _activeActionIndex = NoSelection;
             _justEntered = true;
             _autoFocusPending = true;
         }
@@ -454,6 +493,7 @@ namespace TopSpeed.Menu
         {
             _justEntered = true;
             _ignoreHeldInput = true;
+            _activeActionIndex = NoSelection;
             CancelHint();
             if (!string.IsNullOrWhiteSpace(Title))
                 _speech.Speak(Title, SpeechService.SpeakFlag.Interruptable);
@@ -472,9 +512,44 @@ namespace TopSpeed.Menu
             if (_items.Count == 0)
                 return;
             _index = 0;
+            _activeActionIndex = NoSelection;
             PlayNavigateSound();
             AnnounceCurrent(purge: false);
             _justEntered = false;
+        }
+
+        private bool TryBrowseItemActions(MenuItem item, int direction)
+        {
+            if (!item.HasActions || item.ActionCount <= 0)
+                return false;
+
+            var nextIndex = _activeActionIndex == NoSelection
+                ? (direction >= 0 ? 0 : item.ActionCount - 1)
+                : _activeActionIndex + direction;
+
+            if (WrapNavigation)
+            {
+                nextIndex = (nextIndex % item.ActionCount + item.ActionCount) % item.ActionCount;
+            }
+            else if (nextIndex < 0 || nextIndex >= item.ActionCount)
+            {
+                PlaySfx(_edgeSound);
+                return true;
+            }
+
+            _activeActionIndex = nextIndex;
+            if (item.TryGetActionLabel(_activeActionIndex, out var label) && !string.IsNullOrWhiteSpace(label))
+            {
+                PlayNavigateSound();
+                _speech.Speak(label);
+                CancelHint();
+            }
+            else
+            {
+                PlayNavigateSound();
+            }
+
+            return true;
         }
 
         public void FadeOutMusic(int durationMs)
@@ -740,7 +815,8 @@ namespace TopSpeed.Menu
             CancelHint();
             if (!_usageHintsEnabled())
                 return;
-            if (string.IsNullOrWhiteSpace(item.Hint))
+            var hint = item.GetHintText();
+            if (string.IsNullOrWhiteSpace(hint))
                 return;
 
             var token = Volatile.Read(ref _hintToken);
@@ -752,9 +828,10 @@ namespace TopSpeed.Menu
                     return;
                 if (_disposed || _index != index)
                     return;
-                if (!_usageHintsEnabled() || string.IsNullOrWhiteSpace(item.Hint))
+                var delayedHint = item.GetHintText();
+                if (!_usageHintsEnabled() || string.IsNullOrWhiteSpace(delayedHint))
                     return;
-                _speech.Speak(item.Hint!, SpeechService.SpeakFlag.Interruptable);
+                _speech.Speak(delayedHint!, SpeechService.SpeakFlag.Interruptable);
             });
         }
 

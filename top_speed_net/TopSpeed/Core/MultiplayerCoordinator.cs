@@ -26,6 +26,10 @@ namespace TopSpeed.Core
         private const string MultiplayerLeaveRoomConfirmMenuId = "multiplayer_leave_room_confirm";
         private const string MultiplayerLoadoutVehicleMenuId = "multiplayer_loadout_vehicle";
         private const string MultiplayerLoadoutTransmissionMenuId = "multiplayer_loadout_transmission";
+        private const string MultiplayerSavedServersMenuId = "multiplayer_saved_servers";
+        private const string MultiplayerSavedServerFormMenuId = "multiplayer_saved_server_form";
+        private const string MultiplayerSavedServerDiscardMenuId = "multiplayer_saved_server_discard";
+        private const string MultiplayerSavedServerDeleteMenuId = "multiplayer_saved_server_delete";
         private static readonly string[] RoomTypeOptions = { "Race with bots", "One-on-one without bots" };
         private static readonly string[] PlayerCountOptions = BuildNumericOptions(1, ProtocolConstants.MaxRoomPlayersToStart, "players");
         private static readonly string[] LapCountOptions = BuildNumericOptions(1, 16, "laps");
@@ -70,6 +74,10 @@ namespace TopSpeed.Core
         private AudioSourceHandle? _connectedSound;
         private AudioSourceHandle? _onlineSound;
         private AudioSourceHandle? _offlineSound;
+        private SavedServerEntry _savedServerDraft = new SavedServerEntry();
+        private SavedServerEntry? _savedServerOriginal;
+        private int _savedServerEditIndex = -1;
+        private int _pendingDeleteServerIndex = -1;
 
         public MultiplayerCoordinator(
             MenuManager menu,
@@ -150,8 +158,16 @@ namespace TopSpeed.Core
             _roomBrowserOpenPending = false;
             ResetCreateRoomDraft();
             _pendingLoadoutVehicleIndex = 0;
+            _savedServerDraft = new SavedServerEntry();
+            _savedServerOriginal = null;
+            _savedServerEditIndex = -1;
+            _pendingDeleteServerIndex = -1;
             RebuildLobbyMenu();
             RebuildCreateRoomMenu();
+            RebuildSavedServersMenu();
+            RebuildSavedServerFormMenu();
+            RebuildSavedServerDiscardMenu();
+            RebuildSavedServerDeleteMenu();
             RebuildRoomControlsMenu();
             RebuildRoomOptionsMenu();
             RebuildLeaveRoomConfirmMenu();
@@ -253,6 +269,296 @@ namespace TopSpeed.Core
 
             if (!string.IsNullOrWhiteSpace(message.Message))
                 _speech.Speak(message.Message);
+        }
+
+        public void OpenSavedServersManager()
+        {
+            RebuildSavedServersMenu();
+            _menu.Push(MultiplayerSavedServersMenuId);
+        }
+
+        private IReadOnlyList<SavedServerEntry> SavedServers => _settings.SavedServers ?? (_settings.SavedServers = new List<SavedServerEntry>());
+
+        private void RebuildSavedServersMenu()
+        {
+            var items = new List<MenuItem>();
+            var servers = SavedServers;
+            for (var i = 0; i < servers.Count; i++)
+            {
+                var index = i;
+                var server = servers[i];
+                var displayName = string.IsNullOrWhiteSpace(server.Name)
+                    ? $"{server.Host}:{ResolveSavedServerPort(server)}"
+                    : $"{server.Name}, {server.Host}:{ResolveSavedServerPort(server)}";
+
+                items.Add(new MenuItem(
+                    displayName,
+                    MenuAction.None,
+                    onActivate: () => ConnectUsingSavedServer(index),
+                    actions: new[]
+                    {
+                        new MenuItemAction("Edit", () => OpenEditSavedServerForm(index)),
+                        new MenuItemAction("Delete", () => OpenDeleteSavedServerConfirm(index))
+                    }));
+            }
+
+            items.Add(new MenuItem("Add a new server", MenuAction.None, onActivate: OpenAddSavedServerForm));
+            items.Add(new MenuItem("Go back", MenuAction.Back));
+            _menu.UpdateItems(MultiplayerSavedServersMenuId, items, preserveSelection: true);
+        }
+
+        private void OpenAddSavedServerForm()
+        {
+            _savedServerEditIndex = -1;
+            _savedServerOriginal = null;
+            _savedServerDraft = new SavedServerEntry();
+            RebuildSavedServerFormMenu();
+            _menu.Push(MultiplayerSavedServerFormMenuId);
+        }
+
+        private void OpenEditSavedServerForm(int index)
+        {
+            var servers = SavedServers;
+            if (index < 0 || index >= servers.Count)
+                return;
+
+            var source = servers[index];
+            _savedServerEditIndex = index;
+            _savedServerOriginal = CloneSavedServer(source);
+            _savedServerDraft = CloneSavedServer(source);
+            RebuildSavedServerFormMenu();
+            _menu.Push(MultiplayerSavedServerFormMenuId);
+        }
+
+        private void ConnectUsingSavedServer(int index)
+        {
+            var servers = SavedServers;
+            if (index < 0 || index >= servers.Count)
+                return;
+
+            var server = servers[index];
+            var host = (server.Host ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(host))
+            {
+                _speech.Speak("Saved server host is empty.");
+                return;
+            }
+
+            _pendingServerAddress = host;
+            _pendingServerPort = ResolveSavedServerPort(server);
+            BeginCallSignInput();
+        }
+
+        private void UpdateSavedServerDraftName()
+        {
+            var result = _promptTextInput("Enter the server name.", _savedServerDraft.Name, SpeechService.SpeakFlag.InterruptableButStop, true);
+            if (result.Cancelled)
+                return;
+
+            _savedServerDraft.Name = (result.Text ?? string.Empty).Trim();
+            RebuildSavedServerFormMenu();
+        }
+
+        private void UpdateSavedServerDraftHost()
+        {
+            var result = _promptTextInput("Enter the server IP address or host name.", _savedServerDraft.Host, SpeechService.SpeakFlag.InterruptableButStop, true);
+            if (result.Cancelled)
+                return;
+
+            _savedServerDraft.Host = (result.Text ?? string.Empty).Trim();
+            RebuildSavedServerFormMenu();
+        }
+
+        private void UpdateSavedServerDraftPort()
+        {
+            var current = _savedServerDraft.Port > 0 ? _savedServerDraft.Port.ToString() : string.Empty;
+            var result = _promptTextInput("Enter the server port, or leave empty for default.", current, SpeechService.SpeakFlag.InterruptableButStop, true);
+            if (result.Cancelled)
+                return;
+
+            var trimmed = (result.Text ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(trimmed))
+            {
+                _savedServerDraft.Port = 0;
+                RebuildSavedServerFormMenu();
+                return;
+            }
+
+            if (!int.TryParse(trimmed, out var port) || port < 1 || port > 65535)
+            {
+                _speech.Speak("Invalid port. Enter a number between 1 and 65535.");
+                return;
+            }
+
+            _savedServerDraft.Port = port;
+            RebuildSavedServerFormMenu();
+        }
+
+        private void RebuildSavedServerFormMenu()
+        {
+            var controls = new[]
+            {
+                new MenuFormControl(
+                    () => string.IsNullOrWhiteSpace(_savedServerDraft.Name)
+                        ? "Server name, currently empty."
+                        : $"Server name, currently set to {_savedServerDraft.Name}",
+                    UpdateSavedServerDraftName),
+                new MenuFormControl(
+                    () => string.IsNullOrWhiteSpace(_savedServerDraft.Host)
+                        ? "Server IP or host, currently empty."
+                        : $"Server IP or host, currently set to {_savedServerDraft.Host}",
+                    UpdateSavedServerDraftHost),
+                new MenuFormControl(
+                    () => _savedServerDraft.Port > 0
+                        ? $"Server port, currently set to {_savedServerDraft.Port}"
+                        : "Server port, currently empty.",
+                    UpdateSavedServerDraftPort)
+            };
+
+            var saveLabel = _savedServerEditIndex >= 0 ? "Save server changes" : "Save server";
+            var items = MenuFormBuilder.BuildItems(
+                controls,
+                saveLabel,
+                SaveSavedServerDraft,
+                "Go back",
+                CloseSavedServerForm);
+            _menu.UpdateItems(MultiplayerSavedServerFormMenuId, items, preserveSelection: true);
+        }
+
+        private void CloseSavedServerForm()
+        {
+            if (!IsSavedServerDraftDirty())
+            {
+                _menu.PopToPrevious();
+                return;
+            }
+
+            RebuildSavedServerDiscardMenu();
+            _menu.Push(MultiplayerSavedServerDiscardMenuId);
+        }
+
+        private bool IsSavedServerDraftDirty()
+        {
+            var current = NormalizeSavedServerDraft(_savedServerDraft);
+            var original = NormalizeSavedServerDraft(_savedServerOriginal ?? new SavedServerEntry());
+
+            if (_savedServerEditIndex < 0)
+                return !string.IsNullOrWhiteSpace(current.Host) || !string.IsNullOrWhiteSpace(current.Name) || current.Port != 0;
+
+            return !string.Equals(current.Name, original.Name, StringComparison.Ordinal)
+                || !string.Equals(current.Host, original.Host, StringComparison.OrdinalIgnoreCase)
+                || current.Port != original.Port;
+        }
+
+        private void RebuildSavedServerDiscardMenu()
+        {
+            var items = new List<MenuItem>
+            {
+                new MenuItem("Save changes", MenuAction.None, onActivate: SaveSavedServerDraft),
+                new MenuItem("Discard changes", MenuAction.None, onActivate: DiscardSavedServerDraftChanges)
+            };
+            _menu.UpdateItems(MultiplayerSavedServerDiscardMenuId, items);
+        }
+
+        private void DiscardSavedServerDraftChanges()
+        {
+            _menu.PopToPrevious();
+            _menu.PopToPrevious();
+        }
+
+        private void SaveSavedServerDraft()
+        {
+            var normalized = NormalizeSavedServerDraft(_savedServerDraft);
+            if (string.IsNullOrWhiteSpace(normalized.Host))
+            {
+                _speech.Speak("Server IP or host cannot be empty.");
+                return;
+            }
+
+            var servers = _settings.SavedServers ?? (_settings.SavedServers = new List<SavedServerEntry>());
+            if (_savedServerEditIndex >= 0 && _savedServerEditIndex < servers.Count)
+                servers[_savedServerEditIndex] = normalized;
+            else
+                servers.Add(normalized);
+
+            _saveSettings();
+            RebuildSavedServersMenu();
+
+            if (string.Equals(_menu.CurrentId, MultiplayerSavedServerDiscardMenuId, StringComparison.Ordinal))
+                _menu.PopToPrevious();
+            if (string.Equals(_menu.CurrentId, MultiplayerSavedServerFormMenuId, StringComparison.Ordinal))
+                _menu.PopToPrevious();
+            else if (string.Equals(_menu.CurrentId, MultiplayerSavedServerDiscardMenuId, StringComparison.Ordinal))
+                _menu.PopToPrevious();
+
+            _speech.Speak("Server saved.");
+        }
+
+        private void OpenDeleteSavedServerConfirm(int index)
+        {
+            if (index < 0 || index >= SavedServers.Count)
+                return;
+
+            _pendingDeleteServerIndex = index;
+            RebuildSavedServerDeleteMenu();
+            _menu.Push(MultiplayerSavedServerDeleteMenuId);
+        }
+
+        private void RebuildSavedServerDeleteMenu()
+        {
+            var items = new List<MenuItem>
+            {
+                new MenuItem("Yes, delete this server", MenuAction.None, onActivate: ConfirmDeleteSavedServer),
+                new MenuItem("No, keep this server", MenuAction.Back)
+            };
+            _menu.UpdateItems(MultiplayerSavedServerDeleteMenuId, items);
+        }
+
+        private void ConfirmDeleteSavedServer()
+        {
+            var servers = _settings.SavedServers ?? (_settings.SavedServers = new List<SavedServerEntry>());
+            if (_pendingDeleteServerIndex < 0 || _pendingDeleteServerIndex >= servers.Count)
+            {
+                _menu.PopToPrevious();
+                return;
+            }
+
+            servers.RemoveAt(_pendingDeleteServerIndex);
+            _pendingDeleteServerIndex = -1;
+            _saveSettings();
+            RebuildSavedServersMenu();
+            _menu.PopToPrevious();
+            _speech.Speak("Server deleted.");
+        }
+
+        private static SavedServerEntry CloneSavedServer(SavedServerEntry source)
+        {
+            if (source == null)
+                return new SavedServerEntry();
+
+            return new SavedServerEntry
+            {
+                Name = source.Name ?? string.Empty,
+                Host = source.Host ?? string.Empty,
+                Port = source.Port
+            };
+        }
+
+        private static SavedServerEntry NormalizeSavedServerDraft(SavedServerEntry source)
+        {
+            var copy = CloneSavedServer(source);
+            copy.Name = (copy.Name ?? string.Empty).Trim();
+            copy.Host = (copy.Host ?? string.Empty).Trim();
+            if (copy.Port < 0 || copy.Port > 65535)
+                copy.Port = 0;
+            return copy;
+        }
+
+        private int ResolveSavedServerPort(SavedServerEntry server)
+        {
+            if (server != null && server.Port >= 1 && server.Port <= 65535)
+                return server.Port;
+            return ResolveServerPort();
         }
 
         private void ApplyRoomListEvent(PacketRoomEvent roomEvent)
@@ -426,6 +732,20 @@ namespace TopSpeed.Core
 
             _speech.Speak("Choose your vehicle and transmission mode to get ready for the race.");
             _menu.ShowRoot(MultiplayerLoadoutVehicleMenuId);
+            return true;
+        }
+
+        public bool IsSavedServerFormMenu(string? currentMenuId)
+        {
+            return string.Equals(currentMenuId, MultiplayerSavedServerFormMenuId, StringComparison.Ordinal);
+        }
+
+        public bool TryHandleEscapeFromSavedServerFormMenu(string? currentMenuId)
+        {
+            if (!IsSavedServerFormMenu(currentMenuId))
+                return false;
+
+            CloseSavedServerForm();
             return true;
         }
 

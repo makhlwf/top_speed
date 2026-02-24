@@ -177,7 +177,18 @@ namespace TopSpeed.Core
                     if (_multiplayerCoordinator.IsRoomMenu(_menu.CurrentId)
                         && _input.WasPressed(Key.Escape)
                         && _multiplayerCoordinator.TryHandleEscapeFromRoomMenu(_menu.CurrentId))
+                    {
+                        _input.LatchMenuBack();
                         break;
+                    }
+
+                    if (_multiplayerCoordinator.IsSavedServerFormMenu(_menu.CurrentId)
+                        && _input.WasPressed(Key.Escape)
+                        && _multiplayerCoordinator.TryHandleEscapeFromSavedServerFormMenu(_menu.CurrentId))
+                    {
+                        _input.LatchMenuBack();
+                        break;
+                    }
 
                     var action = _menu.Update(_input);
                     HandleMenuAction(action);
@@ -715,6 +726,7 @@ namespace TopSpeed.Core
         void IMenuActions.SaveMusicVolume(float volume) => SaveMusicVolume(volume);
         void IMenuActions.QueueRaceStart(RaceMode mode) => QueueRaceStart(mode);
         void IMenuActions.StartServerDiscovery() => _multiplayerCoordinator.StartServerDiscovery();
+        void IMenuActions.OpenSavedServersManager() => _multiplayerCoordinator.OpenSavedServersManager();
         void IMenuActions.BeginManualServerEntry() => _multiplayerCoordinator.BeginManualServerEntry();
         void IMenuActions.DisconnectFromServer() => DisconnectFromServer();
         void IMenuActions.SpeakNotImplemented() => _speech.Speak("Not implemented yet.");

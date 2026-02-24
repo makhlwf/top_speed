@@ -6,6 +6,7 @@ namespace TopSpeed.Menu
     {
         private readonly string _text;
         private readonly Func<string>? _textProvider;
+        private readonly MenuItemAction[] _actions;
         public string? Hint { get; }
 
         public string Text => _text;
@@ -13,6 +14,8 @@ namespace TopSpeed.Menu
         public string? NextMenuId { get; }
         public Action? OnActivate { get; }
         public bool SuppressPostActivateAnnouncement { get; }
+        public bool HasActions => _actions.Length > 0;
+        public int ActionCount => _actions.Length;
 
         public MenuItem(
             string text,
@@ -20,7 +23,8 @@ namespace TopSpeed.Menu
             string? nextMenuId = null,
             Action? onActivate = null,
             bool suppressPostActivateAnnouncement = false,
-            string? hint = null)
+            string? hint = null,
+            params MenuItemAction[] actions)
         {
             _text = text;
             _textProvider = null;
@@ -29,6 +33,7 @@ namespace TopSpeed.Menu
             OnActivate = onActivate;
             SuppressPostActivateAnnouncement = suppressPostActivateAnnouncement;
             Hint = hint;
+            _actions = actions ?? Array.Empty<MenuItemAction>();
         }
 
         public MenuItem(
@@ -37,7 +42,8 @@ namespace TopSpeed.Menu
             string? nextMenuId = null,
             Action? onActivate = null,
             bool suppressPostActivateAnnouncement = false,
-            string? hint = null)
+            string? hint = null,
+            params MenuItemAction[] actions)
         {
             _text = string.Empty;
             _textProvider = textProvider ?? throw new ArgumentNullException(nameof(textProvider));
@@ -46,6 +52,7 @@ namespace TopSpeed.Menu
             OnActivate = onActivate;
             SuppressPostActivateAnnouncement = suppressPostActivateAnnouncement;
             Hint = hint;
+            _actions = actions ?? Array.Empty<MenuItemAction>();
         }
 
         public virtual string GetDisplayText()
@@ -63,6 +70,38 @@ namespace TopSpeed.Menu
         {
             announcement = null;
             return false;
+        }
+
+        public bool TryActivateAction(int actionIndex)
+        {
+            if (actionIndex < 0 || actionIndex >= _actions.Length)
+                return false;
+
+            _actions[actionIndex].Activate();
+            return true;
+        }
+
+        public bool TryGetActionLabel(int actionIndex, out string label)
+        {
+            label = string.Empty;
+            if (actionIndex < 0 || actionIndex >= _actions.Length)
+                return false;
+
+            label = _actions[actionIndex].Label ?? string.Empty;
+            return true;
+        }
+
+        public virtual string? GetHintText()
+        {
+            if (HasActions)
+            {
+                var actionsHint = "Actions available, press right arrow to view.";
+                if (string.IsNullOrWhiteSpace(Hint))
+                    return actionsHint;
+                return $"{Hint} {actionsHint}";
+            }
+
+            return Hint;
         }
 
         protected string GetBaseText()

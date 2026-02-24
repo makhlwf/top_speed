@@ -41,6 +41,7 @@ namespace TopSpeed.Core
             var serverAddress = settings.LastServerAddress;
             var screenReaderRate = settings.ScreenReaderRateMs;
             var menuSoundPreset = settings.MenuSoundPreset;
+            var savedServers = new List<SavedServerEntry>();
             var values = new List<int>();
             foreach (var rawLine in lines)
             {
@@ -75,6 +76,11 @@ namespace TopSpeed.Core
                         if (!string.IsNullOrWhiteSpace(val))
                             menuSoundPreset = val.Trim();
                     }
+                    else if (key.Equals("saved_server", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (TryParseSavedServer(val, out var savedServer))
+                            savedServers.Add(savedServer);
+                    }
                     continue;
                 }
 
@@ -87,6 +93,7 @@ namespace TopSpeed.Core
             settings.ScreenReaderRateMs = screenReaderRate;
             settings.MenuSoundPreset = menuSoundPreset ?? settings.MenuSoundPreset;
             ApplyValues(settings, values);
+            settings.SavedServers = savedServers;
             return settings;
         }
 
@@ -103,6 +110,14 @@ namespace TopSpeed.Core
                 lines.Add($"sr_rate={settings.ScreenReaderRateMs.ToString(CultureInfo.InvariantCulture)}");
             if (!string.IsNullOrWhiteSpace(settings.MenuSoundPreset))
                 lines.Add($"menu_sound={settings.MenuSoundPreset}");
+            if (settings.SavedServers != null)
+            {
+                foreach (var server in settings.SavedServers)
+                {
+                    if (TrySerializeSavedServer(server, out var serialized))
+                        lines.Add($"saved_server={serialized}");
+                }
+            }
 
             AppendValue(lines, (int)settings.JoystickLeft);
             AppendValue(lines, (int)settings.JoystickRight);
@@ -183,6 +198,53 @@ namespace TopSpeed.Core
         private static void AppendValue(List<string> lines, int value)
         {
             lines.Add(value.ToString(CultureInfo.InvariantCulture));
+        }
+
+        private static bool TrySerializeSavedServer(SavedServerEntry? server, out string serialized)
+        {
+            serialized = string.Empty;
+            if (server == null)
+                return false;
+
+            var name = (server.Name ?? string.Empty).Trim();
+            var host = (server.Host ?? string.Empty).Trim();
+            var port = ClampPort(server.Port, 0);
+            if (string.IsNullOrWhiteSpace(host))
+                return false;
+
+            serialized = string.Join("\t",
+                Uri.EscapeDataString(name),
+                Uri.EscapeDataString(host),
+                port.ToString(CultureInfo.InvariantCulture));
+            return true;
+        }
+
+        private static bool TryParseSavedServer(string value, out SavedServerEntry server)
+        {
+            server = new SavedServerEntry();
+            if (string.IsNullOrWhiteSpace(value))
+                return false;
+
+            var parts = value.Split(new[] { '\t' }, StringSplitOptions.None);
+            if (parts.Length < 3)
+                return false;
+
+            var name = Uri.UnescapeDataString(parts[0] ?? string.Empty).Trim();
+            var host = Uri.UnescapeDataString(parts[1] ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(host))
+                return false;
+
+            var port = 0;
+            if (int.TryParse(parts[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedPort))
+                port = ClampPort(parsedPort, 0);
+
+            server = new SavedServerEntry
+            {
+                Name = name,
+                Host = host,
+                Port = port
+            };
+            return true;
         }
 
         private static void ApplyValues(RaceSettings settings, List<int> values)
