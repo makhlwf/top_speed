@@ -172,7 +172,7 @@ namespace TopSpeed.Core.Multiplayer
 
             _questions.Show(new Question(
                 "Save changes before closing?",
-                "Choose whether to save or discard your server changes.",
+                "Are you sure you would like to discard all changes?.",
                 new QuestionButton("Save changes", SaveSavedServerDraft, QuestionButtonFlags.Default),
                 new QuestionButton("Discard changes", DiscardSavedServerDraftChanges)));
         }
@@ -232,7 +232,7 @@ namespace TopSpeed.Core.Multiplayer
             _pendingDeleteServerIndex = index;
             _questions.Show(new Question(
                 "Delete this server?",
-                "This will remove the saved server entry.",
+                "This will remove the saved server entry from the list. Are you sure you would like to continue?",
                 new QuestionButton("Yes, delete this server", ConfirmDeleteSavedServer),
                 new QuestionButton("No, keep this server", () => _menu.PopToPrevious(), QuestionButtonFlags.Default)));
         }

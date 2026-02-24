@@ -333,7 +333,7 @@ namespace TopSpeed.Core.Multiplayer
 
             _questions.Show(new Question(
                 "Leave this game room?",
-                "Choose whether to leave this game room or stay.",
+                "Are you sure you want to leave the current room?",
                 new QuestionButton("Yes, leave this game room", ConfirmLeaveRoom),
                 new QuestionButton("No, stay in this game room", () => _menu.PopToPrevious(), QuestionButtonFlags.Default)));
         }
