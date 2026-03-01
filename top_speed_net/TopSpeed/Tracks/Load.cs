@@ -72,14 +72,10 @@ namespace TopSpeed.Tracks
 
         private static TrackData ReadCustomTrackData(string filename)
         {
-            if (TrackTsmParser.TryLoad(filename, out var parsed, out _, MinPartLengthMeters))
+            if (TrackTsmParser.TryLoad(filename, out var parsed, out var issues, MinPartLengthMeters))
                 return parsed;
 
-            return new TrackData(
-                true,
-                TrackWeather.Sunny,
-                TrackAmbience.NoAmbience,
-                new[] { new TrackDefinition(TrackType.Straight, TrackSurface.Asphalt, TrackNoise.NoNoise, MinPartLengthMeters) });
+            throw TrackLoadException.FromIssues(filename, issues);
         }
     }
 }

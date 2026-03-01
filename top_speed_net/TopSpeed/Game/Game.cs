@@ -17,7 +17,13 @@ using TopSpeed.Windowing;
 
 namespace TopSpeed.Game
 {
-    internal sealed partial class Game : IDisposable, IMenuActions
+    internal sealed partial class Game : IDisposable,
+        IMenuUiActions,
+        IMenuRaceActions,
+        IMenuServerActions,
+        IMenuSettingsActions,
+        IMenuAudioActions,
+        IMenuMappingActions
     {
         private enum AppState
         {
@@ -105,7 +111,7 @@ namespace TopSpeed.Game
             _menu.SetMenuSoundPreset(_settings.MenuSoundPreset);
             _menu.SetMenuNavigatePanning(_settings.MenuNavigatePanning);
             _selection = new RaceSelection(_setup, _settings);
-            _menuRegistry = new MenuRegistry(_menu, _settings, _setup, _raceInput, _selection, this);
+            _menuRegistry = new MenuRegistry(_menu, _settings, _setup, _raceInput, _selection, this, this, this, this, this, this);
             _inputMapping = new InputMappingHandler(_input, _raceInput, _settings, _speech, SaveSettings);
             _multiplayerCoordinator = new MultiplayerCoordinator(
                 _menu,

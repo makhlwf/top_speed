@@ -7,6 +7,12 @@ namespace TopSpeed.Race
 {
     internal abstract partial class Level
     {
+        protected void BeginFrame(float raceStartDelaySeconds = DefaultRaceStartDelaySeconds)
+        {
+            EnsureStartSequenceScheduled(raceStartDelaySeconds);
+            ProcessDueEvents();
+        }
+
         protected void EnsureStartSequenceScheduled(float raceStartDelaySeconds = DefaultRaceStartDelaySeconds)
         {
             if (_elapsedTotal == 0.0f)
@@ -106,6 +112,44 @@ namespace TopSpeed.Race
                 return true;
 
             _elapsedTotal += elapsed;
+            return false;
+        }
+
+        protected void RunPlayerVehicleStep(float elapsed, Action? afterTrackUpdate = null)
+        {
+            UpdateVehiclePanels(elapsed);
+            _car.Run(elapsed);
+            _track.Run(_car.PositionY);
+            afterTrackUpdate?.Invoke();
+            var road = _track.RoadAtPosition(_car.PositionY);
+            _car.Evaluate(road);
+            UpdateAudioListener(elapsed);
+            if (_track.NextRoad(_car.PositionY, _car.Speed, (int)_settings.CurveAnnouncement, out var nextRoad))
+                CallNextRoad(nextRoad);
+        }
+
+        protected bool HandlePlayerLapProgress(Action onPlayerFinished, bool announceLapsToGo = true)
+        {
+            var currentLap = _track.Lap(_car.PositionY);
+            if (currentLap <= _lap)
+                return false;
+
+            _lap = currentLap;
+            if (_lap > _nrOfLaps)
+            {
+                ApplyPlayerFinishState();
+                onPlayerFinished?.Invoke();
+                return true;
+            }
+
+            if (announceLapsToGo &&
+                _settings.AutomaticInfo != AutomaticInfoMode.Off &&
+                _lap > 1 &&
+                _lap <= _nrOfLaps)
+            {
+                Speak(_soundLaps[_nrOfLaps - _lap], true);
+            }
+
             return false;
         }
 

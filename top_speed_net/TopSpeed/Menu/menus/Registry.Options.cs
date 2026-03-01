@@ -17,7 +17,7 @@ namespace TopSpeed.Menu
                     onActivate: () =>
                     {
                         _settings.SyncAudioCategoriesFromMusicVolume();
-                        _actions.ApplyAudioSettings();
+                        _audio.ApplyAudioSettings();
                     }),
                 new MenuItem("Controls", MenuAction.None, nextMenuId: "options_controls"),
                 new MenuItem("Race settings", MenuAction.None, nextMenuId: "options_race"),
@@ -35,49 +35,49 @@ namespace TopSpeed.Menu
                 new CheckBox(
                     "Include custom tracks in randomization",
                     () => _settings.RandomCustomTracks,
-                    value => _actions.UpdateSetting(() => _settings.RandomCustomTracks = value),
+                    value => _settingsActions.UpdateSetting(() => _settings.RandomCustomTracks = value),
                     hint: "When checked, random track selection can include custom tracks. Press ENTER to toggle."),
                 new CheckBox(
                     "Include custom vehicles in randomization",
                     () => _settings.RandomCustomVehicles,
-                    value => _actions.UpdateSetting(() => _settings.RandomCustomVehicles = value),
+                    value => _settingsActions.UpdateSetting(() => _settings.RandomCustomVehicles = value),
                     hint: "When checked, random vehicle selection can include custom vehicles. Press ENTER to toggle."),
                 new CheckBox(
                     "Enable HRTF audio",
                     () => _settings.HrtfAudio,
-                    value => _actions.UpdateSetting(() => _settings.HrtfAudio = value),
+                    value => _settingsActions.UpdateSetting(() => _settings.HrtfAudio = value),
                     hint: "When checked, Three-D audio uses HRTF spatialization for more realistic positioning. Press ENTER to toggle."),
                 new CheckBox(
                     "Automatic audio device format",
                     () => _settings.AutoDetectAudioDeviceFormat,
-                    value => _actions.UpdateSetting(() => _settings.AutoDetectAudioDeviceFormat = value),
+                    value => _settingsActions.UpdateSetting(() => _settings.AutoDetectAudioDeviceFormat = value),
                     hint: "When checked, the game uses the device channel count and sample rate. Restart required. Press ENTER to toggle."),
                 new Switch(
                     "Units",
                     "metric",
                     "imperial",
                     () => _settings.Units == UnitSystem.Metric,
-                    value => _actions.UpdateSetting(() => _settings.Units = value ? UnitSystem.Metric : UnitSystem.Imperial),
+                    value => _settingsActions.UpdateSetting(() => _settings.Units = value ? UnitSystem.Metric : UnitSystem.Imperial),
                     hint: "Switch between metric and imperial units. Press ENTER to change."),
                 new CheckBox(
                     "Enable usage hints",
                     () => _settings.UsageHints,
-                    value => _actions.UpdateSetting(() => _settings.UsageHints = value),
+                    value => _settingsActions.UpdateSetting(() => _settings.UsageHints = value),
                     hint: "When checked, menu items can speak usage hints after a short delay. Press ENTER to toggle."),
                 new CheckBox(
                     "Enable menu wrapping",
                     () => _settings.MenuWrapNavigation,
-                    value => _actions.UpdateSetting(() => _settings.MenuWrapNavigation = value),
+                    value => _settingsActions.UpdateSetting(() => _settings.MenuWrapNavigation = value),
                     onChanged: value => _menu.SetWrapNavigation(value),
                     hint: "When checked, menu navigation wraps from the last item to the first. Press ENTER to toggle."),
                 BuildMenuSoundPresetItem(),
                 new CheckBox(
                     "Enable menu navigation panning",
                     () => _settings.MenuNavigatePanning,
-                    value => _actions.UpdateSetting(() => _settings.MenuNavigatePanning = value),
+                    value => _settingsActions.UpdateSetting(() => _settings.MenuNavigatePanning = value),
                     onChanged: value => _menu.SetMenuNavigatePanning(value),
                     hint: "When checked, menu navigation sounds pan left or right based on the item position. Press ENTER to toggle."),
-                new MenuItem("Recalibrate screen reader rate", MenuAction.None, onActivate: _actions.RecalibrateScreenReaderRate),
+                new MenuItem("Recalibrate screen reader rate", MenuAction.None, onActivate: _settingsActions.RecalibrateScreenReaderRate),
                 BackItem()
             };
             return _menu.CreateMenu("options_game", items);
@@ -141,7 +141,7 @@ namespace TopSpeed.Menu
         {
             var items = new List<MenuItem>
             {
-                new MenuItem(() => $"Default server port: {FormatServerPort(_settings.DefaultServerPort)}", MenuAction.None, onActivate: _actions.BeginServerPortEntry),
+                new MenuItem(() => $"Default server port: {FormatServerPort(_settings.DefaultServerPort)}", MenuAction.None, onActivate: _server.BeginServerPortEntry),
                 BackItem()
             };
             return _menu.CreateMenu("options_server", items);
@@ -155,7 +155,7 @@ namespace TopSpeed.Menu
                 new CheckBox(
                     "Force feedback",
                     () => _settings.ForceFeedback,
-                    value => _actions.UpdateSetting(() => _settings.ForceFeedback = value),
+                    value => _settingsActions.UpdateSetting(() => _settings.ForceFeedback = value),
                     hint: "Enables force feedback or vibration if your controller supports it. Press ENTER to toggle."),
                 new MenuItem("Map keyboard keys", MenuAction.None, nextMenuId: "options_controls_keyboard"),
                 new MenuItem("Map joystick keys", MenuAction.None, nextMenuId: "options_controls_joystick"),
@@ -168,9 +168,9 @@ namespace TopSpeed.Menu
         {
             var items = new List<MenuItem>
             {
-                new MenuItem("Keyboard", MenuAction.Back, onActivate: () => _actions.SetDevice(InputDeviceMode.Keyboard)),
-                new MenuItem("Joystick", MenuAction.Back, onActivate: () => _actions.SetDevice(InputDeviceMode.Joystick)),
-                new MenuItem("Both", MenuAction.Back, onActivate: () => _actions.SetDevice(InputDeviceMode.Both)),
+                new MenuItem("Keyboard", MenuAction.Back, onActivate: () => _settingsActions.SetDevice(InputDeviceMode.Keyboard)),
+                new MenuItem("Joystick", MenuAction.Back, onActivate: () => _settingsActions.SetDevice(InputDeviceMode.Joystick)),
+                new MenuItem("Both", MenuAction.Back, onActivate: () => _settingsActions.SetDevice(InputDeviceMode.Both)),
                 BackItem()
             };
             return _menu.CreateMenu("options_controls_device", items, "Select input device");
@@ -193,9 +193,9 @@ namespace TopSpeed.Menu
             {
                 var definition = action;
                 items.Add(new MenuItem(
-                    () => $"{definition.Label}: {_actions.FormatMappingValue(definition.Action, mode)}",
+                    () => $"{definition.Label}: {_mapping.FormatMappingValue(definition.Action, mode)}",
                     MenuAction.None,
-                    onActivate: () => _actions.BeginMapping(mode, definition.Action)));
+                    onActivate: () => _mapping.BeginMapping(mode, definition.Action)));
             }
             items.Add(BackItem());
             return items;
@@ -209,38 +209,38 @@ namespace TopSpeed.Menu
                     "Copilot",
                     new[] { "off", "curves only", "all" },
                     () => (int)_settings.Copilot,
-                    value => _actions.UpdateSetting(() => _settings.Copilot = (CopilotMode)value),
+                    value => _settingsActions.UpdateSetting(() => _settings.Copilot = (CopilotMode)value),
                     hint: "Choose what information the copilot reports during the race. Use LEFT or RIGHT to change."),
                 new Switch(
                     "Curve announcements",
                     "speed dependent",
                     "fixed distance",
                     () => _settings.CurveAnnouncement == CurveAnnouncementMode.SpeedDependent,
-                    value => _actions.UpdateSetting(() => _settings.CurveAnnouncement = value ? CurveAnnouncementMode.SpeedDependent : CurveAnnouncementMode.FixedDistance),
+                    value => _settingsActions.UpdateSetting(() => _settings.CurveAnnouncement = value ? CurveAnnouncementMode.SpeedDependent : CurveAnnouncementMode.FixedDistance),
                     hint: "Switch between fixed distance and speed dependent curve announcements. Press ENTER to change."),
                 new RadioButton(
                     "Automatic race information",
                     new[] { "off", "laps only", "on" },
                     () => (int)_settings.AutomaticInfo,
-                    value => _actions.UpdateSetting(() => _settings.AutomaticInfo = (AutomaticInfoMode)value),
+                    value => _settingsActions.UpdateSetting(() => _settings.AutomaticInfo = (AutomaticInfoMode)value),
                     hint: "Choose how much automatic race information is spoken, such as lap numbers and player positions. Use LEFT or RIGHT to change."),
                 new Slider(
                     "Number of laps",
                     "1-16",
                     () => _settings.NrOfLaps,
-                    value => _actions.UpdateSetting(() => _settings.NrOfLaps = value),
+                    value => _settingsActions.UpdateSetting(() => _settings.NrOfLaps = value),
                     hint: "Sets how many laps the session will be for single race, time trial, and multiplayer. Use LEFT or RIGHT to change by 1, PAGE UP or PAGE DOWN to change by 10, HOME for maximum, END for minimum."),
                 new Slider(
                     "Number of computer players",
                     "1-7",
                     () => _settings.NrOfComputers,
-                    value => _actions.UpdateSetting(() => _settings.NrOfComputers = value),
+                    value => _settingsActions.UpdateSetting(() => _settings.NrOfComputers = value),
                     hint: "Sets how many computer-controlled cars will race against you. Use LEFT or RIGHT to change by 1, PAGE UP or PAGE DOWN to change by 10, HOME for maximum, END for minimum."),
                 new RadioButton(
                     "Single race difficulty",
                     new[] { "easy", "normal", "hard" },
                     () => (int)_settings.Difficulty,
-                    value => _actions.UpdateSetting(() => _settings.Difficulty = (RaceDifficulty)value),
+                    value => _settingsActions.UpdateSetting(() => _settings.Difficulty = (RaceDifficulty)value),
                     hint: "Choose the difficulty level for single races. Use LEFT or RIGHT to change."),
                 BackItem()
             };
@@ -253,7 +253,7 @@ namespace TopSpeed.Menu
             for (var laps = 1; laps <= 16; laps++)
             {
                 var value = laps;
-                items.Add(new MenuItem(laps.ToString(), MenuAction.Back, onActivate: () => _actions.UpdateSetting(() => _settings.NrOfLaps = value)));
+                items.Add(new MenuItem(laps.ToString(), MenuAction.Back, onActivate: () => _settingsActions.UpdateSetting(() => _settings.NrOfLaps = value)));
             }
             items.Add(BackItem());
             return _menu.CreateMenu("options_race_laps", items, "How many labs should the session be. This applys to single race, time trial and multiPlayer modes.");
@@ -265,7 +265,7 @@ namespace TopSpeed.Menu
             for (var count = 1; count <= 7; count++)
             {
                 var value = count;
-                items.Add(new MenuItem(count.ToString(), MenuAction.Back, onActivate: () => _actions.UpdateSetting(() => _settings.NrOfComputers = value)));
+                items.Add(new MenuItem(count.ToString(), MenuAction.Back, onActivate: () => _settingsActions.UpdateSetting(() => _settings.NrOfComputers = value)));
             }
             items.Add(BackItem());
             return _menu.CreateMenu("options_race_computers", items, "Number of computer players");
@@ -275,7 +275,7 @@ namespace TopSpeed.Menu
         {
             var items = new List<MenuItem>
             {
-                new MenuItem("Yes", MenuAction.Back, onActivate: _actions.RestoreDefaults),
+                new MenuItem("Yes", MenuAction.Back, onActivate: _settingsActions.RestoreDefaults),
                 new MenuItem("No", MenuAction.Back),
                 BackItem()
             };
@@ -288,14 +288,14 @@ namespace TopSpeed.Menu
                 label,
                 "0-100",
                 getter,
-                value => _actions.UpdateSetting(() =>
+                value => _settingsActions.UpdateSetting(() =>
                 {
                     _settings.AudioVolumes ??= new AudioVolumeSettings();
                     setter(value);
                     _settings.AudioVolumes.ClampAll();
                     _settings.SyncMusicVolumeFromAudioCategories();
                 }),
-                onChanged: _ => _actions.ApplyAudioSettings(),
+                onChanged: _ => _audio.ApplyAudioSettings(),
                 hint: $"{hint} Use LEFT or RIGHT to change by 1, PAGE UP or PAGE DOWN to change by 10, HOME for maximum, END for minimum.");
         }
 
@@ -312,7 +312,7 @@ namespace TopSpeed.Menu
                 "Menu sounds",
                 _menuSoundPresets,
                 () => GetMenuSoundPresetIndex(),
-                value => _actions.UpdateSetting(() => _settings.MenuSoundPreset = _menuSoundPresets[value]),
+                value => _settingsActions.UpdateSetting(() => _settings.MenuSoundPreset = _menuSoundPresets[value]),
                 onChanged: _ => _menu.SetMenuSoundPreset(_settings.MenuSoundPreset),
                 hint: "Select the menu sound preset. Use LEFT or RIGHT to change.");
         }

@@ -146,13 +146,9 @@ namespace TopSpeed.Race
 
         public void Run(float elapsed)
         {
-            EnsureStartSequenceScheduled(_raceStartDelay);
-            ProcessDueEvents();
+            BeginFrame(_raceStartDelay);
 
             UpdatePositions();
-            UpdateVehiclePanels(elapsed);
-            _car.Run(elapsed);
-            _track.Run(_car.PositionY);
 
             for (var botIndex = 0; botIndex < _nComputerPlayers; botIndex++)
             {
@@ -171,34 +167,15 @@ namespace TopSpeed.Race
                 }
             }
 
-            var road = _track.RoadAtPosition(_car.PositionY);
-            _car.Evaluate(road);
-            UpdateAudioListener(elapsed);
-            if (_track.NextRoad(_car.PositionY, _car.Speed, (int)_settings.CurveAnnouncement, out var nextRoad))
-                CallNextRoad(nextRoad);
-
-            if (_track.Lap(_car.PositionY) > _lap)
-            {
-                _lap = _track.Lap(_car.PositionY);
-                if (_lap > _nrOfLaps)
+            RunPlayerVehicleStep(elapsed);
+            HandlePlayerLapProgress(
+                onPlayerFinished: () =>
                 {
-                    var finishSound = _randomSounds[(int)RandomSound.Finish][Algorithm.RandomInt(_totalRandomSounds[(int)RandomSound.Finish])];
-                    if (finishSound != null)
-                        Speak(finishSound, true);
-                    _car.ManualTransmission = false;
-                    _car.Quiet();
-                    _car.Stop();
-                    _raceTime = (int)(_stopwatch.ElapsedMilliseconds - _stopwatchDiffMs);
                     Speak(_soundPlayerNr[_playerNumber]!, true);
                     Speak(_soundFinished[_positionFinish++]!, true);
                     if (CheckFinish())
                         PushEvent(RaceEventType.RaceFinish, 1.0f + _speakTime - _elapsedTotal);
-                }
-                else if (_settings.AutomaticInfo != AutomaticInfoMode.Off && _lap > 1 && _lap <= _nrOfLaps)
-                {
-                    Speak(_soundLaps[_nrOfLaps - _lap], true);
-                }
-            }
+                });
 
             CheckForBumps();
 
@@ -246,26 +223,20 @@ namespace TopSpeed.Race
 
         public void Pause()
         {
-            _soundTheme4?.SetVolumePercent((int)Math.Round(_settings.MusicVolume * 100f));
-            _soundTheme4?.Play(loop: true);
-            FadeIn();
-            PauseVehiclePanels();
-            _car.Pause();
-            for (var i = 0; i < _nComputerPlayers; i++)
-                _computerPlayers[i]?.Pause();
-            _soundPause?.Play(loop: false);
+            PauseCore(() =>
+            {
+                for (var i = 0; i < _nComputerPlayers; i++)
+                    _computerPlayers[i]?.Pause();
+            });
         }
 
         public void Unpause()
         {
-            _car.Unpause();
-            ResumeVehiclePanels();
-            for (var i = 0; i < _nComputerPlayers; i++)
-                _computerPlayers[i]?.Unpause();
-            FadeOut();
-            _soundTheme4?.Stop();
-            _soundTheme4?.SeekToStart();
-            _soundUnpause?.Play(loop: false);
+            UnpauseCore(() =>
+            {
+                for (var i = 0; i < _nComputerPlayers; i++)
+                    _computerPlayers[i]?.Unpause();
+            });
         }
 
         private ComputerPlayer GenerateRandomPlayer(int playerNumber)
@@ -429,16 +400,6 @@ namespace TopSpeed.Race
             if (perc > 100)
                 perc = 100;
             return perc;
-        }
-
-        private AudioSourceHandle LoadCustomSound(string fileName)
-        {
-            var path = System.IO.Path.IsPathRooted(fileName)
-                ? fileName
-                : System.IO.Path.Combine(AppContext.BaseDirectory, fileName);
-            if (!System.IO.File.Exists(path))
-                return LoadLegacySound("error.wav");
-            return _audio.CreateSource(path, streamFromDisk: true);
         }
 
         private string GetVehicleNameForPlayer(int playerIndex)

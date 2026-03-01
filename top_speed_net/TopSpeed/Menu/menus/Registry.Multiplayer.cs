@@ -8,9 +8,9 @@ namespace TopSpeed.Menu
         {
             var items = new List<MenuItem>
             {
-                new MenuItem("Join a game on the local network", MenuAction.None, onActivate: _actions.StartServerDiscovery),
-                new MenuItem("Manage saved servers", MenuAction.None, onActivate: _actions.OpenSavedServersManager),
-                new MenuItem("Enter the IP address or domain manually", MenuAction.None, onActivate: _actions.BeginManualServerEntry),
+                new MenuItem("Join a game on the local network", MenuAction.None, onActivate: _server.StartServerDiscovery),
+                new MenuItem("Manage saved servers", MenuAction.None, onActivate: _server.OpenSavedServersManager),
+                new MenuItem("Enter the IP address or domain manually", MenuAction.None, onActivate: _server.BeginManualServerEntry),
                 BackItem()
             };
             return _menu.CreateMenu("multiplayer", items);
@@ -29,8 +29,8 @@ namespace TopSpeed.Menu
         {
             var items = new List<MenuItem>
             {
-                new MenuItem("Create a new game", MenuAction.None, onActivate: _actions.SpeakNotImplemented),
-                new MenuItem("Join an existing game", MenuAction.None, onActivate: _actions.SpeakNotImplemented),
+                new MenuItem("Create a new game", MenuAction.None, onActivate: _ui.SpeakNotImplemented),
+                new MenuItem("Join an existing game", MenuAction.None, onActivate: _ui.SpeakNotImplemented),
                 new MenuItem("Options", MenuAction.None, nextMenuId: "options_main"),
                 new MenuItem("Disconnect", MenuAction.None, flags: MenuItemFlags.Close)
             };

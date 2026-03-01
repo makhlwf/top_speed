@@ -161,17 +161,16 @@ namespace TopSpeed.Race
 
         public void Run(float elapsed)
         {
-            EnsureStartSequenceScheduled();
-            ProcessDueEvents();
+            BeginFrame();
 
             ApplyBufferedRaceSnapshots(elapsed);
             UpdatePositions();
-            UpdateVehiclePanels(elapsed);
-            _car.Run(elapsed);
-            _track.Run(_car.PositionY);
-            var spatialTrackLength = GetSpatialTrackLength();
-            foreach (var remote in _remotePlayers.Values)
-                remote.Player.UpdateRemoteAudio(_car.PositionX, _car.PositionY, spatialTrackLength, elapsed);
+            RunPlayerVehicleStep(elapsed, afterTrackUpdate: () =>
+            {
+                var spatialTrackLength = GetSpatialTrackLength();
+                foreach (var remote in _remotePlayers.Values)
+                    remote.Player.UpdateRemoteAudio(_car.PositionX, _car.PositionY, spatialTrackLength, elapsed);
+            });
 
             if (_started
                 && !_sentFinish
@@ -183,24 +182,9 @@ namespace TopSpeed.Race
             }
             _lastCarState = _car.State;
 
-            var road = _track.RoadAtPosition(_car.PositionY);
-            _car.Evaluate(road);
-            UpdateAudioListener(elapsed);
-            if (_track.NextRoad(_car.PositionY, _car.Speed, (int)_settings.CurveAnnouncement, out var nextRoad))
-                CallNextRoad(nextRoad);
-
-            if (_track.Lap(_car.PositionY) > _lap)
-            {
-                _lap = _track.Lap(_car.PositionY);
-                if (_lap > _nrOfLaps)
+            HandlePlayerLapProgress(
+                onPlayerFinished: () =>
                 {
-                    var finishSound = _randomSounds[(int)RandomSound.Finish][Algorithm.RandomInt(_totalRandomSounds[(int)RandomSound.Finish])];
-                    if (finishSound != null)
-                        Speak(finishSound, true);
-                    _car.ManualTransmission = false;
-                    _car.Quiet();
-                    _car.Stop();
-                    _raceTime = (int)(_stopwatch.ElapsedMilliseconds - _stopwatchDiffMs);
                     SpeakIfAvailable(_soundPlayerNr[_playerNumber], true);
                     SpeakIfAvailable(_soundFinished[Math.Min(_positionFinish++, _soundFinished.Length - 1)], true);
                     if (!_sentFinish)
@@ -211,12 +195,7 @@ namespace TopSpeed.Race
                         _session.SendPlayerState(_currentState);
                     }
                     PushEvent(RaceEventType.RaceFinish, 1.0f + _speakTime - _elapsedTotal);
-                }
-                else if (_settings.AutomaticInfo != AutomaticInfoMode.Off && _lap > 1 && _lap <= _nrOfLaps)
-                {
-                    Speak(_soundLaps[_nrOfLaps - _lap], true);
-                }
-            }
+                });
 
             HandleCoreRaceMetricsRequests(includeFinishedRaceTime: true);
             HandleCommentRequests(elapsed, Comment, ref _lastComment, ref _infoKeyReleased);
@@ -296,26 +275,20 @@ namespace TopSpeed.Race
 
         public void Pause()
         {
-            _soundTheme4?.SetVolumePercent((int)Math.Round(_settings.MusicVolume * 100f));
-            _soundTheme4?.Play(loop: true);
-            FadeIn();
-            PauseVehiclePanels();
-            _car.Pause();
-            foreach (var remote in _remotePlayers.Values)
-                remote.Player.Pause();
-            _soundPause?.Play(loop: false);
+            PauseCore(() =>
+            {
+                foreach (var remote in _remotePlayers.Values)
+                    remote.Player.Pause();
+            });
         }
 
         public void Unpause()
         {
-            _car.Unpause();
-            ResumeVehiclePanels();
-            foreach (var remote in _remotePlayers.Values)
-                remote.Player.Unpause();
-            FadeOut();
-            _soundTheme4?.Stop();
-            _soundTheme4?.SeekToStart();
-            _soundUnpause?.Play(loop: false);
+            UnpauseCore(() =>
+            {
+                foreach (var remote in _remotePlayers.Values)
+                    remote.Player.Unpause();
+            });
         }
 
         protected override void OnLocalRadioMediaLoaded(uint mediaId, string mediaPath)

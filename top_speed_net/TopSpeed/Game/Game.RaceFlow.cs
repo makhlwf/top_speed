@@ -1,9 +1,11 @@
+using System.Collections.Generic;
 using SharpDX.DirectInput;
 using TopSpeed.Audio;
 using TopSpeed.Common;
 using TopSpeed.Data;
 using TopSpeed.Race;
 using TopSpeed.Core;
+using TopSpeed.Tracks;
 
 namespace TopSpeed.Game
 {
@@ -112,46 +114,81 @@ namespace TopSpeed.Game
             var vehicleFile = _setup.VehicleFile;
             var automatic = _setup.Transmission == TransmissionMode.Automatic;
 
-            switch (mode)
+            try
             {
-                case RaceMode.TimeTrial:
-                    _timeTrial?.FinalizeLevelTimeTrial();
-                    _timeTrial?.Dispose();
-                    _timeTrial = new LevelTimeTrial(
-                        _audio,
-                        _speech,
-                        _settings,
-                        _raceInput,
-                        track,
-                        automatic,
-                        _settings.NrOfLaps,
-                        vehicleIndex,
-                        vehicleFile,
-                        _input.VibrationDevice);
-                    _timeTrial.Initialize();
-                    _state = AppState.TimeTrial;
-                    _speech.Speak("Time trial.");
-                    break;
-                case RaceMode.QuickStart:
-                case RaceMode.SingleRace:
-                    _singleRace?.FinalizeLevelSingleRace();
-                    _singleRace?.Dispose();
-                    _singleRace = new LevelSingleRace(
-                        _audio,
-                        _speech,
-                        _settings,
-                        _raceInput,
-                        track,
-                        automatic,
-                        _settings.NrOfLaps,
-                        vehicleIndex,
-                        vehicleFile,
-                        _input.VibrationDevice);
-                    _singleRace.Initialize(Algorithm.RandomInt(_settings.NrOfComputers + 1));
-                    _state = AppState.SingleRace;
-                    _speech.Speak(mode == RaceMode.QuickStart ? "Quick start." : "Single race.");
-                    break;
+                switch (mode)
+                {
+                    case RaceMode.TimeTrial:
+                        _timeTrial?.FinalizeLevelTimeTrial();
+                        _timeTrial?.Dispose();
+                        _timeTrial = null;
+
+                        var timeTrial = new LevelTimeTrial(
+                            _audio,
+                            _speech,
+                            _settings,
+                            _raceInput,
+                            track,
+                            automatic,
+                            _settings.NrOfLaps,
+                            vehicleIndex,
+                            vehicleFile,
+                            _input.VibrationDevice);
+                        timeTrial.Initialize();
+                        _timeTrial = timeTrial;
+                        _state = AppState.TimeTrial;
+                        _speech.Speak("Time trial.");
+                        break;
+                    case RaceMode.QuickStart:
+                    case RaceMode.SingleRace:
+                        _singleRace?.FinalizeLevelSingleRace();
+                        _singleRace?.Dispose();
+                        _singleRace = null;
+
+                        var singleRace = new LevelSingleRace(
+                            _audio,
+                            _speech,
+                            _settings,
+                            _raceInput,
+                            track,
+                            automatic,
+                            _settings.NrOfLaps,
+                            vehicleIndex,
+                            vehicleFile,
+                            _input.VibrationDevice);
+                        singleRace.Initialize(Algorithm.RandomInt(_settings.NrOfComputers + 1));
+                        _singleRace = singleRace;
+                        _state = AppState.SingleRace;
+                        _speech.Speak(mode == RaceMode.QuickStart ? "Quick start." : "Single race.");
+                        break;
+                }
             }
+            catch (TrackLoadException ex)
+            {
+                HandleTrackLoadFailure(ex);
+            }
+        }
+
+        private void HandleTrackLoadFailure(TrackLoadException ex)
+        {
+            _state = AppState.Menu;
+            _menu.FadeInMenuMusic(force: true);
+
+            var items = new List<string>();
+            if (ex.Details != null && ex.Details.Count > 0)
+            {
+                for (var i = 0; i < ex.Details.Count; i++)
+                    items.Add(ex.Details[i]);
+            }
+            else
+            {
+                items.Add(ex.Message);
+            }
+
+            ShowMessageDialog(
+                "Track load error",
+                "The selected track could not be loaded. The race was not started.",
+                items);
         }
 
         private void EndRace()

@@ -38,20 +38,6 @@ namespace TopSpeed.Game
             SaveSettings();
         }
 
-        private void ToggleCurveAnnouncements()
-        {
-            _settings.CurveAnnouncement = _settings.CurveAnnouncement == CurveAnnouncementMode.FixedDistance
-                ? CurveAnnouncementMode.SpeedDependent
-                : CurveAnnouncementMode.FixedDistance;
-            SaveSettings();
-        }
-
-        private void ToggleSetting(Action update)
-        {
-            update();
-            SaveSettings();
-        }
-
         private void UpdateSetting(Action update)
         {
             update();

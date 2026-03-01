@@ -5,28 +5,6 @@ using TopSpeed.Input;
 
 namespace TopSpeed.Menu
 {
-    internal interface IMenuActions
-    {
-        void SaveMusicVolume(float volume);
-        void QueueRaceStart(RaceMode mode);
-        void StartServerDiscovery();
-        void OpenSavedServersManager();
-        void BeginManualServerEntry();
-        void SpeakMessage(string text);
-        void ShowMessageDialog(string title, string caption, IReadOnlyList<string> items);
-        void SpeakNotImplemented();
-        void BeginServerPortEntry();
-        void RestoreDefaults();
-        void RecalibrateScreenReaderRate();
-        void SetDevice(InputDeviceMode mode);
-        void ToggleCurveAnnouncements();
-        void ToggleSetting(Action update);
-        void UpdateSetting(Action update);
-        void ApplyAudioSettings();
-        void BeginMapping(InputMappingMode mode, InputAction action);
-        string FormatMappingValue(InputAction action, InputMappingMode mode);
-    }
-
     internal sealed partial class MenuRegistry
     {
         private readonly MenuManager _menu;
@@ -34,7 +12,12 @@ namespace TopSpeed.Menu
         private readonly RaceSetup _setup;
         private readonly RaceInput _raceInput;
         private readonly RaceSelection _selection;
-        private readonly IMenuActions _actions;
+        private readonly IMenuUiActions _ui;
+        private readonly IMenuRaceActions _race;
+        private readonly IMenuServerActions _server;
+        private readonly IMenuSettingsActions _settingsActions;
+        private readonly IMenuAudioActions _audio;
+        private readonly IMenuMappingActions _mapping;
         private readonly IReadOnlyList<string> _menuSoundPresets;
 
         public MenuRegistry(
@@ -43,14 +26,24 @@ namespace TopSpeed.Menu
             RaceSetup setup,
             RaceInput raceInput,
             RaceSelection selection,
-            IMenuActions actions)
+            IMenuUiActions ui,
+            IMenuRaceActions race,
+            IMenuServerActions server,
+            IMenuSettingsActions settingsActions,
+            IMenuAudioActions audio,
+            IMenuMappingActions mapping)
         {
             _menu = menu ?? throw new ArgumentNullException(nameof(menu));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _setup = setup ?? throw new ArgumentNullException(nameof(setup));
             _raceInput = raceInput ?? throw new ArgumentNullException(nameof(raceInput));
             _selection = selection ?? throw new ArgumentNullException(nameof(selection));
-            _actions = actions ?? throw new ArgumentNullException(nameof(actions));
+            _ui = ui ?? throw new ArgumentNullException(nameof(ui));
+            _race = race ?? throw new ArgumentNullException(nameof(race));
+            _server = server ?? throw new ArgumentNullException(nameof(server));
+            _settingsActions = settingsActions ?? throw new ArgumentNullException(nameof(settingsActions));
+            _audio = audio ?? throw new ArgumentNullException(nameof(audio));
+            _mapping = mapping ?? throw new ArgumentNullException(nameof(mapping));
             _menuSoundPresets = LoadMenuSoundPresets();
         }
 
@@ -115,7 +108,7 @@ namespace TopSpeed.Menu
 
             mainMenu.MusicFile = "theme1.ogg";
             mainMenu.MusicVolume = _settings.MusicVolume;
-            mainMenu.MusicVolumeChanged = _actions.SaveMusicVolume;
+            mainMenu.MusicVolumeChanged = _audio.SaveMusicVolume;
             _menu.Register(mainMenu);
         }
     }

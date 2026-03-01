@@ -1,4 +1,6 @@
+using System;
 using System.Numerics;
+using TopSpeed.Audio;
 
 namespace TopSpeed.Race
 {
@@ -43,6 +45,45 @@ namespace TopSpeed.Race
             _panelManager.Pause();
             _car.FinalizeCar();
             _track.FinalizeTrack();
+        }
+
+        protected void ApplyPlayerFinishState()
+        {
+            var finishSounds = _randomSounds[(int)RandomSound.Finish];
+            var finishSoundCount = _totalRandomSounds[(int)RandomSound.Finish];
+            if (finishSoundCount > 0)
+            {
+                var finishSound = finishSounds[TopSpeed.Common.Algorithm.RandomInt(finishSoundCount)];
+                if (finishSound != null)
+                    Speak(finishSound, true);
+            }
+
+            _car.ManualTransmission = false;
+            _car.Quiet();
+            _car.Stop();
+            _raceTime = (int)(_stopwatch.ElapsedMilliseconds - _stopwatchDiffMs);
+        }
+
+        protected void PauseCore(Action? pauseExtras = null)
+        {
+            _soundTheme4?.SetVolumePercent((int)Math.Round(_settings.MusicVolume * 100f));
+            _soundTheme4?.Play(loop: true);
+            FadeIn();
+            PauseVehiclePanels();
+            _car.Pause();
+            pauseExtras?.Invoke();
+            _soundPause?.Play(loop: false);
+        }
+
+        protected void UnpauseCore(Action? unpauseExtras = null)
+        {
+            _car.Unpause();
+            ResumeVehiclePanels();
+            unpauseExtras?.Invoke();
+            FadeOut();
+            _soundTheme4?.Stop();
+            _soundTheme4?.SeekToStart();
+            _soundUnpause?.Play(loop: false);
         }
 
         protected void RequestExitWhenQueueIdle()

@@ -17,7 +17,7 @@ namespace TopSpeed.Menu
         private void CompleteTransmission(RaceMode mode, TransmissionMode transmission)
         {
             _setup.Transmission = transmission;
-            _actions.QueueRaceStart(mode);
+            _race.QueueRaceStart(mode);
         }
 
         private MenuScreen BuildTrackTypeMenu(string id, RaceMode mode)
@@ -172,14 +172,14 @@ namespace TopSpeed.Menu
             {
                 if (issues.Count > 0)
                 {
-                    _actions.ShowMessageDialog(
+                    _ui.ShowMessageDialog(
                         "Custom track errors",
                         "Some custom track files are invalid and were skipped.",
                         issues);
                 }
                 else
                 {
-                    _actions.SpeakMessage("No custom tracks found.");
+                    _ui.SpeakMessage("No custom tracks found.");
                 }
                 return;
             }
@@ -190,7 +190,7 @@ namespace TopSpeed.Menu
 
             if (issues.Count > 0)
             {
-                _actions.ShowMessageDialog(
+                _ui.ShowMessageDialog(
                     "Custom track errors",
                     "Some custom track files are invalid and were skipped.",
                     issues);
@@ -205,14 +205,14 @@ namespace TopSpeed.Menu
             {
                 if (issues.Count > 0)
                 {
-                    _actions.ShowMessageDialog(
+                    _ui.ShowMessageDialog(
                         "Custom vehicle errors",
                         "Some custom vehicle files are invalid and were skipped.",
                         issues);
                 }
                 else
                 {
-                    _actions.SpeakMessage("No custom vehicles found.");
+                    _ui.SpeakMessage("No custom vehicles found.");
                 }
                 return;
             }
@@ -222,7 +222,7 @@ namespace TopSpeed.Menu
 
             if (issues.Count > 0)
             {
-                _actions.ShowMessageDialog(
+                _ui.ShowMessageDialog(
                     "Custom vehicle errors",
                     "Some custom vehicle files are invalid and were skipped.",
                     issues);

@@ -9,24 +9,27 @@ namespace TopSpeed.Game
 {
     internal sealed partial class Game
     {
-        void IMenuActions.SaveMusicVolume(float volume) => SaveMusicVolume(volume);
-        void IMenuActions.QueueRaceStart(RaceMode mode) => QueueRaceStart(mode);
-        void IMenuActions.StartServerDiscovery() => _multiplayerCoordinator.StartServerDiscovery();
-        void IMenuActions.OpenSavedServersManager() => _multiplayerCoordinator.OpenSavedServersManager();
-        void IMenuActions.BeginManualServerEntry() => _multiplayerCoordinator.BeginManualServerEntry();
-        void IMenuActions.SpeakMessage(string text) => _speech.Speak(text);
-        void IMenuActions.ShowMessageDialog(string title, string caption, IReadOnlyList<string> items) => ShowMessageDialog(title, caption, items);
-        void IMenuActions.SpeakNotImplemented() => _speech.Speak("Not implemented yet.");
-        void IMenuActions.BeginServerPortEntry() => _multiplayerCoordinator.BeginServerPortEntry();
-        void IMenuActions.RestoreDefaults() => RestoreDefaults();
-        void IMenuActions.RecalibrateScreenReaderRate() => StartCalibrationSequence("options_game");
-        void IMenuActions.SetDevice(InputDeviceMode mode) => SetDevice(mode);
-        void IMenuActions.ToggleCurveAnnouncements() => ToggleCurveAnnouncements();
-        void IMenuActions.ToggleSetting(Action update) => ToggleSetting(update);
-        void IMenuActions.UpdateSetting(Action update) => UpdateSetting(update);
-        void IMenuActions.ApplyAudioSettings() => ApplyAudioSettings();
-        void IMenuActions.BeginMapping(InputMappingMode mode, InputAction action) => _inputMapping.BeginMapping(mode, action);
-        string IMenuActions.FormatMappingValue(InputAction action, InputMappingMode mode) => _inputMapping.FormatMappingValue(action, mode);
+        void IMenuAudioActions.SaveMusicVolume(float volume) => SaveMusicVolume(volume);
+        void IMenuAudioActions.ApplyAudioSettings() => ApplyAudioSettings();
+
+        void IMenuRaceActions.QueueRaceStart(RaceMode mode) => QueueRaceStart(mode);
+
+        void IMenuServerActions.StartServerDiscovery() => _multiplayerCoordinator.StartServerDiscovery();
+        void IMenuServerActions.OpenSavedServersManager() => _multiplayerCoordinator.OpenSavedServersManager();
+        void IMenuServerActions.BeginManualServerEntry() => _multiplayerCoordinator.BeginManualServerEntry();
+        void IMenuServerActions.BeginServerPortEntry() => _multiplayerCoordinator.BeginServerPortEntry();
+
+        void IMenuUiActions.SpeakMessage(string text) => _speech.Speak(text);
+        void IMenuUiActions.ShowMessageDialog(string title, string caption, IReadOnlyList<string> items) => ShowMessageDialog(title, caption, items);
+        void IMenuUiActions.SpeakNotImplemented() => _speech.Speak("Not implemented yet.");
+
+        void IMenuSettingsActions.RestoreDefaults() => RestoreDefaults();
+        void IMenuSettingsActions.RecalibrateScreenReaderRate() => StartCalibrationSequence("options_game");
+        void IMenuSettingsActions.SetDevice(InputDeviceMode mode) => SetDevice(mode);
+        void IMenuSettingsActions.UpdateSetting(Action update) => UpdateSetting(update);
+
+        void IMenuMappingActions.BeginMapping(InputMappingMode mode, InputAction action) => _inputMapping.BeginMapping(mode, action);
+        string IMenuMappingActions.FormatMappingValue(InputAction action, InputMappingMode mode) => _inputMapping.FormatMappingValue(action, mode);
 
         private void ShowMessageDialog(string title, string caption, IReadOnlyList<string> items)
         {
