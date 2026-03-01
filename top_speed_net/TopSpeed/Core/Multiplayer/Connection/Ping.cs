@@ -22,7 +22,11 @@ namespace TopSpeed.Core.Multiplayer
             _pingPending = true;
             _pingStartedAtMs = DateTime.UtcNow.Ticks;
             PlayNetworkSound("ping_start.ogg");
-            session.SendPing();
+            if (!TrySend(session.SendPing(), "ping request"))
+            {
+                _pingPending = false;
+                return;
+            }
         }
 
         public void HandlePingReply(long receivedUtcTicks = 0)

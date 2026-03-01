@@ -12,45 +12,10 @@ namespace TopSpeed.Menu
             if (_items.Count == 0)
                 return MenuUpdateResult.None;
 
-            if (_titlePending)
-            {
-                if (input.IsAnyMenuInputHeld())
-                    return MenuUpdateResult.None;
-                _titlePending = false;
-                AnnounceTitle();
-            }
+            if (!TryHandlePendingTitle(input))
+                return MenuUpdateResult.None;
 
-            var moveUp = input.WasPressed(Key.Up);
-            var moveDown = input.WasPressed(Key.Down);
-            var moveHome = input.WasPressed(Key.Home);
-            var moveEnd = input.WasPressed(Key.End);
-            var moveLeft = input.WasPressed(Key.Left);
-            var moveRight = input.WasPressed(Key.Right);
-            var pageUp = input.WasPressed(Key.PageUp);
-            var pageDown = input.WasPressed(Key.PageDown);
-            var activate = input.WasPressed(Key.Return) || input.WasPressed(Key.NumberPadEnter);
-            var back = input.WasPressed(Key.Escape);
-
-            if (input.TryGetJoystickState(out var joystick))
-            {
-                if (!_hasJoystickCenter && MenuInputUtil.IsNearCenter(joystick))
-                {
-                    _joystickCenter = joystick;
-                    _hasJoystickCenter = true;
-                }
-
-                var previous = _hasPrevJoystick ? _prevJoystick : _joystickCenter;
-                moveUp |= MenuInputUtil.WasJoystickUpPressed(joystick, previous);
-                moveDown |= MenuInputUtil.WasJoystickDownPressed(joystick, previous);
-                activate |= MenuInputUtil.WasJoystickActivatePressed(joystick, previous);
-                back |= MenuInputUtil.WasJoystickBackPressed(joystick, previous);
-                _prevJoystick = joystick;
-                _hasPrevJoystick = true;
-            }
-            else
-            {
-                _hasPrevJoystick = false;
-            }
+            var state = CaptureInputState(input);
 
             if (input.ShouldIgnoreMenuBack())
                 return MenuUpdateResult.None;
@@ -61,175 +26,22 @@ namespace TopSpeed.Menu
             if (TryHandleLetterNavigation(input))
                 return MenuUpdateResult.None;
 
-            if (_ignoreHeldInput)
-            {
-                if (input.IsMenuBackHeld())
-                {
-                    input.LatchMenuBack();
-                    _ignoreHeldInput = false;
-                    _autoFocusPending = false;
-                    return MenuUpdateResult.Back;
-                }
-                if (moveUp)
-                {
-                    _ignoreHeldInput = false;
-                    _autoFocusPending = false;
-                    MoveToIndex(_items.Count - 1);
-                    return MenuUpdateResult.None;
-                }
-                if (moveDown)
-                {
-                    _ignoreHeldInput = false;
-                    _autoFocusPending = false;
-                    MoveToIndex(0);
-                    return MenuUpdateResult.None;
-                }
-                if (moveHome)
-                {
-                    _ignoreHeldInput = false;
-                    _autoFocusPending = false;
-                    MoveToIndex(0);
-                    return MenuUpdateResult.None;
-                }
-                if (moveEnd)
-                {
-                    _ignoreHeldInput = false;
-                    _autoFocusPending = false;
-                    MoveToIndex(_items.Count - 1);
-                    return MenuUpdateResult.None;
-                }
-                if (activate || back)
-                {
-                    _ignoreHeldInput = false;
-                }
-                else if (input.IsAnyMenuInputHeld())
-                {
-                    return MenuUpdateResult.None;
-                }
-                else
-                {
-                    _ignoreHeldInput = false;
-                    input.ResetState();
-                }
-            }
+            if (TryHandleHeldInputGate(input, state, out var heldResult))
+                return heldResult;
 
-            if (_index != NoSelection)
-            {
-                var adjustment = GetAdjustmentAction(moveLeft, moveRight, pageUp, pageDown, moveHome, moveEnd);
-                if (adjustment.HasValue)
-                {
-                    var item = _items[_index];
-                    if (item.Adjust(adjustment.Value, out var announcement))
-                    {
-                        PlayNavigateSound();
-                        var safeAnnouncement = announcement;
-                        if (!string.IsNullOrWhiteSpace(safeAnnouncement))
-                        {
-                            _speech.Speak(safeAnnouncement!);
-                            CancelHint();
-                        }
-                        return MenuUpdateResult.None;
-                    }
-                }
-            }
+            if (TryHandleItemAdjustment(state))
+                return MenuUpdateResult.None;
 
-            if (_index != NoSelection)
-            {
-                var currentItem = _items[_index];
-                if (currentItem.HasActions)
-                {
-                    if (moveRight && TryBrowseItemActions(currentItem, +1))
-                        return MenuUpdateResult.None;
+            if (TryHandleActionBrowse(state))
+                return MenuUpdateResult.None;
 
-                    if (moveLeft && _activeActionIndex != NoSelection && TryBrowseItemActions(currentItem, -1))
-                        return MenuUpdateResult.None;
-                }
-                else
-                {
-                    _activeActionIndex = NoSelection;
-                }
-            }
+            HandleNavigation(state);
+            HandleMusicAdjustment(state);
 
-            if (_index == NoSelection)
-            {
-                if (moveDown)
-                {
-                    _activeActionIndex = NoSelection;
-                    MoveToIndex(0);
-                    _autoFocusPending = false;
-                }
-                else if (moveUp)
-                {
-                    _activeActionIndex = NoSelection;
-                    MoveToIndex(_items.Count - 1);
-                    _autoFocusPending = false;
-                }
-                else if (moveHome)
-                {
-                    _activeActionIndex = NoSelection;
-                    MoveToIndex(0);
-                    _autoFocusPending = false;
-                }
-                else if (moveEnd)
-                {
-                    _activeActionIndex = NoSelection;
-                    MoveToIndex(_items.Count - 1);
-                    _autoFocusPending = false;
-                }
-            }
-            else
-            {
-                if (moveUp)
-                {
-                    _activeActionIndex = NoSelection;
-                    MoveSelectionAndAnnounce(-1);
-                }
-                else if (moveDown)
-                {
-                    _activeActionIndex = NoSelection;
-                    MoveSelectionAndAnnounce(1);
-                }
-                else if (moveHome)
-                {
-                    _activeActionIndex = NoSelection;
-                    MoveToIndex(0);
-                }
-                else if (moveEnd)
-                {
-                    _activeActionIndex = NoSelection;
-                    MoveToIndex(_items.Count - 1);
-                }
-            }
+            if (state.Activate)
+                return HandleActivation();
 
-            if (pageUp)
-            {
-                SetMusicVolume(_musicVolume + 0.05f);
-            }
-            else if (pageDown)
-            {
-                SetMusicVolume(_musicVolume - 0.05f);
-            }
-
-            if (activate)
-            {
-                if (_index == NoSelection)
-                    return MenuUpdateResult.None;
-                if (_activeActionIndex != NoSelection)
-                {
-                    var item = _items[_index];
-                    if (item.TryActivateAction(_activeActionIndex))
-                    {
-                        PlaySfx(_activateSound);
-                        CancelHint();
-                        return MenuUpdateResult.None;
-                    }
-                }
-                PlaySfx(_activateSound);
-                CancelHint();
-                return MenuUpdateResult.Activated(_items[_index]);
-            }
-
-            if (back)
+            if (state.Back)
             {
                 input.LatchMenuBack();
                 return MenuUpdateResult.Back;
@@ -242,6 +54,256 @@ namespace TopSpeed.Menu
             }
 
             return MenuUpdateResult.None;
+        }
+
+        private bool TryHandlePendingTitle(InputManager input)
+        {
+            if (!_titlePending)
+                return true;
+
+            if (input.IsAnyMenuInputHeld())
+                return false;
+
+            _titlePending = false;
+            AnnounceTitle();
+            return true;
+        }
+
+        private UpdateInputState CaptureInputState(InputManager input)
+        {
+            var state = new UpdateInputState(
+                input.WasPressed(Key.Up),
+                input.WasPressed(Key.Down),
+                input.WasPressed(Key.Home),
+                input.WasPressed(Key.End),
+                input.WasPressed(Key.Left),
+                input.WasPressed(Key.Right),
+                input.WasPressed(Key.PageUp),
+                input.WasPressed(Key.PageDown),
+                input.WasPressed(Key.Return) || input.WasPressed(Key.NumberPadEnter),
+                input.WasPressed(Key.Escape));
+
+            if (input.TryGetJoystickState(out var joystick))
+            {
+                if (!_hasJoystickCenter && MenuInputUtil.IsNearCenter(joystick))
+                {
+                    _joystickCenter = joystick;
+                    _hasJoystickCenter = true;
+                }
+
+                var previous = _hasPrevJoystick ? _prevJoystick : _joystickCenter;
+                state.MoveUp |= MenuInputUtil.WasJoystickUpPressed(joystick, previous);
+                state.MoveDown |= MenuInputUtil.WasJoystickDownPressed(joystick, previous);
+                state.Activate |= MenuInputUtil.WasJoystickActivatePressed(joystick, previous);
+                state.Back |= MenuInputUtil.WasJoystickBackPressed(joystick, previous);
+                _prevJoystick = joystick;
+                _hasPrevJoystick = true;
+            }
+            else
+            {
+                _hasPrevJoystick = false;
+            }
+
+            return state;
+        }
+
+        private bool TryHandleHeldInputGate(InputManager input, UpdateInputState state, out MenuUpdateResult result)
+        {
+            result = MenuUpdateResult.None;
+            if (!_ignoreHeldInput)
+                return false;
+
+            if (input.IsMenuBackHeld())
+            {
+                input.LatchMenuBack();
+                _ignoreHeldInput = false;
+                _autoFocusPending = false;
+                result = MenuUpdateResult.Back;
+                return true;
+            }
+
+            if (state.MoveUp)
+            {
+                _ignoreHeldInput = false;
+                _autoFocusPending = false;
+                MoveToIndex(_items.Count - 1);
+                return true;
+            }
+
+            if (state.MoveDown)
+            {
+                _ignoreHeldInput = false;
+                _autoFocusPending = false;
+                MoveToIndex(0);
+                return true;
+            }
+
+            if (state.MoveHome)
+            {
+                _ignoreHeldInput = false;
+                _autoFocusPending = false;
+                MoveToIndex(0);
+                return true;
+            }
+
+            if (state.MoveEnd)
+            {
+                _ignoreHeldInput = false;
+                _autoFocusPending = false;
+                MoveToIndex(_items.Count - 1);
+                return true;
+            }
+
+            if (state.Activate || state.Back)
+            {
+                _ignoreHeldInput = false;
+                return false;
+            }
+
+            if (input.IsAnyMenuInputHeld())
+                return true;
+
+            _ignoreHeldInput = false;
+            input.ResetState();
+            return false;
+        }
+
+        private bool TryHandleItemAdjustment(UpdateInputState state)
+        {
+            if (_index == NoSelection)
+                return false;
+
+            var adjustment = GetAdjustmentAction(
+                state.MoveLeft,
+                state.MoveRight,
+                state.PageUp,
+                state.PageDown,
+                state.MoveHome,
+                state.MoveEnd);
+            if (!adjustment.HasValue)
+                return false;
+
+            var item = _items[_index];
+            if (!item.Adjust(adjustment.Value, out var announcement))
+                return false;
+
+            PlayNavigateSound();
+            var safeAnnouncement = announcement;
+            if (!string.IsNullOrWhiteSpace(safeAnnouncement))
+            {
+                _speech.Speak(safeAnnouncement!);
+                CancelHint();
+            }
+
+            return true;
+        }
+
+        private bool TryHandleActionBrowse(UpdateInputState state)
+        {
+            if (_index == NoSelection)
+                return false;
+
+            var currentItem = _items[_index];
+            if (!currentItem.HasActions)
+            {
+                _activeActionIndex = NoSelection;
+                return false;
+            }
+
+            if (state.MoveRight && TryBrowseItemActions(currentItem, +1))
+                return true;
+
+            if (state.MoveLeft && _activeActionIndex != NoSelection && TryBrowseItemActions(currentItem, -1))
+                return true;
+
+            return false;
+        }
+
+        private void HandleNavigation(UpdateInputState state)
+        {
+            if (_index == NoSelection)
+            {
+                if (state.MoveDown)
+                {
+                    _activeActionIndex = NoSelection;
+                    MoveToIndex(0);
+                    _autoFocusPending = false;
+                }
+                else if (state.MoveUp)
+                {
+                    _activeActionIndex = NoSelection;
+                    MoveToIndex(_items.Count - 1);
+                    _autoFocusPending = false;
+                }
+                else if (state.MoveHome)
+                {
+                    _activeActionIndex = NoSelection;
+                    MoveToIndex(0);
+                    _autoFocusPending = false;
+                }
+                else if (state.MoveEnd)
+                {
+                    _activeActionIndex = NoSelection;
+                    MoveToIndex(_items.Count - 1);
+                    _autoFocusPending = false;
+                }
+
+                return;
+            }
+
+            if (state.MoveUp)
+            {
+                _activeActionIndex = NoSelection;
+                MoveSelectionAndAnnounce(-1);
+            }
+            else if (state.MoveDown)
+            {
+                _activeActionIndex = NoSelection;
+                MoveSelectionAndAnnounce(1);
+            }
+            else if (state.MoveHome)
+            {
+                _activeActionIndex = NoSelection;
+                MoveToIndex(0);
+            }
+            else if (state.MoveEnd)
+            {
+                _activeActionIndex = NoSelection;
+                MoveToIndex(_items.Count - 1);
+            }
+        }
+
+        private void HandleMusicAdjustment(UpdateInputState state)
+        {
+            if (state.PageUp)
+            {
+                SetMusicVolume(_musicVolume + 0.05f);
+            }
+            else if (state.PageDown)
+            {
+                SetMusicVolume(_musicVolume - 0.05f);
+            }
+        }
+
+        private MenuUpdateResult HandleActivation()
+        {
+            if (_index == NoSelection)
+                return MenuUpdateResult.None;
+
+            if (_activeActionIndex != NoSelection)
+            {
+                var item = _items[_index];
+                if (item.TryActivateAction(_activeActionIndex))
+                {
+                    PlaySfx(_activateSound);
+                    CancelHint();
+                    return MenuUpdateResult.None;
+                }
+            }
+
+            PlaySfx(_activateSound);
+            CancelHint();
+            return MenuUpdateResult.Activated(_items[_index]);
         }
 
         private bool TryHandleShortcut(InputManager input)
@@ -489,6 +551,44 @@ namespace TopSpeed.Menu
             if (moveEnd)
                 return MenuAdjustAction.ToMinimum;
             return null;
+        }
+
+        private struct UpdateInputState
+        {
+            public UpdateInputState(
+                bool moveUp,
+                bool moveDown,
+                bool moveHome,
+                bool moveEnd,
+                bool moveLeft,
+                bool moveRight,
+                bool pageUp,
+                bool pageDown,
+                bool activate,
+                bool back)
+            {
+                MoveUp = moveUp;
+                MoveDown = moveDown;
+                MoveHome = moveHome;
+                MoveEnd = moveEnd;
+                MoveLeft = moveLeft;
+                MoveRight = moveRight;
+                PageUp = pageUp;
+                PageDown = pageDown;
+                Activate = activate;
+                Back = back;
+            }
+
+            public bool MoveUp;
+            public bool MoveDown;
+            public bool MoveHome;
+            public bool MoveEnd;
+            public bool MoveLeft;
+            public bool MoveRight;
+            public bool PageUp;
+            public bool PageDown;
+            public bool Activate;
+            public bool Back;
         }
     }
 }

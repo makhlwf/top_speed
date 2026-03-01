@@ -64,13 +64,13 @@ namespace TopSpeed.Network
                 DrainIncomingToSink();
         }
 
-        public void SendPlayerState(PlayerState state)
+        public bool SendPlayerState(PlayerState state)
         {
             var payload = ClientPacketSerializer.WritePlayerState(Command.PlayerState, PlayerId, PlayerNumber, state);
-            _sender.TrySend(payload, PacketStream.Control);
+            return _sender.TrySend(payload, PacketStream.Control);
         }
 
-        public void SendPlayerData(
+        public bool SendPlayerData(
             PlayerRaceData raceData,
             CarType car,
             PlayerState state,
@@ -95,7 +95,7 @@ namespace TopSpeed.Network
                 radioLoaded,
                 radioPlaying,
                 radioMediaId);
-            _sender.TrySend(payload, PacketStream.RaceState, PacketDeliveryKind.Sequenced);
+            return _sender.TrySend(payload, PacketStream.RaceState, PacketDeliveryKind.Sequenced);
         }
 
         public bool SendRadioMedia(uint mediaId, string filePath)
@@ -108,102 +108,102 @@ namespace TopSpeed.Network
             return _media.TrySendStreamed(PlayerId, PlayerNumber, mediaId, filePath);
         }
 
-        public void SendPlayerStarted()
+        public bool SendPlayerStarted()
         {
-            _sender.TrySend(
+            return _sender.TrySend(
                 ClientPacketSerializer.WritePlayer(Command.PlayerStarted, PlayerId, PlayerNumber),
                 PacketStream.RaceEvent);
         }
 
-        public void SendPlayerFinished()
+        public bool SendPlayerFinished()
         {
-            _sender.TrySend(
+            return _sender.TrySend(
                 ClientPacketSerializer.WritePlayer(Command.PlayerFinished, PlayerId, PlayerNumber),
                 PacketStream.RaceEvent);
         }
 
-        public void SendPlayerFinalize(PlayerState state)
+        public bool SendPlayerFinalize(PlayerState state)
         {
-            _sender.TrySend(
+            return _sender.TrySend(
                 ClientPacketSerializer.WritePlayerState(Command.PlayerFinalize, PlayerId, PlayerNumber, state),
                 PacketStream.Control);
         }
 
-        public void SendPlayerCrashed()
+        public bool SendPlayerCrashed()
         {
-            _sender.TrySend(
+            return _sender.TrySend(
                 ClientPacketSerializer.WritePlayer(Command.PlayerCrashed, PlayerId, PlayerNumber),
                 PacketStream.RaceEvent);
         }
 
-        public void SendPing()
+        public bool SendPing()
         {
-            _sender.TrySend(ClientPacketSerializer.WriteGeneral(Command.Ping), PacketStream.Control);
+            return _sender.TrySend(ClientPacketSerializer.WriteGeneral(Command.Ping), PacketStream.Control);
         }
 
-        public void SendRoomListRequest()
+        public bool SendRoomListRequest()
         {
-            _sender.TrySend(ClientPacketSerializer.WriteRoomListRequest(), PacketStream.Query);
+            return _sender.TrySend(ClientPacketSerializer.WriteRoomListRequest(), PacketStream.Query);
         }
 
-        public void SendRoomStateRequest()
+        public bool SendRoomStateRequest()
         {
-            _sender.TrySend(ClientPacketSerializer.WriteRoomStateRequest(), PacketStream.Query);
+            return _sender.TrySend(ClientPacketSerializer.WriteRoomStateRequest(), PacketStream.Query);
         }
 
-        public void SendRoomGetRequest(uint roomId)
+        public bool SendRoomGetRequest(uint roomId)
         {
-            _sender.TrySend(ClientPacketSerializer.WriteRoomGetRequest(roomId), PacketStream.Query);
+            return _sender.TrySend(ClientPacketSerializer.WriteRoomGetRequest(roomId), PacketStream.Query);
         }
 
-        public void SendRoomCreate(string roomName, GameRoomType roomType, byte playersToStart)
+        public bool SendRoomCreate(string roomName, GameRoomType roomType, byte playersToStart)
         {
-            _sender.TrySend(ClientPacketSerializer.WriteRoomCreate(roomName, roomType, playersToStart), PacketStream.Room);
+            return _sender.TrySend(ClientPacketSerializer.WriteRoomCreate(roomName, roomType, playersToStart), PacketStream.Room);
         }
 
-        public void SendRoomJoin(uint roomId)
+        public bool SendRoomJoin(uint roomId)
         {
-            _sender.TrySend(ClientPacketSerializer.WriteRoomJoin(roomId), PacketStream.Room);
+            return _sender.TrySend(ClientPacketSerializer.WriteRoomJoin(roomId), PacketStream.Room);
         }
 
-        public void SendRoomLeave()
+        public bool SendRoomLeave()
         {
-            _sender.TrySend(ClientPacketSerializer.WriteRoomLeave(), PacketStream.Room);
+            return _sender.TrySend(ClientPacketSerializer.WriteRoomLeave(), PacketStream.Room);
         }
 
-        public void SendRoomSetTrack(string trackName)
+        public bool SendRoomSetTrack(string trackName)
         {
-            _sender.TrySend(ClientPacketSerializer.WriteRoomSetTrack(trackName), PacketStream.Room);
+            return _sender.TrySend(ClientPacketSerializer.WriteRoomSetTrack(trackName), PacketStream.Room);
         }
 
-        public void SendRoomSetLaps(byte laps)
+        public bool SendRoomSetLaps(byte laps)
         {
-            _sender.TrySend(ClientPacketSerializer.WriteRoomSetLaps(laps), PacketStream.Room);
+            return _sender.TrySend(ClientPacketSerializer.WriteRoomSetLaps(laps), PacketStream.Room);
         }
 
-        public void SendRoomStartRace()
+        public bool SendRoomStartRace()
         {
-            _sender.TrySend(ClientPacketSerializer.WriteRoomStartRace(), PacketStream.Room);
+            return _sender.TrySend(ClientPacketSerializer.WriteRoomStartRace(), PacketStream.Room);
         }
 
-        public void SendRoomSetPlayersToStart(byte playersToStart)
+        public bool SendRoomSetPlayersToStart(byte playersToStart)
         {
-            _sender.TrySend(ClientPacketSerializer.WriteRoomSetPlayersToStart(playersToStart), PacketStream.Room);
+            return _sender.TrySend(ClientPacketSerializer.WriteRoomSetPlayersToStart(playersToStart), PacketStream.Room);
         }
 
-        public void SendRoomAddBot()
+        public bool SendRoomAddBot()
         {
-            _sender.TrySend(ClientPacketSerializer.WriteRoomAddBot(), PacketStream.Room);
+            return _sender.TrySend(ClientPacketSerializer.WriteRoomAddBot(), PacketStream.Room);
         }
 
-        public void SendRoomRemoveBot()
+        public bool SendRoomRemoveBot()
         {
-            _sender.TrySend(ClientPacketSerializer.WriteRoomRemoveBot(), PacketStream.Room);
+            return _sender.TrySend(ClientPacketSerializer.WriteRoomRemoveBot(), PacketStream.Room);
         }
 
-        public void SendRoomPlayerReady(CarType car, bool automaticTransmission)
+        public bool SendRoomPlayerReady(CarType car, bool automaticTransmission)
         {
-            _sender.TrySend(ClientPacketSerializer.WriteRoomPlayerReady(car, automaticTransmission), PacketStream.Room);
+            return _sender.TrySend(ClientPacketSerializer.WriteRoomPlayerReady(car, automaticTransmission), PacketStream.Room);
         }
 
         public void Dispose()

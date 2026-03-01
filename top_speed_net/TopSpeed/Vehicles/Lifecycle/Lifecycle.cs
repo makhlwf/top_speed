@@ -13,7 +13,7 @@ namespace TopSpeed.Vehicles
             _positionX = positionX;
             _positionY = Math.Max(0f, positionY);
             _laneWidth = _track.LaneWidth * 2;
-            s_stickReleased = true;
+            _stickReleased = true;
             _audioInitialized = false;
             _lastAudioX = positionX;
             _lastAudioY = _positionY;
@@ -54,7 +54,7 @@ namespace TopSpeed.Vehicles
             _soundWater.SetFrequency(_surfaceFrequency);
             _soundSand.SetFrequency(_surfaceFrequency);
             _soundSnow.SetFrequency(_surfaceFrequency);
-            s_stickReleased = true;
+            _stickReleased = true;
             SetState(CarState.Starting);
             _listener?.OnStart();
             _vibration?.PlayEffect(VibrationEffectType.Start);
@@ -83,7 +83,7 @@ namespace TopSpeed.Vehicles
             _soundWater.SetFrequency(_surfaceFrequency);
             _soundSand.SetFrequency(_surfaceFrequency);
             _soundSnow.SetFrequency(_surfaceFrequency);
-            s_stickReleased = true;
+            _stickReleased = true;
             SetState(CarState.Starting);
             _listener?.OnStart();
             _vibration?.PlayEffect(VibrationEffectType.Start);

@@ -43,7 +43,8 @@ namespace TopSpeed.Core.Multiplayer
                 return;
             }
 
-            session.SendRoomLeave();
+            if (!TrySend(session.SendRoomLeave(), "room leave request"))
+                return;
             _speech.Speak("Leaving game room.");
             _menu.ShowRoot(MultiplayerLobbyMenuId);
         }
@@ -63,7 +64,7 @@ namespace TopSpeed.Core.Multiplayer
                 return;
             }
 
-            session.SendRoomStartRace();
+            TrySend(session.SendRoomStartRace(), "race start request");
         }
 
         private int GetCurrentRoomTrackIndex()
@@ -88,7 +89,7 @@ namespace TopSpeed.Core.Multiplayer
             if (index < 0 || index >= RoomTrackOptions.Length)
                 return;
 
-            session.SendRoomSetTrack(RoomTrackOptions[index].Key);
+            TrySend(session.SendRoomSetTrack(RoomTrackOptions[index].Key), "track change request");
         }
 
         private void SetLaps(byte laps)
@@ -99,7 +100,7 @@ namespace TopSpeed.Core.Multiplayer
             if (laps < 1 || laps > 16)
                 return;
 
-            session.SendRoomSetLaps(laps);
+            TrySend(session.SendRoomSetLaps(laps), "lap count change request");
         }
 
         private void SetPlayersToStart(byte playersToStart)
@@ -110,7 +111,7 @@ namespace TopSpeed.Core.Multiplayer
 
             if (playersToStart < 2)
                 playersToStart = 2;
-            session.SendRoomSetPlayersToStart(playersToStart);
+            TrySend(session.SendRoomSetPlayersToStart(playersToStart), "player count change request");
         }
 
         private void AddBotToRoom()
@@ -128,7 +129,7 @@ namespace TopSpeed.Core.Multiplayer
                 return;
             }
 
-            session.SendRoomAddBot();
+            TrySend(session.SendRoomAddBot(), "add bot request");
         }
 
         private void RemoveLastBotFromRoom()
@@ -146,7 +147,7 @@ namespace TopSpeed.Core.Multiplayer
                 return;
             }
 
-            session.SendRoomRemoveBot();
+            TrySend(session.SendRoomRemoveBot(), "remove bot request");
         }
 
         private void SubmitLoadoutReady(bool automaticTransmission)
@@ -167,7 +168,8 @@ namespace TopSpeed.Core.Multiplayer
             var vehicleIndex = Math.Max(0, Math.Min(VehicleCatalog.VehicleCount - 1, _pendingLoadoutVehicleIndex));
             var selectedCar = (CarType)vehicleIndex;
             _setLocalMultiplayerLoadout(vehicleIndex, automaticTransmission);
-            session.SendRoomPlayerReady(selectedCar, automaticTransmission);
+            if (!TrySend(session.SendRoomPlayerReady(selectedCar, automaticTransmission), "ready state"))
+                return;
             _speech.Speak("Ready. Waiting for other players.");
             _menu.ShowRoot(MultiplayerRoomControlsMenuId);
         }

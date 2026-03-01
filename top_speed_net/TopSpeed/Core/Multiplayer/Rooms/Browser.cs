@@ -20,7 +20,8 @@ namespace TopSpeed.Core.Multiplayer
                 return;
 
             _roomBrowserOpenPending = true;
-            session.SendRoomListRequest();
+            if (!TrySend(session.SendRoomListRequest(), "room list request"))
+                _roomBrowserOpenPending = false;
         }
 
         private void JoinRoom(uint roomId)
@@ -32,7 +33,7 @@ namespace TopSpeed.Core.Multiplayer
                 return;
             }
 
-            session.SendRoomJoin(roomId);
+            TrySend(session.SendRoomJoin(roomId), "room join request");
         }
 
         private void UpdateRoomBrowserMenu()

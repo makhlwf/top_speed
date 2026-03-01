@@ -177,7 +177,7 @@ namespace TopSpeed.Game
 
             if (_session != null)
             {
-                _session.SendPlayerState(PlayerState.NotReady);
+                TrySendSession(_session.SendPlayerState(PlayerState.NotReady), "not-ready state");
                 _state = AppState.Menu;
                 _multiplayerCoordinator.ShowMultiplayerMenuAfterRace();
             }
@@ -235,7 +235,8 @@ namespace TopSpeed.Game
                 return;
 
             _multiplayerRaceQuitConfirmActive = false;
-            _session?.SendRoomLeave();
+            if (_session != null)
+                TrySendSession(_session.SendRoomLeave(), "room leave request");
 
             _multiplayerRace?.FinalizeLevelMultiplayer();
             _multiplayerRace?.Dispose();
@@ -244,6 +245,15 @@ namespace TopSpeed.Game
             ResetPendingMultiplayerState();
             _state = AppState.Menu;
             _menu.ShowRoot("multiplayer_lobby");
+        }
+
+        private bool TrySendSession(bool sent, string action)
+        {
+            if (sent)
+                return true;
+
+            _speech.Speak($"Failed to send {action}. Please check your connection.");
+            return false;
         }
     }
 }

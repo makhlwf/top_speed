@@ -58,5 +58,14 @@ namespace TopSpeed.Core.Multiplayer
 
             return labels;
         }
+
+        private bool TrySend(bool sent, string action)
+        {
+            if (sent)
+                return true;
+
+            _speech.Speak($"Failed to send {action}. Please check your connection.");
+            return false;
+        }
     }
 }

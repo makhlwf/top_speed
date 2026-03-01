@@ -102,7 +102,8 @@ namespace TopSpeed.Core.Multiplayer
             if (_createRoomType == GameRoomType.OneOnOne)
                 playersToStart = 2;
 
-            session.SendRoomCreate(_createRoomName, _createRoomType, playersToStart);
+            if (!TrySend(session.SendRoomCreate(_createRoomName, _createRoomType, playersToStart), "room create request"))
+                return;
             _menu.ShowRoot(MultiplayerLobbyMenuId);
         }
 

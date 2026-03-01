@@ -20,13 +20,13 @@ namespace TopSpeed.Vehicles
         private void HandleManualShift(bool gearUp, bool gearDown)
         {
             if (!gearUp && !gearDown)
-                s_stickReleased = true;
+                _stickReleased = true;
 
-            if (gearDown && s_stickReleased)
+            if (gearDown && _stickReleased)
             {
                 if (_gear > FirstForwardGear)
                 {
-                    s_stickReleased = false;
+                    _stickReleased = false;
                     _switchingGear = -1;
                     --_gear;
                     if (_soundEngine.GetPitch() > 3f * _topFreq / (2f * _soundEngine.InputSampleRate))
@@ -37,7 +37,7 @@ namespace TopSpeed.Vehicles
                 }
                 else if (_gear == FirstForwardGear)
                 {
-                    s_stickReleased = false;
+                    _stickReleased = false;
                     if (_speed <= ReverseShiftMaxSpeedKmh)
                     {
                         _switchingGear = -1;
@@ -50,11 +50,11 @@ namespace TopSpeed.Vehicles
                     }
                 }
             }
-            else if (gearUp && s_stickReleased)
+            else if (gearUp && _stickReleased)
             {
                 if (_gear == ReverseGear)
                 {
-                    s_stickReleased = false;
+                    _stickReleased = false;
                     if (_speed <= ReverseShiftMaxSpeedKmh)
                     {
                         _switchingGear = 1;
@@ -68,7 +68,7 @@ namespace TopSpeed.Vehicles
                 }
                 else if (_gear < _gears)
                 {
-                    s_stickReleased = false;
+                    _stickReleased = false;
                     _switchingGear = 1;
                     ++_gear;
                     if (_soundEngine.GetPitch() < _idleFreq / (float)_soundEngine.InputSampleRate)

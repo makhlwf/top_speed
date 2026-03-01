@@ -29,7 +29,7 @@ namespace TopSpeed.Vehicles
         private const int ReverseGear = 0;
         private const int FirstForwardGear = 1;
         private const float ReverseShiftMaxSpeedKmh = 15.0f;
-        private static bool s_stickReleased = true;
+        private bool _stickReleased = true;
 
         private readonly AudioManager _audio;
         private readonly Track _track;

@@ -33,9 +33,12 @@ namespace TopSpeed.Network.Session
                 return false;
 
             var extension = NormalizeExtension(filePath);
-            _sender.TrySend(
+            if (!_sender.TrySend(
                 ClientPacketSerializer.WritePlayerMediaBegin(playerId, playerNumber, mediaId, (uint)bytes.Length, extension),
-                PacketStream.Media);
+                PacketStream.Media))
+            {
+                return false;
+            }
 
             var chunkIndex = 0;
             var offset = 0;
@@ -44,15 +47,17 @@ namespace TopSpeed.Network.Session
                 var length = Math.Min(ChunkSize, bytes.Length - offset);
                 var chunk = new byte[length];
                 Buffer.BlockCopy(bytes, offset, chunk, 0, length);
-                _sender.TrySend(
+                if (!_sender.TrySend(
                     ClientPacketSerializer.WritePlayerMediaChunk(playerId, playerNumber, mediaId, (ushort)chunkIndex, chunk),
-                    PacketStream.Media);
+                    PacketStream.Media))
+                {
+                    return false;
+                }
                 chunkIndex++;
                 offset += length;
             }
 
-            _sender.TrySend(ClientPacketSerializer.WritePlayerMediaEnd(playerId, playerNumber, mediaId), PacketStream.Media);
-            return true;
+            return _sender.TrySend(ClientPacketSerializer.WritePlayerMediaEnd(playerId, playerNumber, mediaId), PacketStream.Media);
         }
 
         public bool TrySendStreamed(uint playerId, byte playerNumber, uint mediaId, string filePath)
@@ -68,9 +73,12 @@ namespace TopSpeed.Network.Session
                     return false;
 
                 var extension = NormalizeExtension(filePath);
-                _sender.TrySend(
+                if (!_sender.TrySend(
                     ClientPacketSerializer.WritePlayerMediaBegin(playerId, playerNumber, mediaId, (uint)stream.Length, extension),
-                    PacketStream.Media);
+                    PacketStream.Media))
+                {
+                    return false;
+                }
 
                 var chunkIndex = 0;
                 var buffer = new byte[ChunkSize];
@@ -82,14 +90,16 @@ namespace TopSpeed.Network.Session
 
                     var chunk = new byte[read];
                     Buffer.BlockCopy(buffer, 0, chunk, 0, read);
-                    _sender.TrySend(
+                    if (!_sender.TrySend(
                         ClientPacketSerializer.WritePlayerMediaChunk(playerId, playerNumber, mediaId, (ushort)chunkIndex, chunk),
-                        PacketStream.Media);
+                        PacketStream.Media))
+                    {
+                        return false;
+                    }
                     chunkIndex++;
                 }
 
-                _sender.TrySend(ClientPacketSerializer.WritePlayerMediaEnd(playerId, playerNumber, mediaId), PacketStream.Media);
-                return true;
+                return _sender.TrySend(ClientPacketSerializer.WritePlayerMediaEnd(playerId, playerNumber, mediaId), PacketStream.Media);
             }
             catch
             {

@@ -54,6 +54,7 @@ namespace TopSpeed.Race
         private bool _hasRaceSnapshotSequence;
         private float _snapshotTickNow;
         private bool _hasSnapshotTickNow;
+        private bool _sendFailureAnnounced;
 
         public LevelMultiplayer(
             AudioManager audio,
@@ -104,6 +105,7 @@ namespace TopSpeed.Race
             _snapshotFrames.Clear();
             _snapshotTickNow = 0f;
             _hasSnapshotTickNow = false;
+            _sendFailureAnnounced = false;
             Array.Clear(_disconnectedPlayerSlots, 0, _disconnectedPlayerSlots.Length);
 
             var rowSpacing = Math.Max(10.0f, _car.LengthM * 1.5f);
@@ -133,7 +135,7 @@ namespace TopSpeed.Race
             Speak(_soundNumbers[_playerNumber + 1]);
 
             _currentState = PlayerState.AwaitingStart;
-            _session.SendPlayerState(_currentState);
+            TrySendRace(_session.SendPlayerState(_currentState), "awaiting-start state");
         }
 
         public void FinalizeLevelMultiplayer()
@@ -178,7 +180,7 @@ namespace TopSpeed.Race
                 && _lastCarState != CarState.Crashed
                 && (_car.State == CarState.Crashing || _car.State == CarState.Crashed))
             {
-                _session.SendPlayerCrashed();
+                TrySendRace(_session.SendPlayerCrashed(), "crash event");
             }
             _lastCarState = _car.State;
 
@@ -191,8 +193,8 @@ namespace TopSpeed.Race
                     {
                         _sentFinish = true;
                         _currentState = PlayerState.Finished;
-                        _session.SendPlayerFinished();
-                        _session.SendPlayerState(_currentState);
+                        TrySendRace(_session.SendPlayerFinished(), "finish event");
+                        TrySendRace(_session.SendPlayerState(_currentState), "finished state");
                     }
                     PushEvent(RaceEventType.RaceFinish, 1.0f + _speakTime - _elapsedTotal);
                 });
@@ -244,7 +246,7 @@ namespace TopSpeed.Race
                     Speed = (ushort)_car.Speed,
                     Frequency = _car.Frequency
                 };
-                _session.SendPlayerData(
+                TrySendRace(_session.SendPlayerData(
                     raceData,
                     _car.CarType,
                     state,
@@ -254,7 +256,8 @@ namespace TopSpeed.Race
                     _car.Backfiring(),
                     LocalMediaLoaded,
                     LocalMediaPlaying,
-                    LocalMediaId);
+                    LocalMediaId),
+                    "player state update");
             }
 
             if (CompleteFrame(elapsed))
@@ -269,8 +272,8 @@ namespace TopSpeed.Race
 
             _sentStart = true;
             _currentState = PlayerState.Racing;
-            _session.SendPlayerStarted();
-            _session.SendPlayerState(_currentState);
+            TrySendRace(_session.SendPlayerStarted(), "race start event");
+            TrySendRace(_session.SendPlayerState(_currentState), "racing state");
         }
 
         public void Pause()
@@ -293,8 +296,21 @@ namespace TopSpeed.Race
 
         protected override void OnLocalRadioMediaLoaded(uint mediaId, string mediaPath)
         {
-            if (!_session.SendRadioMediaStreamed(mediaId, mediaPath))
+            if (!TrySendRace(_session.SendRadioMediaStreamed(mediaId, mediaPath), "radio media"))
                 SpeakText("Failed to transmit radio media.");
+        }
+
+        private bool TrySendRace(bool sent, string action)
+        {
+            if (sent)
+                return true;
+
+            if (_sendFailureAnnounced)
+                return false;
+
+            _sendFailureAnnounced = true;
+            SpeakText($"Network send failed while sending {action}.");
+            return false;
         }
     }
 }
