@@ -14,24 +14,33 @@ namespace TopSpeed.Vehicles
 
             if (_soundEngine.IsPlaying)
             {
-                if (_currentThrottle > 50)
+                var throttlePercent = Math.Max(0f, Math.Min(100f, _currentThrottle));
+                var throttleRatio = throttlePercent / 100f;
+                var speedFloor = _topSpeed > 0f ? (_speed * 95f / _topSpeed) : 0f;
+                if (speedFloor < 0f)
+                    speedFloor = 0f;
+                if (speedFloor > 95f)
+                    speedFloor = 95f;
+
+                if (throttlePercent > 0f)
                 {
                     if (!_soundThrottle.IsPlaying)
                     {
-                        if (_throttleVolume < 80.0f)
-                            _throttleVolume = 80.0f;
+                        var startVolume = Math.Max(speedFloor, 20f + (80f * throttleRatio));
+                        _throttleVolume = startVolume;
                         SetPlayerEngineVolumePercent(_soundThrottle, (int)_throttleVolume);
                         _prevThrottleVolume = _throttleVolume;
                         _soundThrottle.Play(loop: true);
                     }
                     else
                     {
-                        if (_throttleVolume >= 80.0f)
-                            _throttleVolume += (100.0f - _throttleVolume) * elapsed;
-                        else
-                            _throttleVolume = 80.0f;
+                        var targetVolume = Math.Max(speedFloor, 20f + (80f * throttleRatio));
+                        var blend = Math.Min(1f, elapsed * 10f);
+                        _throttleVolume += (targetVolume - _throttleVolume) * blend;
                         if (_throttleVolume > 100.0f)
                             _throttleVolume = 100.0f;
+                        if (_throttleVolume < 0.0f)
+                            _throttleVolume = 0.0f;
                         if ((int)_throttleVolume != (int)_prevThrottleVolume)
                         {
                             SetPlayerEngineVolumePercent(_soundThrottle, (int)_throttleVolume);
@@ -41,10 +50,8 @@ namespace TopSpeed.Vehicles
                 }
                 else
                 {
-                    _throttleVolume -= 10.0f * elapsed;
-                    var min = _speed * 95 / _topSpeed;
-                    if (_throttleVolume < min)
-                        _throttleVolume = min;
+                    var blend = Math.Min(1f, elapsed * 6f);
+                    _throttleVolume += (speedFloor - _throttleVolume) * blend;
                     if ((int)_throttleVolume != (int)_prevThrottleVolume)
                     {
                         SetPlayerEngineVolumePercent(_soundThrottle, (int)_throttleVolume);
@@ -60,16 +67,20 @@ namespace TopSpeed.Vehicles
 
         private void UpdateBrakeAndSteeringOutput()
         {
-            if (_thrust < -50 && _speed > 0)
+            var brakingInput = Math.Max(0, -_currentBrake);
+            var isBraking = brakingInput > 0 && _speed > 0;
+            if (isBraking)
             {
                 BrakeSound();
-                _vibration?.Gain(VibrationEffectType.Spring, (int)(50.0f * _speed / _topSpeed));
-                _currentSteering = (_currentSteering * 2) / 3;
+                if (_thrust < -50)
+                {
+                    _vibration?.Gain(VibrationEffectType.Spring, (int)(50.0f * _speed / _topSpeed));
+                    _currentSteering = (_currentSteering * 2) / 3;
+                }
             }
             else if (_currentSteering != 0 && _speed > _topSpeed / 2)
             {
-                if (_thrust > -50)
-                    BrakeCurveSound();
+                BrakeCurveSound();
             }
             else
             {
@@ -96,10 +107,11 @@ namespace TopSpeed.Vehicles
                 _prevBrakeFrequency = _brakeFrequency;
             }
 
-            if (_speed <= 50.0f)
-                SetPlayerEventVolumePercent(_soundBrake, (int)(100 - (50 - _speed)));
-            else
-                SetPlayerEventVolumePercent(_soundBrake, 100);
+            var brakePercent = Math.Max(0f, Math.Min(100f, -_currentBrake));
+            var speedVolume = _speed <= 50.0f ? (100f - (50f - _speed)) : 100f;
+            var inputVolume = brakePercent <= 0f ? 0f : (25f + (75f * (brakePercent / 100f)));
+            var brakeVolume = (int)Math.Round(speedVolume * (inputVolume / 100f));
+            SetPlayerEventVolumePercent(_soundBrake, brakeVolume);
 
             if (_manualTransmission)
                 UpdateEngineFreqManual();
