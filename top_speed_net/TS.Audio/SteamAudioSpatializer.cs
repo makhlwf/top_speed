@@ -234,15 +234,30 @@ namespace TS.Audio
                 IPL.BinauralEffectApply(_binauralRight, ref binauralParams, ref dirBufferR, ref outBufferR);
 
                 const float mixScale = 0.5f;
-                for (int i = 0; i < frames; i++)
+                if (IsStereoWideningEnabled(spatial))
                 {
-                    int idx = i * (int)channels;
-                    float left = (pOutLL[i] + pOutRL[i]) * mixScale;
-                    float right = (pOutLR[i] + pOutRR[i]) * mixScale;
-                    framesOut[idx] = left;
-                    framesOut[idx + 1] = right;
-                    for (int ch = 2; ch < channels; ch++)
-                        framesOut[idx + ch] = 0f;
+                    GetStereoWideningGains(direction, out var leftGain, out var rightGain);
+                    for (int i = 0; i < frames; i++)
+                    {
+                        int idx = i * (int)channels;
+                        framesOut[idx] = (pOutLL[i] + pOutRL[i]) * mixScale * leftGain;
+                        framesOut[idx + 1] = (pOutLR[i] + pOutRR[i]) * mixScale * rightGain;
+                        for (int ch = 2; ch < channels; ch++)
+                            framesOut[idx + ch] = 0f;
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < frames; i++)
+                    {
+                        int idx = i * (int)channels;
+                        float left = (pOutLL[i] + pOutRL[i]) * mixScale;
+                        float right = (pOutLR[i] + pOutRR[i]) * mixScale;
+                        framesOut[idx] = left;
+                        framesOut[idx + 1] = right;
+                        for (int ch = 2; ch < channels; ch++)
+                            framesOut[idx + ch] = 0f;
+                    }
                 }
 
                 if ((simFlags & AudioSourceSpatialParams.SimReflections) != 0)
@@ -380,14 +395,30 @@ namespace TS.Audio
                 IPL.DirectEffectApply(_directLeft, ref directParams, ref inputBuffer, ref inputBuffer);
                 IPL.BinauralEffectApply(_binauralLeft, ref binauralParams, ref inputBuffer, ref outputBuffer);
 
-                for (int i = 0; i < frames; i++)
+                if (IsStereoWideningEnabled(spatial))
                 {
-                    int idx = i * (int)channels;
-                    framesOut[idx] = pOutL[i];
-                    if (channels > 1)
-                        framesOut[idx + 1] = pOutR[i];
-                    for (int ch = 2; ch < channels; ch++)
-                        framesOut[idx + ch] = 0f;
+                    GetStereoWideningGains(direction, out var leftGain, out var rightGain);
+                    for (int i = 0; i < frames; i++)
+                    {
+                        int idx = i * (int)channels;
+                        framesOut[idx] = pOutL[i] * leftGain;
+                        if (channels > 1)
+                            framesOut[idx + 1] = pOutR[i] * rightGain;
+                        for (int ch = 2; ch < channels; ch++)
+                            framesOut[idx + ch] = 0f;
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < frames; i++)
+                    {
+                        int idx = i * (int)channels;
+                        framesOut[idx] = pOutL[i];
+                        if (channels > 1)
+                            framesOut[idx + 1] = pOutR[i];
+                        for (int ch = 2; ch < channels; ch++)
+                            framesOut[idx + ch] = 0f;
+                    }
                 }
 
                 if ((simFlags & AudioSourceSpatialParams.SimReflections) != 0)
@@ -592,6 +623,20 @@ namespace TS.Audio
             }
 
             return wetScale;
+        }
+
+        private static bool IsStereoWideningEnabled(AudioSourceSpatialParams spatial)
+        {
+            return Volatile.Read(ref spatial.StereoWidening) != 0;
+        }
+
+        private static void GetStereoWideningGains(IPL.Vector3 direction, out float leftGain, out float rightGain)
+        {
+            const float fullCutoffAtDirectionX = 0.90f;
+            var normalizedX = Clamp(direction.X / fullCutoffAtDirectionX, -1f, 1f);
+
+            leftGain = normalizedX > 0f ? 1f - normalizedX : 1f;
+            rightGain = normalizedX < 0f ? 1f + normalizedX : 1f;
         }
 
         private float GetAttenuationAndDirection(AudioSourceSpatialParams spatial, out IPL.Vector3 direction)

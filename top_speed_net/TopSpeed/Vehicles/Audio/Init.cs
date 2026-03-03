@@ -64,8 +64,18 @@ namespace TopSpeed.Vehicles
 
         private void ConfigureInitialAudioState()
         {
+            var enableStereoWidening = _settings.StereoWidening;
+
             for (var i = 0; i < _soundCrashVariants.Length; i++)
+            {
                 _soundCrashVariants[i].SetDopplerFactor(0f);
+                _soundCrashVariants[i].SetStereoWidening(enableStereoWidening);
+            }
+
+            for (var i = 0; i < _soundBackfireVariants.Length; i++)
+            {
+                _soundBackfireVariants[i].SetStereoWidening(enableStereoWidening);
+            }
 
             _soundEngine.SetDopplerFactor(0f);
             _soundThrottle?.SetDopplerFactor(0f);
@@ -79,6 +89,23 @@ namespace TopSpeed.Vehicles
             _soundMiniCrash.SetDopplerFactor(0f);
             _soundBump.SetDopplerFactor(0f);
             _soundWipers?.SetDopplerFactor(0f);
+
+            _soundEngine.SetStereoWidening(enableStereoWidening);
+            _soundThrottle?.SetStereoWidening(enableStereoWidening);
+            _soundHorn.SetStereoWidening(enableStereoWidening);
+            _soundBrake.SetStereoWidening(enableStereoWidening);
+            _soundBackfire?.SetStereoWidening(enableStereoWidening);
+            _soundStart.SetStereoWidening(enableStereoWidening);
+            _soundCrash.SetStereoWidening(enableStereoWidening);
+            _soundMiniCrash.SetStereoWidening(enableStereoWidening);
+            _soundBump.SetStereoWidening(enableStereoWidening);
+            _soundBadSwitch.SetStereoWidening(enableStereoWidening);
+            _soundWipers?.SetStereoWidening(enableStereoWidening);
+            _soundAsphalt.SetStereoWidening(enableStereoWidening);
+            _soundGravel.SetStereoWidening(enableStereoWidening);
+            _soundWater.SetStereoWidening(enableStereoWidening);
+            _soundSand.SetStereoWidening(enableStereoWidening);
+            _soundSnow.SetStereoWidening(enableStereoWidening);
             RefreshCategoryVolumes(force: true);
         }
     }

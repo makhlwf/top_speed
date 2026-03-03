@@ -14,6 +14,7 @@ namespace TopSpeed.Core.Settings
         private static readonly KeyValuePair<string, string>[] BooleanKeys =
         {
             new KeyValuePair<string, string>("hrtfAudio", "audio.hrtfAudio"),
+            new KeyValuePair<string, string>("stereoWidening", "audio.stereoWidening"),
             new KeyValuePair<string, string>("autoDetectAudioDeviceFormat", "audio.autoDetectAudioDeviceFormat"),
             new KeyValuePair<string, string>("forceFeedback", "input.forceFeedback"),
             new KeyValuePair<string, string>("randomCustomTracks", "race.randomCustomTracks"),
