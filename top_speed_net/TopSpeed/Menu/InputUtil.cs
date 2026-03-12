@@ -1,6 +1,7 @@
 using System;
 using SharpDX.DirectInput;
 using TopSpeed.Input;
+using TopSpeed.Input.Devices.Joystick;
 
 namespace TopSpeed.Menu
 {

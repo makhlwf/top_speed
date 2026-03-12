@@ -2,6 +2,7 @@ using System.IO;
 using TopSpeed.Data;
 using TopSpeed.Input;
 using TopSpeed.Protocol;
+using TopSpeed.Input.Devices.Vibration;
 
 namespace TopSpeed.Vehicles
 {

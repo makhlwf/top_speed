@@ -1,0 +1,56 @@
+using System.Collections.Generic;
+using TopSpeed.Input;
+using TopSpeed.Menu;
+
+namespace TopSpeed.Core.Multiplayer
+{
+    internal sealed partial class MultiplayerCoordinator
+    {
+        private void OpenDeleteSavedServerConfirm(int index)
+        {
+            if (index < 0 || index >= SavedServers.Count)
+                return;
+
+            _pendingDeleteServerIndex = index;
+            _questions.Show(new Question(
+                "Delete this server?",
+                "This will remove the saved server entry from the list. Are you sure you would like to continue?",
+                HandleDeleteSavedServerQuestionResult,
+                new QuestionButton(QuestionId.Yes, "Yes, delete this server"),
+                new QuestionButton(QuestionId.No, "No, keep this server", flags: QuestionButtonFlags.Default)));
+        }
+
+        private void HandleSavedServerDiscardQuestionResult(int resultId)
+        {
+            if (resultId == QuestionId.Confirm)
+                SaveSavedServerDraft();
+            else if (resultId == QuestionId.Close || resultId == QuestionId.Cancel || resultId == QuestionId.No)
+                DiscardSavedServerDraftChanges();
+        }
+
+        private void HandleDeleteSavedServerQuestionResult(int resultId)
+        {
+            if (resultId == QuestionId.Yes)
+                ConfirmDeleteSavedServer();
+        }
+
+        private void ConfirmDeleteSavedServer()
+        {
+            var servers = _settings.SavedServers ?? (_settings.SavedServers = new List<SavedServerEntry>());
+            if (_pendingDeleteServerIndex < 0 || _pendingDeleteServerIndex >= servers.Count)
+            {
+                if (_questions.IsQuestionMenu(_menu.CurrentId))
+                    _menu.PopToPrevious();
+                return;
+            }
+
+            servers.RemoveAt(_pendingDeleteServerIndex);
+            _pendingDeleteServerIndex = -1;
+            _saveSettings();
+            RebuildSavedServersMenu();
+            if (_questions.IsQuestionMenu(_menu.CurrentId))
+                _menu.PopToPrevious();
+            _speech.Speak("Server deleted.");
+        }
+    }
+}

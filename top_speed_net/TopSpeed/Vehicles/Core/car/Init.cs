@@ -11,6 +11,7 @@ using TopSpeed.Vehicles.Control;
 using TopSpeed.Vehicles.Core;
 using TopSpeed.Vehicles.Events;
 using TopSpeed.Vehicles.Physics;
+using TopSpeed.Input.Devices.Vibration;
 
 namespace TopSpeed.Vehicles
 {

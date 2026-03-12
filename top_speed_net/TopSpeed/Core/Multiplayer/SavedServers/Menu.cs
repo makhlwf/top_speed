@@ -1,0 +1,80 @@
+using System;
+using System.Collections.Generic;
+using TopSpeed.Input;
+using TopSpeed.Menu;
+
+namespace TopSpeed.Core.Multiplayer
+{
+    internal sealed partial class MultiplayerCoordinator
+    {
+        private void RebuildSavedServersMenu()
+        {
+            var items = new List<MenuItem>();
+            var servers = SavedServers;
+            for (var i = 0; i < servers.Count; i++)
+            {
+                var index = i;
+                var server = servers[i];
+                var displayName = string.IsNullOrWhiteSpace(server.Name)
+                    ? $"{server.Host}:{ResolveSavedServerPort(server)}"
+                    : $"{server.Name}, {server.Host}:{ResolveSavedServerPort(server)}";
+
+                items.Add(new MenuItem(
+                    displayName,
+                    MenuAction.None,
+                    onActivate: () => ConnectUsingSavedServer(index),
+                    actions: new[]
+                    {
+                        new MenuItemAction("Edit", () => OpenEditSavedServerForm(index)),
+                        new MenuItemAction("Delete", () => OpenDeleteSavedServerConfirm(index))
+                    }));
+            }
+
+            items.Add(new MenuItem("Add a new server", MenuAction.None, onActivate: OpenAddSavedServerForm));
+            items.Add(new MenuItem("Go back", MenuAction.Back));
+            _menu.UpdateItems(MultiplayerSavedServersMenuId, items, preserveSelection: true);
+        }
+
+        private void OpenAddSavedServerForm()
+        {
+            _savedServerEditIndex = -1;
+            _savedServerOriginal = null;
+            _savedServerDraft = new SavedServerEntry();
+            RebuildSavedServerFormMenu();
+            _menu.Push(MultiplayerSavedServerFormMenuId);
+        }
+
+        private void OpenEditSavedServerForm(int index)
+        {
+            var servers = SavedServers;
+            if (index < 0 || index >= servers.Count)
+                return;
+
+            var source = servers[index];
+            _savedServerEditIndex = index;
+            _savedServerOriginal = CloneSavedServer(source);
+            _savedServerDraft = CloneSavedServer(source);
+            RebuildSavedServerFormMenu();
+            _menu.Push(MultiplayerSavedServerFormMenuId);
+        }
+
+        private void ConnectUsingSavedServer(int index)
+        {
+            var servers = SavedServers;
+            if (index < 0 || index >= servers.Count)
+                return;
+
+            var server = servers[index];
+            var host = (server.Host ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(host))
+            {
+                _speech.Speak("Saved server host is empty.");
+                return;
+            }
+
+            _pendingServerAddress = host;
+            _pendingServerPort = ResolveSavedServerPort(server);
+            BeginCallSignInput();
+        }
+    }
+}

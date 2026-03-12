@@ -6,9 +6,67 @@
     <Nullable>enable</Nullable>
     <RootNamespace>TopSpeed.Server</RootNamespace>
     <AssemblyName>TopSpeed.Server</AssemblyName>
-    <SelfContained>true</SelfContained>
+    <SelfContained>false</SelfContained>
     <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(ServerPublishProfile)' == 'ReleaseWinX64'">
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>false</PublishSingleFile>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishDir>publish\win-x64\</PublishDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(ServerPublishProfile)' == 'ReleaseLinuxX64'">
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>false</PublishSingleFile>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishDir>publish\linux-x64\</PublishDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(ServerPublishProfile)' == 'ReleaseLinuxArm64'">
+    <RuntimeIdentifier>linux-arm64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>false</PublishSingleFile>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishDir>publish\linux-arm64\</PublishDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(ServerPublishProfile)' == 'ReleaseLinuxArm32'">
+    <RuntimeIdentifier>linux-arm</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>false</PublishSingleFile>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishDir>publish\linux-arm32\</PublishDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(ServerPublishProfile)' == 'ReleaseLinuxMuslX64'">
+    <RuntimeIdentifier>linux-musl-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>false</PublishSingleFile>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishDir>publish\linux-musl-x64\</PublishDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(ServerPublishProfile)' == 'ReleaseLinuxMuslArm64'">
+    <RuntimeIdentifier>linux-musl-arm64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>false</PublishSingleFile>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishDir>publish\linux-musl-arm64\</PublishDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(ServerPublishProfile)' == 'ReleaseLinuxX86FrameworkDependent'">
+    <RuntimeIdentifier>linux-x86</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <UseAppHost>false</UseAppHost>
+    <PublishSingleFile>false</PublishSingleFile>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishDir>publish\linux-x86-fdd\</PublishDir>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Bogus" Version="35.6.1" />
     <PackageReference Include="LiteNetLib" Version="1.3.1" />

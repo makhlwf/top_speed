@@ -47,7 +47,7 @@ namespace TopSpeed.Game
 
         private void DisconnectFromServer()
         {
-            _multiplayerRace?.FinalizeLevelMultiplayer();
+            _multiplayerRace?.FinalizeMultiplayerMode();
             _multiplayerRace?.Dispose();
             _multiplayerRace = null;
             _multiplayerRaceQuitConfirmActive = false;
@@ -60,3 +60,4 @@ namespace TopSpeed.Game
         }
     }
 }
+

@@ -73,9 +73,9 @@ namespace TopSpeed.Game
             var vehicleIndex = Math.Max(0, Math.Min(VehicleCatalog.VehicleCount - 1, _multiplayerVehicleIndex));
             var automatic = _multiplayerAutomaticTransmission;
 
-            _multiplayerRace?.FinalizeLevelMultiplayer();
+            _multiplayerRace?.FinalizeMultiplayerMode();
             _multiplayerRace?.Dispose();
-            _multiplayerRace = new LevelMultiplayer(
+            _multiplayerRace = new MultiplayerMode(
                 _audio,
                 _speech,
                 _settings,
@@ -96,7 +96,7 @@ namespace TopSpeed.Game
 
         private void EndMultiplayerRace()
         {
-            _multiplayerRace?.FinalizeLevelMultiplayer();
+            _multiplayerRace?.FinalizeMultiplayerMode();
             _multiplayerRace?.Dispose();
             _multiplayerRace = null;
             _multiplayerRaceQuitConfirmActive = false;
@@ -116,3 +116,5 @@ namespace TopSpeed.Game
         }
     }
 }
+
+

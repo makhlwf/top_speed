@@ -1,0 +1,117 @@
+using System;
+using TopSpeed.Data;
+using TopSpeed.Protocol;
+
+namespace TopSpeed.Network
+{
+    internal static partial class ClientPacketSerializer
+    {
+        public static byte[] WriteRoomListRequest()
+        {
+            return WriteGeneral(Command.RoomListRequest);
+        }
+
+        public static byte[] WriteRoomStateRequest()
+        {
+            return WriteGeneral(Command.RoomStateRequest);
+        }
+
+        public static byte[] WriteRoomGetRequest(uint roomId)
+        {
+            var buffer = WritePacketHeader(Command.RoomGetRequest, 4);
+            var writer = new PacketWriter(buffer);
+            writer.WriteByte(ProtocolConstants.Version);
+            writer.WriteByte((byte)Command.RoomGetRequest);
+            writer.WriteUInt32(roomId);
+            return buffer;
+        }
+
+        public static byte[] WriteRoomCreate(string roomName, GameRoomType roomType, byte playersToStart)
+        {
+            var buffer = WritePacketHeader(Command.RoomCreate, ProtocolConstants.MaxRoomNameLength + 1 + 1);
+            var writer = new PacketWriter(buffer);
+            writer.WriteByte(ProtocolConstants.Version);
+            writer.WriteByte((byte)Command.RoomCreate);
+            writer.WriteFixedString(roomName ?? string.Empty, ProtocolConstants.MaxRoomNameLength);
+            writer.WriteByte((byte)roomType);
+            writer.WriteByte(playersToStart);
+            return buffer;
+        }
+
+        public static byte[] WriteRoomJoin(uint roomId)
+        {
+            var buffer = WritePacketHeader(Command.RoomJoin, 4);
+            var writer = new PacketWriter(buffer);
+            writer.WriteByte(ProtocolConstants.Version);
+            writer.WriteByte((byte)Command.RoomJoin);
+            writer.WriteUInt32(roomId);
+            return buffer;
+        }
+
+        public static byte[] WriteRoomLeave()
+        {
+            return WriteGeneral(Command.RoomLeave);
+        }
+
+        public static byte[] WriteRoomSetTrack(string trackName)
+        {
+            var buffer = WritePacketHeader(Command.RoomSetTrack, 12);
+            var writer = new PacketWriter(buffer);
+            writer.WriteByte(ProtocolConstants.Version);
+            writer.WriteByte((byte)Command.RoomSetTrack);
+            writer.WriteFixedString(trackName ?? string.Empty, 12);
+            return buffer;
+        }
+
+        public static byte[] WriteRoomSetLaps(byte laps)
+        {
+            var buffer = WritePacketHeader(Command.RoomSetLaps, 1);
+            var writer = new PacketWriter(buffer);
+            writer.WriteByte(ProtocolConstants.Version);
+            writer.WriteByte((byte)Command.RoomSetLaps);
+            writer.WriteByte(laps);
+            return buffer;
+        }
+
+        public static byte[] WriteRoomStartRace()
+        {
+            return WriteGeneral(Command.RoomStartRace);
+        }
+
+        public static byte[] WriteRoomSetPlayersToStart(byte playersToStart)
+        {
+            var buffer = WritePacketHeader(Command.RoomSetPlayersToStart, 1);
+            var writer = new PacketWriter(buffer);
+            writer.WriteByte(ProtocolConstants.Version);
+            writer.WriteByte((byte)Command.RoomSetPlayersToStart);
+            writer.WriteByte(playersToStart);
+            return buffer;
+        }
+
+        public static byte[] WriteRoomAddBot()
+        {
+            return WriteGeneral(Command.RoomAddBot);
+        }
+
+        public static byte[] WriteRoomRemoveBot()
+        {
+            return WriteGeneral(Command.RoomRemoveBot);
+        }
+
+        public static byte[] WriteRoomPlayerReady(CarType car, bool automaticTransmission)
+        {
+            var buffer = WritePacketHeader(Command.RoomPlayerReady, 1 + 1);
+            var writer = new PacketWriter(buffer);
+            writer.WriteByte(ProtocolConstants.Version);
+            writer.WriteByte((byte)Command.RoomPlayerReady);
+            writer.WriteByte((byte)car);
+            writer.WriteBool(automaticTransmission);
+            return buffer;
+        }
+
+        public static byte[] WriteRoomPlayerWithdraw()
+        {
+            return WriteGeneral(Command.RoomPlayerWithdraw);
+        }
+    }
+}

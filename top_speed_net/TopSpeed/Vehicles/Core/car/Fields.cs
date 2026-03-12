@@ -9,6 +9,7 @@ using TopSpeed.Vehicles.Core;
 using TopSpeed.Vehicles.Events;
 using TopSpeed.Vehicles.Physics;
 using TS.Audio;
+using TopSpeed.Input.Devices.Vibration;
 
 namespace TopSpeed.Vehicles
 {

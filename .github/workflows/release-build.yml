@@ -78,8 +78,7 @@ jobs:
         "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         "server_version=$serverVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         "game_zip=TopSpeed-Release-v-$version.zip" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-        "server_win_zip=TopSpeed.Server-win-x64-Release-v-$serverVersion.zip" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-        "server_linux_zip=TopSpeed.Server-linux-x64-Release-v-$serverVersion.zip" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        "server_zip_glob=TopSpeed.Server-*-Release-v-$serverVersion.zip" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         "changes_md<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         $changes | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
@@ -98,11 +97,22 @@ jobs:
     - name: Build
       run: dotnet build TopSpeed.sln --configuration Release --no-restore
 
-    - name: Publish TopSpeed.Server (self-contained)
-      run: dotnet publish TopSpeed.Server/TopSpeed.Server.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=false -o TopSpeed.Server/publish/win-x64
+    - name: Publish TopSpeed.Server (all release profiles)
+      shell: pwsh
+      run: |
+        $profiles = @(
+          "ReleaseWinX64",
+          "ReleaseLinuxX64",
+          "ReleaseLinuxArm64",
+          "ReleaseLinuxArm32",
+          "ReleaseLinuxMuslX64",
+          "ReleaseLinuxMuslArm64",
+          "ReleaseLinuxX86FrameworkDependent"
+        )
 
-    - name: Publish TopSpeed.Server (self-contained linux)
-      run: dotnet publish TopSpeed.Server/TopSpeed.Server.csproj --configuration Release --runtime linux-x64 --self-contained true -p:PublishSingleFile=false -o TopSpeed.Server/publish/linux-x64
+        foreach ($profile in $profiles) {
+          dotnet publish TopSpeed.Server/TopSpeed.Server.csproj --configuration Release -p:ServerPublishProfile=$profile
+        }
 
     - name: Create Zip Archive
       shell: powershell
@@ -112,15 +122,23 @@ jobs:
         if (Test-Path $gameDestination) { Remove-Item $gameDestination -Force }
         Compress-Archive -Path $gameSource -DestinationPath $gameDestination -CompressionLevel Optimal
 
-        $serverSource = "TopSpeed.Server\publish\win-x64\*"
-        $serverDestination = "${{ steps.release_info.outputs.server_win_zip }}"
-        if (Test-Path $serverDestination) { Remove-Item $serverDestination -Force }
-        Compress-Archive -Path $serverSource -DestinationPath $serverDestination -CompressionLevel Optimal
+        $serverVersion = "${{ steps.release_info.outputs.server_version }}"
+        $targets = @(
+          "win-x64",
+          "linux-x64",
+          "linux-arm64",
+          "linux-arm32",
+          "linux-musl-x64",
+          "linux-musl-arm64",
+          "linux-x86-fdd"
+        )
 
-        $serverLinuxSource = "TopSpeed.Server\publish\linux-x64\*"
-        $serverLinuxDestination = "${{ steps.release_info.outputs.server_linux_zip }}"
-        if (Test-Path $serverLinuxDestination) { Remove-Item $serverLinuxDestination -Force }
-        Compress-Archive -Path $serverLinuxSource -DestinationPath $serverLinuxDestination -CompressionLevel Optimal
+        foreach ($rid in $targets) {
+          $source = "TopSpeed.Server\publish\$rid\*"
+          $destination = "TopSpeed.Server-$rid-Release-v-$serverVersion.zip"
+          if (Test-Path $destination) { Remove-Item $destination -Force }
+          Compress-Archive -Path $source -DestinationPath $destination -CompressionLevel Optimal
+        }
 
     - name: Generate Commit Log
       id: changelog
@@ -200,5 +218,4 @@ jobs:
         prerelease: false
         files: |
           top_speed_net/${{ steps.release_info.outputs.game_zip }}
-          top_speed_net/${{ steps.release_info.outputs.server_win_zip }}
-          top_speed_net/${{ steps.release_info.outputs.server_linux_zip }}
+          top_speed_net/${{ steps.release_info.outputs.server_zip_glob }}

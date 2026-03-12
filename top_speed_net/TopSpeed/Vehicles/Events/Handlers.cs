@@ -1,6 +1,7 @@
 using TopSpeed.Audio;
 using TopSpeed.Input;
 using TopSpeed.Vehicles.Events;
+using TopSpeed.Input.Devices.Vibration;
 
 namespace TopSpeed.Vehicles
 {

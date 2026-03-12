@@ -53,7 +53,7 @@ namespace TopSpeed.Game
             if (_session != null)
                 TrySendSession(_session.SendRoomLeave(), "room leave request");
 
-            _multiplayerRace?.FinalizeLevelMultiplayer();
+            _multiplayerRace?.FinalizeMultiplayerMode();
             _multiplayerRace?.Dispose();
             _multiplayerRace = null;
 
@@ -72,3 +72,4 @@ namespace TopSpeed.Game
         }
     }
 }
+

@@ -3,7 +3,7 @@ using TopSpeed.Vehicles;
 
 namespace TopSpeed.Race
 {
-    internal sealed partial class LevelSingleRace
+    internal sealed partial class SingleRaceMode
     {
         private void CheckForBumps()
         {
@@ -43,3 +43,4 @@ namespace TopSpeed.Race
         }
     }
 }
+

@@ -6,6 +6,7 @@ using TopSpeed.Core;
 using TopSpeed.Input;
 using TopSpeed.Speech;
 using TS.Audio;
+using TopSpeed.Input.Devices.Joystick;
 
 namespace TopSpeed.Menu
 {

@@ -6,6 +6,7 @@ using TopSpeed.Core;
 using TopSpeed.Data;
 using TopSpeed.Race;
 using TopSpeed.Tracks;
+using CoreRaceMode = TopSpeed.Core.RaceMode;
 
 namespace TopSpeed.Game
 {
@@ -13,20 +14,20 @@ namespace TopSpeed.Game
     {
         private void PrepareQuickStart()
         {
-            _setup.Mode = RaceMode.QuickStart;
+            _setup.Mode = CoreRaceMode.QuickStart;
             _setup.ClearSelection();
             _selection.SelectRandomTrackAny(_settings.RandomCustomTracks);
             _selection.SelectRandomVehicle();
             _setup.Transmission = TransmissionMode.Automatic;
         }
 
-        private void QueueRaceStart(RaceMode mode)
+        private void QueueRaceStart(CoreRaceMode mode)
         {
             _pendingRaceStart = true;
             _pendingMode = mode;
         }
 
-        private void StartRace(RaceMode mode)
+        private void StartRace(CoreRaceMode mode)
         {
             FadeOutMenuMusic();
             var track = string.IsNullOrWhiteSpace(_setup.TrackNameOrFile)
@@ -40,12 +41,12 @@ namespace TopSpeed.Game
             {
                 switch (mode)
                 {
-                    case RaceMode.TimeTrial:
-                        _timeTrial?.FinalizeLevelTimeTrial();
+                    case CoreRaceMode.TimeTrial:
+                        _timeTrial?.FinalizeTimeTrialMode();
                         _timeTrial?.Dispose();
                         _timeTrial = null;
 
-                        var timeTrial = new LevelTimeTrial(
+                        var timeTrial = new TimeTrialMode(
                             _audio,
                             _speech,
                             _settings,
@@ -61,13 +62,13 @@ namespace TopSpeed.Game
                         _state = AppState.TimeTrial;
                         _speech.Speak("Time trial.");
                         break;
-                    case RaceMode.QuickStart:
-                    case RaceMode.SingleRace:
-                        _singleRace?.FinalizeLevelSingleRace();
+                    case CoreRaceMode.QuickStart:
+                    case CoreRaceMode.SingleRace:
+                        _singleRace?.FinalizeSingleRaceMode();
                         _singleRace?.Dispose();
                         _singleRace = null;
 
-                        var singleRace = new LevelSingleRace(
+                        var singleRace = new SingleRaceMode(
                             _audio,
                             _speech,
                             _settings,
@@ -81,7 +82,7 @@ namespace TopSpeed.Game
                         singleRace.Initialize(Algorithm.RandomInt(_settings.NrOfComputers + 1));
                         _singleRace = singleRace;
                         _state = AppState.SingleRace;
-                        _speech.Speak(mode == RaceMode.QuickStart ? "Quick start." : "Single race.");
+                        _speech.Speak(mode == CoreRaceMode.QuickStart ? "Quick start." : "Single race.");
                         break;
                 }
             }
@@ -114,3 +115,5 @@ namespace TopSpeed.Game
         }
     }
 }
+
+

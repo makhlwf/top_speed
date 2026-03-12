@@ -2,6 +2,7 @@ using System;
 using TopSpeed.Audio;
 using TopSpeed.Input;
 using TopSpeed.Data;
+using TopSpeed.Input.Devices.Vibration;
 
 namespace TopSpeed.Vehicles
 {

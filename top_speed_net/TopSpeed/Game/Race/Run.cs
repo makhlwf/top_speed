@@ -36,11 +36,11 @@ namespace TopSpeed.Game
 
         private void EndRace()
         {
-            _timeTrial?.FinalizeLevelTimeTrial();
+            _timeTrial?.FinalizeTimeTrialMode();
             _timeTrial?.Dispose();
             _timeTrial = null;
 
-            _singleRace?.FinalizeLevelSingleRace();
+            _singleRace?.FinalizeSingleRaceMode();
             _singleRace?.Dispose();
             _singleRace = null;
 
@@ -50,3 +50,4 @@ namespace TopSpeed.Game
         }
     }
 }
+

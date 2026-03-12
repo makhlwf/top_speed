@@ -17,6 +17,7 @@ using TopSpeed.Protocol;
 using TopSpeed.Race;
 using TopSpeed.Speech;
 using TopSpeed.Windowing;
+using CoreRaceMode = TopSpeed.Core.RaceMode;
 
 namespace TopSpeed.Game
 {
@@ -63,11 +64,11 @@ namespace TopSpeed.Game
         private bool _calibrationOverlay;
         private Stopwatch? _calibrationStopwatch;
         private bool _pendingRaceStart;
-        private RaceMode _pendingMode;
+        private CoreRaceMode _pendingMode;
         private bool _pauseKeyReleased = true;
-        private LevelTimeTrial? _timeTrial;
-        private LevelSingleRace? _singleRace;
-        private LevelMultiplayer? _multiplayerRace;
+        private TimeTrialMode? _timeTrial;
+        private SingleRaceMode? _singleRace;
+        private MultiplayerMode? _multiplayerRace;
         private bool _multiplayerRaceQuitConfirmActive;
         private TrackData? _pendingMultiplayerTrack;
         private string _pendingMultiplayerTrackName = string.Empty;
@@ -118,3 +119,4 @@ namespace TopSpeed.Game
         }
     }
 }
+

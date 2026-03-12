@@ -4,7 +4,7 @@ using TopSpeed.Vehicles;
 
 namespace TopSpeed.Race
 {
-    internal sealed partial class LevelSingleRace
+    internal sealed partial class SingleRaceMode
     {
         private ComputerPlayer GenerateRandomPlayer(int playerNumber)
         {
@@ -31,3 +31,4 @@ namespace TopSpeed.Race
         }
     }
 }
+

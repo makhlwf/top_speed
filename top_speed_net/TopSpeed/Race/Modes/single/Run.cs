@@ -2,7 +2,7 @@ using TopSpeed.Race.Events;
 
 namespace TopSpeed.Race
 {
-    internal sealed partial class LevelSingleRace
+    internal sealed partial class SingleRaceMode
     {
         public void Run(float elapsed)
         {
@@ -89,3 +89,4 @@ namespace TopSpeed.Race
         }
     }
 }
+

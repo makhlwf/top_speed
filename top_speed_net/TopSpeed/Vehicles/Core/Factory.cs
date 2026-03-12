@@ -3,6 +3,7 @@ using TopSpeed.Audio;
 using TopSpeed.Input;
 using TopSpeed.Tracks;
 using TS.Audio;
+using TopSpeed.Input.Devices.Vibration;
 
 namespace TopSpeed.Vehicles.Core
 {

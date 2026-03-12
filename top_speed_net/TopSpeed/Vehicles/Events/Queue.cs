@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TopSpeed.Input;
+using TopSpeed.Input.Devices.Vibration;
 
 namespace TopSpeed.Vehicles.Events
 {

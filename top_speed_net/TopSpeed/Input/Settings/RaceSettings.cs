@@ -1,6 +1,7 @@
 using SharpDX.DirectInput;
 using System;
 using System.Collections.Generic;
+using TopSpeed.Input.Devices.Joystick;
 
 namespace TopSpeed.Input
 {
