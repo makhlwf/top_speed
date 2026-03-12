@@ -1,0 +1,125 @@
+using System;
+using System.Collections.Generic;
+using System.Numerics;
+using TopSpeed.Audio;
+using TopSpeed.Bots;
+using TopSpeed.Core;
+using TopSpeed.Data;
+using TopSpeed.Input;
+using TopSpeed.Tracks;
+using TopSpeed.Vehicles.Live;
+using TS.Audio;
+
+namespace TopSpeed.Vehicles
+{
+    internal sealed partial class ComputerPlayer
+    {
+        private readonly AudioManager _audio;
+        private readonly Track _track;
+        private readonly RaceSettings _settings;
+        private readonly Func<float> _currentTime;
+        private readonly Func<bool> _started;
+        private readonly Action<string>? _debugSpeak;
+        private readonly int _playerNumber;
+        private readonly int _vehicleIndex;
+        private readonly List<BotEvent> _events;
+        private readonly string _legacyRoot;
+
+        private ComputerState _state;
+        private TrackSurface _surface;
+        private int _gear;
+        private float _speed;
+        private float _positionX;
+        private float _positionY;
+        private int _switchingGear;
+        private float _autoShiftCooldown;
+        private float _trackLength;
+
+        private float _surfaceTractionFactor;
+        private float _deceleration;
+        private float _topSpeed;
+        private float _massKg;
+        private float _drivetrainEfficiency;
+        private float _engineBrakingTorqueNm;
+        private float _tireGripCoefficient;
+        private float _brakeStrength;
+        private float _wheelRadiusM;
+        private float _engineBraking;
+        private float _idleRpm;
+        private float _revLimiter;
+        private float _finalDriveRatio;
+        private float _powerFactor;
+        private float _peakTorqueNm;
+        private float _peakTorqueRpm;
+        private float _idleTorqueNm;
+        private float _redlineTorqueNm;
+        private float _dragCoefficient;
+        private float _frontalAreaM2;
+        private float _rollingResistanceCoefficient;
+        private float _launchRpm;
+        private float _lateralGripCoefficient;
+        private float _highSpeedStability;
+        private float _wheelbaseM;
+        private float _maxSteerDeg;
+        private float _widthM;
+        private float _lengthM;
+        private int _idleFreq;
+        private int _topFreq;
+        private int _shiftFreq;
+        private int _gears;
+        private float _steering;
+
+        private int _random;
+        private int _prevFrequency;
+        private int _frequency;
+        private int _prevBrakeFrequency;
+        private int _brakeFrequency;
+        private float _laneWidth;
+        private float _relPos;
+        private float _nextRelPos;
+        private float _diffX;
+        private float _diffY;
+        private int _currentSteering;
+        private int _currentThrottle;
+        private int _currentBrake;
+        private float _speedDiff;
+        private int _difficulty;
+        private bool _finished;
+        private bool _horning;
+        private bool _backfirePlayedAuto;
+        private bool _networkBackfireActive;
+        private bool _remoteEngineStartPending;
+        private float _remoteEngineStartRemaining;
+        private int _remoteEnginePendingFrequency;
+        private bool _remoteNetInit;
+        private float _remoteTargetX;
+        private float _remoteTargetY;
+        private float _remoteTargetSpeed;
+        private bool _crashLateralAnchored;
+        private float _crashLateralFromCenter;
+        private int _frame;
+        private Vector3 _lastAudioPosition;
+        private bool _audioInitialized;
+        private float _lastAudioUpdateTime;
+        private readonly VehicleRadioController _radio;
+        private readonly LiveRadio _liveRadio;
+        private bool _radioLoaded;
+        private bool _radioPlaying;
+        private uint _radioMediaId;
+
+        private AudioSourceHandle _soundEngine = default!;
+        private AudioSourceHandle _soundHorn = default!;
+        private AudioSourceHandle _soundStart = default!;
+        private AudioSourceHandle _soundCrash = default!;
+        private AudioSourceHandle _soundBrake = default!;
+        private AudioSourceHandle _soundMiniCrash = default!;
+        private AudioSourceHandle _soundBump = default!;
+        private AudioSourceHandle? _soundBackfire;
+        private int _lastOtherEngineVolumePercent = -1;
+        private int _lastOtherEventsVolumePercent = -1;
+        private int _lastRadioVolumePercent = -1;
+
+        private EngineModel _engine;
+        private readonly BotPhysicsConfig _physicsConfig;
+    }
+}
