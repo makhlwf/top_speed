@@ -1,4 +1,5 @@
 using System;
+using TopSpeed.Physics.Powertrain;
 
 namespace TopSpeed.Bots
 {
@@ -66,28 +67,20 @@ namespace TopSpeed.Bots
             if (rpm > config.RevLimiter && gear < config.Gears)
                 return float.NegativeInfinity;
 
-            var engineTorque = CalculateEngineTorqueNm(config, rpm) * throttle * config.PowerFactor;
-            var gearRatio = config.GetGearRatio(gear);
-            var wheelTorque = engineTorque * gearRatio * config.FinalDriveRatio * config.DrivetrainEfficiency;
-            var wheelForce = wheelTorque / config.WheelRadiusM;
-            var tractionLimit = config.TireGripCoefficient * surfaceTractionMod * config.MassKg * 9.80665f;
-            if (wheelForce > tractionLimit)
-                wheelForce = tractionLimit;
-            wheelForce *= longitudinalGripFactor;
-
-            var dragForce = 0.5f * 1.225f * config.DragCoefficient * config.FrontalAreaM2 * speedMps * speedMps;
-            var rollingForce = config.RollingResistanceCoefficient * config.MassKg * 9.80665f;
-            var netForce = wheelForce - dragForce - rollingForce;
-            return netForce / config.MassKg;
+            return Calculator.DriveAccel(
+                config.Powertrain,
+                gear,
+                speedMps,
+                throttle,
+                surfaceTractionMod,
+                longitudinalGripFactor);
         }
 
         private static float SpeedToRpm(BotPhysicsConfig config, float speedMps, int gear)
         {
-            var wheelCircumference = config.WheelRadiusM * 2.0f * (float)Math.PI;
-            if (wheelCircumference <= 0f)
-                return 0f;
-            var gearRatio = config.GetGearRatio(gear);
-            return (speedMps / wheelCircumference) * 60f * gearRatio * config.FinalDriveRatio;
+            return Calculator.RpmAtSpeed(config.Powertrain, speedMps, gear);
         }
     }
 }
+
+

@@ -20,6 +20,11 @@ namespace TopSpeed.Physics.Tires
             var yaw = TireYaw.Resolve(parameters, steer, axle, massKg);
             var steerSign = TireModelMath.Sign(steer.SteerRad);
             var steerMag = TireModelMath.Clamp01(Math.Abs(input.SteeringInput) / 100f);
+            var highSpeedStability = TireModelMath.Clamp(parameters.HighSpeedStability, 0f, 1f);
+            var highSpeedStabilityScale = TireModelMath.Lerp(
+                1f,
+                TireModelMath.Lerp(0.72f, 0.48f, highSpeedStability),
+                yaw.SpeedSharpness);
             // Recenter damping should only dominate when steering is truly near neutral.
             var neutralSteer = TireModelMath.Clamp01(1f - (steerMag * 4.0f));
 
@@ -32,13 +37,20 @@ namespace TopSpeed.Physics.Tires
                 rDot += yawSource;
 
                 // Preserve classic "tap steer then release" feel by steering lateral velocity toward input while active.
-                var lateralCommandMps = steerSign * steer.ForwardSpeed * steerMag * (0.14f + (0.26f * yaw.SpeedSharpness));
-                var lateralTrackGain = 2.2f + (3.2f * steerMag);
+                var lateralCommandGain = TireModelMath.Lerp(0.28f, 0.12f, yaw.SpeedSharpness) * highSpeedStabilityScale;
+                var lateralCommandMps = steerSign * steer.ForwardSpeed * steerMag * lateralCommandGain;
+                var lateralTrackGain = TireModelMath.Lerp(2.2f, 1.2f, yaw.SpeedSharpness) + (1.8f * steerMag);
                 vyDot += (lateralCommandMps - state.LateralVelocityMps) * lateralTrackGain;
             }
 
             vyDot -= state.LateralVelocityMps * ((damping * 0.75f) + (0.85f * neutralSteer));
-            rDot -= state.YawRateRad * ((damping * 0.55f) + (0.14f * yaw.SpeedSharpness) + (1.00f * neutralSteer));
+            var yawSpeedDamping = TireModelMath.Lerp(0.35f, 1.50f + (0.90f * highSpeedStability), yaw.SpeedSharpness);
+            rDot -= state.YawRateRad * ((damping * 0.55f) + yawSpeedDamping + (1.00f * neutralSteer));
+            if (steerSign != 0f)
+            {
+                var activeYawDamping = TireModelMath.Lerp(0.12f, 1.40f + (0.90f * highSpeedStability), yaw.SpeedSharpness);
+                rDot -= state.YawRateRad * activeYawDamping * steerMag;
+            }
 
             var nextVy = state.LateralVelocityMps + (vyDot * dt);
             var nextYawRate = state.YawRateRad + (rDot * dt);
@@ -85,11 +97,24 @@ namespace TopSpeed.Physics.Tires
             if (steerSign != 0f)
             {
                 // Immediate steering authority term so normal-speed turning is responsive.
-                var directSteerGain = 0.16f + (0.24f * yaw.SpeedSharpness);
+                var directSteerGain = TireModelMath.Lerp(0.18f, 0.07f, yaw.SpeedSharpness) * highSpeedStabilityScale;
                 directSteer = steerSign * steer.ForwardSpeed * steerMag * directSteerGain * Math.Max(0.45f, parameters.TurnResponse);
             }
 
             var lateralSpeedMps = (nextVy * responseScale + directSteer) * input.SurfaceLateralMultiplier;
+            var maxLateralRatio = TireModelMath.Lerp(
+                0.18f,
+                TireModelMath.Lerp(0.11f, 0.07f, highSpeedStability),
+                yaw.SpeedSharpness);
+            var maxLateralSpeed = Math.Max(0.5f, steer.ForwardSpeed * maxLateralRatio);
+            lateralSpeedMps = TireModelMath.Clamp(lateralSpeedMps, -maxLateralSpeed, maxLateralSpeed);
+
+            var maxYawRate = TireModelMath.Lerp(
+                4.5f,
+                TireModelMath.Lerp(2.2f, 1.3f, highSpeedStability),
+                yaw.SpeedSharpness);
+            nextYawRate = TireModelMath.Clamp(nextYawRate, -maxYawRate, maxYawRate);
+
             var nextState = new TireModelState(nextVy, nextYawRate);
             return new TireModelOutput(longitudinalGripFactor, lateralSpeedMps, nextState);
         }

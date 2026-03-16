@@ -7,6 +7,7 @@ using TopSpeed.Common;
 using TopSpeed.Core;
 using TopSpeed.Data;
 using TopSpeed.Input;
+using TopSpeed.Physics.Powertrain;
 using TopSpeed.Protocol;
 using TopSpeed.Tracks;
 using TopSpeed.Vehicles.Live;
@@ -95,6 +96,9 @@ namespace TopSpeed.Vehicles
             _frontalAreaM2 = Math.Max(0.1f, definition.FrontalAreaM2);
             _rollingResistanceCoefficient = Math.Max(0.001f, definition.RollingResistanceCoefficient);
             _launchRpm = Math.Max(_idleRpm, Math.Min(_revLimiter, definition.LaunchRpm));
+            _engineInertiaKgm2 = Math.Max(0.01f, definition.EngineInertiaKgm2);
+            _engineFrictionTorqueNm = Math.Max(0f, definition.EngineFrictionTorqueNm);
+            _drivelineCouplingRate = Math.Max(0.1f, definition.DrivelineCouplingRate);
             _lateralGripCoefficient = Math.Max(0.1f, definition.LateralGripCoefficient);
             _highSpeedStability = Math.Max(0f, Math.Min(1.0f, definition.HighSpeedStability));
             _wheelbaseM = Math.Max(0.5f, definition.WheelbaseM);
@@ -107,6 +111,7 @@ namespace TopSpeed.Vehicles
             _gears = definition.Gears;
             _steering = definition.Steering;
             _frequency = _idleFreq;
+            var torqueCurve = PowertrainProfileBuilder.Build(definition);
 
             _engine = new EngineModel(
                 definition.IdleRpm,
@@ -118,7 +123,17 @@ namespace TopSpeed.Vehicles
                 definition.FinalDriveRatio,
                 definition.TireCircumferenceM,
                 definition.Gears,
-                definition.GearRatios);
+                definition.GearRatios,
+                definition.PeakTorqueNm,
+                definition.PeakTorqueRpm,
+                definition.IdleTorqueNm,
+                definition.RedlineTorqueNm,
+                definition.EngineBrakingTorqueNm,
+                definition.PowerFactor,
+                definition.EngineInertiaKgm2,
+                definition.EngineFrictionTorqueNm,
+                definition.DrivelineCouplingRate,
+                torqueCurve);
 
             _physicsConfig = new BotPhysicsConfig(
                 _surfaceTractionFactor,
@@ -143,6 +158,11 @@ namespace TopSpeed.Vehicles
                 _frontalAreaM2,
                 _rollingResistanceCoefficient,
                 _launchRpm,
+                definition.ReversePowerFactor,
+                definition.ReverseGearRatio,
+                _engineInertiaKgm2,
+                _engineFrictionTorqueNm,
+                _drivelineCouplingRate,
                 _lateralGripCoefficient,
                 _highSpeedStability,
                 _wheelbaseM,
@@ -165,6 +185,7 @@ namespace TopSpeed.Vehicles
                 definition.SteeringCurve,
                 definition.TransientDamping,
                 _gears,
+                torqueCurve,
                 definition.GearRatios,
                 definition.TransmissionPolicy);
 

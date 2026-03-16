@@ -85,7 +85,13 @@ namespace TopSpeed.Vehicles.Parsing
         public float FrontalAreaM2 { get; set; }
         public float RollingResistanceCoefficient { get; set; }
         public float LaunchRpm { get; set; }
+        public float EngineInertiaKgm2 { get; set; }
+        public float EngineFrictionTorqueNm { get; set; }
+        public float DrivelineCouplingRate { get; set; }
         public float PowerFactor { get; set; }
+        public string? TorqueCurvePreset { get; set; }
+        public float[] TorqueCurveRpm { get; set; } = Array.Empty<float>();
+        public float[] TorqueCurveTorqueNm { get; set; } = Array.Empty<float>();
 
         public float FinalDriveRatio { get; set; }
         public float ReverseMaxSpeedKph { get; set; }

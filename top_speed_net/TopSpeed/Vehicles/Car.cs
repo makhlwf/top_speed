@@ -37,6 +37,9 @@ namespace TopSpeed.Vehicles
 
         public float SpeedKmh => _engine.SpeedKmh;
         public float EngineRpm => _engine.Rpm;
+        public float EngineHorsepower => _engine.Horsepower;
+        public float EngineGrossHorsepower => _engine.GrossHorsepower;
+        public float EngineNetHorsepower => _engine.NetHorsepower;
         public float DistanceMeters => _engine.DistanceMeters;
 
         public void SetPhysicsModel(IModel model)

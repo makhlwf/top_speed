@@ -66,12 +66,13 @@ namespace TopSpeed.Vehicles
                 _autoShiftCooldown = physicsState.AutoShiftCooldownSeconds;
                 _speedDiff = _speed - beforeSpeed;
 
-                _engine.SyncFromSpeed(_speed, _gear, elapsed, _currentThrottle);
+                _engine.SyncFromSpeed(_speed, _gear, elapsed, _currentThrottle, inReverse: false);
 
                 if (_frame % 4 == 0)
                 {
                     _frame = 0;
-                    _brakeFrequency = (int)(11025 + 22050 * _speed / _topSpeed);
+                    var speedRatio = NormalizeSpeedByTopSpeed(_speed, 1f);
+                    _brakeFrequency = (int)(11025 + (22050 * speedRatio));
                     if (_brakeFrequency != _prevBrakeFrequency)
                     {
                         _soundBrake.SetFrequency(_brakeFrequency);

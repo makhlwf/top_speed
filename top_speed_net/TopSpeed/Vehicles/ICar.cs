@@ -30,6 +30,9 @@ namespace TopSpeed.Vehicles
         float LengthM { get; }
         float SpeedKmh { get; }
         float EngineRpm { get; }
+        float EngineHorsepower { get; }
+        float EngineGrossHorsepower { get; }
+        float EngineNetHorsepower { get; }
         float DistanceMeters { get; }
 
         void Initialize(float positionX = 0, float positionY = 0);

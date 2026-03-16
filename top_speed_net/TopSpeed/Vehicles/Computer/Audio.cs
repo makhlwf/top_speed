@@ -114,5 +114,16 @@ namespace TopSpeed.Vehicles
                 ? _audio.CreateLoopingSpatialSource(resolved, allowHrtf: allowHrtf)
                 : _audio.CreateSpatialSource(resolved, streamFromDisk: true, allowHrtf: allowHrtf);
         }
+
+        private float NormalizeSpeedByTopSpeed(float speedKph, float maxRatio = 1f)
+        {
+            var referenceTopSpeed = Math.Max(1f, _topSpeed);
+            var ratio = speedKph / referenceTopSpeed;
+            if (ratio <= 0f)
+                return 0f;
+            if (ratio >= maxRatio)
+                return maxRatio;
+            return ratio;
+        }
     }
 }

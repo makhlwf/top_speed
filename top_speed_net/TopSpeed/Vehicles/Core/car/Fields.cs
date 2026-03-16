@@ -2,6 +2,7 @@ using System;
 using TopSpeed.Audio;
 using TopSpeed.Data;
 using TopSpeed.Input;
+using TopSpeed.Physics.Powertrain;
 using TopSpeed.Protocol;
 using TopSpeed.Tracks;
 using TopSpeed.Vehicles.Audio;
@@ -81,6 +82,9 @@ namespace TopSpeed.Vehicles
         private float _frontalAreaM2;
         private float _rollingResistanceCoefficient;
         private float _launchRpm;
+        private float _engineInertiaKgm2;
+        private float _engineFrictionTorqueNm;
+        private float _drivelineCouplingRate;
         private float _lastDriveRpm;
         private float _lateralGripCoefficient;
         private float _highSpeedStability;
@@ -158,6 +162,8 @@ namespace TopSpeed.Vehicles
         private int _lastSurfaceLoopVolumePercent = -1;
 
         private EngineModel _engine = default!;
+        private Config _powertrainConfiguration = default!;
         private TransmissionPolicy _transmissionPolicy = TransmissionPolicy.Default;
     }
 }
+

@@ -20,6 +20,14 @@ namespace TopSpeed.Bots
             return v;
         }
 
+        private static float ResolveForwardSafetySpeedKph(float referenceTopSpeedKph)
+        {
+            var referenceTopSpeed = Math.Max(1f, referenceTopSpeedKph);
+            var scaledSafetySpeed = referenceTopSpeed * 1.5f;
+            var safetySpeed = Math.Min(550f, scaledSafetySpeed);
+            return Math.Max(5f, safetySpeed);
+        }
+
         private static float DegToRad(float deg)
         {
             return (float)(Math.PI / 180.0) * deg;

@@ -36,6 +36,9 @@ namespace TopSpeed.Vehicles.Loader
                 FrontalAreaM2 = parameters.FrontalAreaM2,
                 RollingResistanceCoefficient = parameters.RollingResistanceCoefficient,
                 LaunchRpm = parameters.LaunchRpm,
+                EngineInertiaKgm2 = parameters.EngineInertiaKgm2,
+                EngineFrictionTorqueNm = parameters.EngineFrictionTorqueNm,
+                DrivelineCouplingRate = parameters.DrivelineCouplingRate,
                 FinalDriveRatio = parameters.FinalDriveRatio,
                 ReverseMaxSpeedKph = parameters.ReverseMaxSpeedKph,
                 ReversePowerFactor = parameters.ReversePowerFactor,
@@ -63,6 +66,9 @@ namespace TopSpeed.Vehicles.Loader
                 LengthM = parameters.LengthM,
                 PowerFactor = parameters.PowerFactor,
                 GearRatios = parameters.GearRatios,
+                TorqueCurveRpm = parameters.TorqueCurveRpm,
+                TorqueCurveTorqueNm = parameters.TorqueCurveTorqueNm,
+                TorqueCurvePreset = parameters.TorqueCurvePreset,
                 BrakeStrength = parameters.BrakeStrength,
                 TransmissionPolicy = parameters.TransmissionPolicy
             };
@@ -98,6 +104,9 @@ namespace TopSpeed.Vehicles.Loader
                 FrontalAreaM2 = parsed.FrontalAreaM2,
                 RollingResistanceCoefficient = parsed.RollingResistanceCoefficient,
                 LaunchRpm = parsed.LaunchRpm,
+                EngineInertiaKgm2 = parsed.EngineInertiaKgm2,
+                EngineFrictionTorqueNm = parsed.EngineFrictionTorqueNm,
+                DrivelineCouplingRate = parsed.DrivelineCouplingRate,
                 FinalDriveRatio = parsed.FinalDriveRatio,
                 ReverseMaxSpeedKph = parsed.ReverseMaxSpeedKph,
                 ReversePowerFactor = parsed.ReversePowerFactor,
@@ -125,6 +134,9 @@ namespace TopSpeed.Vehicles.Loader
                 LengthM = parsed.LengthM,
                 PowerFactor = parsed.PowerFactor,
                 GearRatios = parsed.GearRatios,
+                TorqueCurveRpm = parsed.TorqueCurveRpm,
+                TorqueCurveTorqueNm = parsed.TorqueCurveTorqueNm,
+                TorqueCurvePreset = parsed.TorqueCurvePreset,
                 BrakeStrength = parsed.BrakeStrength,
                 TransmissionPolicy = parsed.TransmissionPolicy
             };

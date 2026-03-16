@@ -4,6 +4,7 @@ using TopSpeed.Audio;
 using TopSpeed.Core;
 using TopSpeed.Data;
 using TopSpeed.Input;
+using TopSpeed.Physics.Powertrain;
 using TopSpeed.Protocol;
 using TopSpeed.Tracks;
 using TopSpeed.Vehicles.Audio;
@@ -136,6 +137,9 @@ namespace TopSpeed.Vehicles
             _frontalAreaM2 = Math.Max(0.1f, SanitizeFinite(definition.FrontalAreaM2, 0.1f));
             _rollingResistanceCoefficient = Math.Max(0.001f, SanitizeFinite(definition.RollingResistanceCoefficient, 0.001f));
             _launchRpm = Math.Max(_idleRpm, Math.Min(_revLimiter, SanitizeFinite(definition.LaunchRpm, _idleRpm)));
+            _engineInertiaKgm2 = Math.Max(0.01f, SanitizeFinite(definition.EngineInertiaKgm2, 0.24f));
+            _engineFrictionTorqueNm = Math.Max(0f, SanitizeFinite(definition.EngineFrictionTorqueNm, 20f));
+            _drivelineCouplingRate = Math.Max(0.1f, SanitizeFinite(definition.DrivelineCouplingRate, 12f));
             _lateralGripCoefficient = Math.Max(0.1f, SanitizeFinite(definition.LateralGripCoefficient, 0.1f));
             _highSpeedStability = Math.Max(0f, Math.Min(1.0f, SanitizeFinite(definition.HighSpeedStability, 0f)));
             _wheelbaseM = Math.Max(0.5f, SanitizeFinite(definition.WheelbaseM, 0.5f));
@@ -168,6 +172,8 @@ namespace TopSpeed.Vehicles
 
         private void InitializeDriveSystems(VehicleDefinition definition)
         {
+            var torqueCurve = PowertrainProfileBuilder.Build(definition);
+
             _engine = new EngineModel(
                 definition.IdleRpm,
                 definition.MaxRpm,
@@ -178,8 +184,48 @@ namespace TopSpeed.Vehicles
                 definition.FinalDriveRatio,
                 definition.TireCircumferenceM,
                 definition.Gears,
-                definition.GearRatios);
+                definition.GearRatios,
+                definition.PeakTorqueNm,
+                definition.PeakTorqueRpm,
+                definition.IdleTorqueNm,
+                definition.RedlineTorqueNm,
+                definition.EngineBrakingTorqueNm,
+                definition.PowerFactor,
+                definition.EngineInertiaKgm2,
+                definition.EngineFrictionTorqueNm,
+                definition.DrivelineCouplingRate,
+                torqueCurve);
+
+            _powertrainConfiguration = new Config(
+                _massKg,
+                _drivetrainEfficiency,
+                _engineBrakingTorqueNm,
+                _tireGripCoefficient,
+                _brakeStrength,
+                _wheelRadiusM,
+                _engineBraking,
+                _idleRpm,
+                _revLimiter,
+                _finalDriveRatio,
+                _powerFactor,
+                _peakTorqueNm,
+                _peakTorqueRpm,
+                _idleTorqueNm,
+                _redlineTorqueNm,
+                _dragCoefficient,
+                _frontalAreaM2,
+                _rollingResistanceCoefficient,
+                _launchRpm,
+                _reversePowerFactor,
+                _reverseGearRatio,
+                _engineInertiaKgm2,
+                _engineFrictionTorqueNm,
+                _drivelineCouplingRate,
+                _gears,
+                definition.GearRatios ?? Array.Empty<float>(),
+                torqueCurve);
             _transmissionPolicy = definition.TransmissionPolicy ?? TransmissionPolicy.Default;
         }
     }
 }
+

@@ -70,12 +70,13 @@ namespace TopSpeed.Vehicles
         {
             var brakingInput = Math.Max(0, -_currentBrake);
             var isBraking = brakingInput > 0 && _speed > 0;
+            var speedRatio = NormalizeSpeedByTopSpeed(_speed, 1f);
             if (isBraking)
             {
                 BrakeSound();
                 if (_thrust < -50)
                 {
-                    _vibration?.Gain(VibrationEffectType.Spring, (int)(50.0f * _speed / _topSpeed));
+                    _vibration?.Gain(VibrationEffectType.Spring, (int)(50.0f * speedRatio));
                     _currentSteering = (_currentSteering * 2) / 3;
                 }
             }
@@ -101,7 +102,8 @@ namespace TopSpeed.Vehicles
                 return;
 
             _frame = 0;
-            _brakeFrequency = (int)(11025 + 22050 * _speed / _topSpeed);
+            var speedRatio = NormalizeSpeedByTopSpeed(_speed, 1f);
+            _brakeFrequency = (int)(11025 + (22050 * speedRatio));
             if (_brakeFrequency != _prevBrakeFrequency)
             {
                 _soundBrake.SetFrequency(_brakeFrequency);
@@ -124,14 +126,14 @@ namespace TopSpeed.Vehicles
                 return;
 
             if (_surface == TrackSurface.Gravel)
-                _vibration.Gain(VibrationEffectType.Gravel, (int)(_speed * 10000 / _topSpeed));
+                _vibration.Gain(VibrationEffectType.Gravel, (int)(speedRatio * 10000));
             else
                 _vibration.Gain(VibrationEffectType.Gravel, 0);
 
             if (_speed == 0)
                 _vibration.Gain(VibrationEffectType.Spring, 10000);
             else
-                _vibration.Gain(VibrationEffectType.Spring, (int)(10000 * _speed / _topSpeed));
+                _vibration.Gain(VibrationEffectType.Spring, (int)(10000 * speedRatio));
 
             if (_speed < _topSpeed / 10)
                 _vibration.Gain(VibrationEffectType.Engine, (int)(10000 - _speed * 10 / _topSpeed));

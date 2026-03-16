@@ -30,6 +30,9 @@ namespace TopSpeed.Vehicles.Loader
             public float FrontalAreaM2 { get; set; }
             public float RollingResistanceCoefficient { get; set; }
             public float LaunchRpm { get; set; }
+            public float EngineInertiaKgm2 { get; set; }
+            public float EngineFrictionTorqueNm { get; set; }
+            public float DrivelineCouplingRate { get; set; }
             public float FinalDriveRatio { get; set; }
             public float ReverseMaxSpeedKph { get; set; }
             public float ReversePowerFactor { get; set; }
@@ -57,6 +60,9 @@ namespace TopSpeed.Vehicles.Loader
             public float LengthM { get; set; }
             public float PowerFactor { get; set; }
             public float[]? GearRatios { get; set; }
+            public float[]? TorqueCurveRpm { get; set; }
+            public float[]? TorqueCurveTorqueNm { get; set; }
+            public string? TorqueCurvePreset { get; set; }
             public float BrakeStrength { get; set; }
             public TransmissionPolicy TransmissionPolicy { get; set; } = TransmissionPolicy.Default;
         }

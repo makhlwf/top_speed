@@ -109,7 +109,8 @@ namespace TopSpeed.Vehicles
             {
                 if (!_soundBrake.IsPlaying)
                     _soundBrake.Play(loop: true);
-                var targetBrakeFrequency = (int)(11025 + 22050 * incomingSpeed / _topSpeed);
+                var speedRatio = NormalizeSpeedByTopSpeed(incomingSpeed, 1f);
+                var targetBrakeFrequency = (int)(11025 + (22050 * speedRatio));
                 if (_prevBrakeFrequency != targetBrakeFrequency)
                 {
                     _soundBrake.SetFrequency(targetBrakeFrequency);

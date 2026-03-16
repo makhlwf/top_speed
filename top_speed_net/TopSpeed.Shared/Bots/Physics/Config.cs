@@ -1,4 +1,6 @@
 using System;
+using TopSpeed.Physics.Powertrain;
+using TopSpeed.Physics.Torque;
 using TopSpeed.Vehicles;
 
 namespace TopSpeed.Bots
@@ -28,6 +30,11 @@ namespace TopSpeed.Bots
             float frontalAreaM2,
             float rollingResistanceCoefficient,
             float launchRpm,
+            float reversePowerFactor,
+            float reverseGearRatio,
+            float engineInertiaKgm2,
+            float engineFrictionTorqueNm,
+            float drivelineCouplingRate,
             float lateralGripCoefficient,
             float highSpeedStability,
             float wheelbaseM,
@@ -50,6 +57,7 @@ namespace TopSpeed.Bots
             float steeringCurve,
             float transientDamping,
             int gears,
+            CurveProfile torqueCurve,
             float[]? gearRatios = null,
             TransmissionPolicy? transmissionPolicy = null)
         {
@@ -75,6 +83,11 @@ namespace TopSpeed.Bots
             FrontalAreaM2 = Math.Max(0.1f, frontalAreaM2);
             RollingResistanceCoefficient = Math.Max(0.001f, rollingResistanceCoefficient);
             LaunchRpm = Math.Max(IdleRpm, Math.Min(RevLimiter, launchRpm));
+            ReversePowerFactor = Math.Max(0.1f, reversePowerFactor);
+            ReverseGearRatio = Math.Max(0.1f, reverseGearRatio);
+            EngineInertiaKgm2 = Math.Max(0.01f, engineInertiaKgm2);
+            EngineFrictionTorqueNm = Math.Max(0f, engineFrictionTorqueNm);
+            DrivelineCouplingRate = Math.Max(0.1f, drivelineCouplingRate);
             LateralGripCoefficient = Math.Max(0.1f, lateralGripCoefficient);
             HighSpeedStability = Math.Max(0f, Math.Min(1.0f, highSpeedStability));
             WheelbaseM = Math.Max(0.5f, wheelbaseM);
@@ -101,6 +114,36 @@ namespace TopSpeed.Bots
             Gears = Math.Max(1, gears);
             GearRatios = BuildRatios(Gears, gearRatios);
             TransmissionPolicy = transmissionPolicy ?? TransmissionPolicy.Default;
+            TorqueCurve = torqueCurve ?? throw new ArgumentNullException(nameof(torqueCurve));
+
+            Powertrain = new Config(
+                MassKg,
+                DrivetrainEfficiency,
+                EngineBrakingTorqueNm,
+                TireGripCoefficient,
+                BrakeStrength,
+                WheelRadiusM,
+                EngineBraking,
+                IdleRpm,
+                RevLimiter,
+                FinalDriveRatio,
+                PowerFactor,
+                PeakTorqueNm,
+                PeakTorqueRpm,
+                IdleTorqueNm,
+                RedlineTorqueNm,
+                DragCoefficient,
+                FrontalAreaM2,
+                RollingResistanceCoefficient,
+                LaunchRpm,
+                ReversePowerFactor,
+                ReverseGearRatio,
+                EngineInertiaKgm2,
+                EngineFrictionTorqueNm,
+                DrivelineCouplingRate,
+                Gears,
+                GearRatios,
+                TorqueCurve);
         }
 
         public float SurfaceTractionFactor { get; }
@@ -125,6 +168,11 @@ namespace TopSpeed.Bots
         public float FrontalAreaM2 { get; }
         public float RollingResistanceCoefficient { get; }
         public float LaunchRpm { get; }
+        public float ReversePowerFactor { get; }
+        public float ReverseGearRatio { get; }
+        public float EngineInertiaKgm2 { get; }
+        public float EngineFrictionTorqueNm { get; }
+        public float DrivelineCouplingRate { get; }
         public float LateralGripCoefficient { get; }
         public float HighSpeedStability { get; }
         public float WheelbaseM { get; }
@@ -148,7 +196,9 @@ namespace TopSpeed.Bots
         public float TransientDamping { get; }
         public int Gears { get; }
         public float[] GearRatios { get; }
+        public CurveProfile TorqueCurve { get; }
         public TransmissionPolicy TransmissionPolicy { get; }
+        public Config Powertrain { get; }
 
         public float GetGearRatio(int gear)
         {
@@ -176,3 +226,4 @@ namespace TopSpeed.Bots
         }
     }
 }
+

@@ -37,7 +37,12 @@ namespace TopSpeed.Physics.Tires
 
             var steerWindow = Math.Max(1f, parameters.HighSpeedSteerFullKph - parameters.HighSpeedSteerStartKph);
             var highSpeedSteerT = TireModelMath.Clamp01((speedKph - parameters.HighSpeedSteerStartKph) / steerWindow);
-            var highSpeedSteerScale = TireModelMath.Lerp(1f, parameters.HighSpeedSteerGain, highSpeedSteerT);
+            var configuredHighSpeedGain = TireModelMath.Clamp(parameters.HighSpeedSteerGain, 0.7f, 1.6f);
+            var highSpeedStability = TireModelMath.Clamp(parameters.HighSpeedStability, 0f, 1f);
+            var baselineTarget = TireModelMath.Lerp(0.68f, 0.50f, highSpeedStability);
+            var baselineHighSpeedScale = TireModelMath.Lerp(1f, baselineTarget, highSpeedSteerT);
+            var gainBoost = 1f + ((configuredHighSpeedGain - 1f) * 0.25f * highSpeedSteerT);
+            var highSpeedSteerScale = TireModelMath.Clamp(baselineHighSpeedScale * gainBoost, 0.40f, 1.05f);
             var steeringCommand = TireModelMath.Clamp(steeringShaped * parameters.SteeringResponse * highSpeedSteerScale, -1f, 1f);
             var steerRad = TireModelMath.DegToRad(parameters.MaxSteerDeg * steeringCommand);
             var speedNorm = TireModelMath.Clamp01(speedKph / 240f);

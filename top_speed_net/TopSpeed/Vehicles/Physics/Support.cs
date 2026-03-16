@@ -1,4 +1,5 @@
 using System;
+using TopSpeed.Physics.Powertrain;
 
 namespace TopSpeed.Vehicles
 {
@@ -29,6 +30,30 @@ namespace TopSpeed.Vehicles
             return !float.IsNaN(value) && !float.IsInfinity(value);
         }
 
+        private float ResolveForwardSafetySpeedKph()
+        {
+            var referenceTopSpeed = Math.Max(1f, _topSpeed);
+            var scaledSafetySpeed = referenceTopSpeed * 1.5f;
+            var safetySpeed = Math.Min(550f, scaledSafetySpeed);
+            return Math.Max(5f, safetySpeed);
+        }
+
+        private static float ClampRatio(float value, float max)
+        {
+            if (value <= 0f)
+                return 0f;
+            if (value >= max)
+                return max;
+            return value;
+        }
+
+        private float NormalizeSpeedByTopSpeed(float speedKph, float maxRatio = 1f)
+        {
+            var referenceTopSpeed = Math.Max(1f, _topSpeed);
+            var ratio = speedKph / referenceTopSpeed;
+            return ClampRatio(ratio, Math.Max(0f, maxRatio));
+        }
+
         private static float SanitizeFinite(float value, float fallback)
         {
             return IsFinite(value) ? value : fallback;
@@ -36,30 +61,21 @@ namespace TopSpeed.Vehicles
 
         private float CalculateBrakeDecel(float brakeInput, float surfaceDecelMod)
         {
-            if (brakeInput <= 0f)
-                return 0f;
-            var grip = Math.Max(0.1f, _tireGripCoefficient * surfaceDecelMod);
-            var decelMps2 = brakeInput * _brakeStrength * grip * 9.80665f;
-            return decelMps2 * 3.6f;
+            return Calculator.BrakeDecelKph(
+                _powertrainConfiguration,
+                brakeInput,
+                surfaceDecelMod);
         }
 
         private float CalculateEngineBrakingDecel(float surfaceDecelMod)
         {
-            if (_engineBrakingTorqueNm <= 0f || _massKg <= 0f || _wheelRadiusM <= 0f)
-                return 0f;
-            var rpmRange = _revLimiter - _idleRpm;
-            if (rpmRange <= 0f)
-                return 0f;
-            var rpmFactor = (_engine.Rpm - _idleRpm) / rpmRange;
-            if (rpmFactor <= 0f)
-                return 0f;
-            rpmFactor = Math.Max(0f, Math.Min(1f, rpmFactor));
-            var gearRatio = _gear == ReverseGear ? _reverseGearRatio : _engine.GetGearRatio(GetDriveGear());
-            var drivelineTorque = _engineBrakingTorqueNm * _engineBraking * rpmFactor;
-            var wheelTorque = drivelineTorque * gearRatio * _finalDriveRatio * _drivetrainEfficiency;
-            var wheelForce = wheelTorque / _wheelRadiusM;
-            var decelMps2 = (wheelForce / _massKg) * surfaceDecelMod;
-            return Math.Max(0f, decelMps2 * 3.6f);
+            return Calculator.EngineBrakeDecelKph(
+                _powertrainConfiguration,
+                GetDriveGear(),
+                _gear == ReverseGear,
+                _speed / 3.6f,
+                surfaceDecelMod,
+                _engine.Rpm);
         }
 
         private float GetLapStartPosition(float position)
@@ -79,3 +95,5 @@ namespace TopSpeed.Vehicles
         }
     }
 }
+
+

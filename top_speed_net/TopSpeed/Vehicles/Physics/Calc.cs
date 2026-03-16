@@ -1,6 +1,7 @@
 using System;
 using TopSpeed.Common;
 using TopSpeed.Physics.Surface;
+using TopSpeed.Physics.Powertrain;
 
 namespace TopSpeed.Vehicles
 {
@@ -55,29 +56,32 @@ namespace TopSpeed.Vehicles
             var tireOutput = SolveTireModel(elapsed, speedMpsCurrent, _currentSteering, surfaceTractionMod, 1f, commitState: false);
             longitudinalGripFactor = tireOutput.LongitudinalGripFactor;
 
-            var driveRpm = CalculateDriveRpm(speedMpsCurrent, throttle);
-            var engineTorque = CalculateEngineTorqueNm(driveRpm) * throttle * _powerFactor;
-            var gearRatio = inReverse ? _reverseGearRatio : _engine.GetGearRatio(GetDriveGear());
-            var wheelTorque = engineTorque * gearRatio * _finalDriveRatio * _drivetrainEfficiency;
-            var wheelForce = wheelTorque / _wheelRadiusM;
-            var tractionLimit = _tireGripCoefficient * surfaceTractionMod * _massKg * 9.80665f;
-            if (wheelForce > tractionLimit)
-                wheelForce = tractionLimit;
-            wheelForce *= longitudinalGripFactor;
-            wheelForce *= (_factor1 / 100f);
-            if (inReverse)
-                wheelForce *= _reversePowerFactor;
-
-            var dragForce = 0.5f * 1.225f * _dragCoefficient * _frontalAreaM2 * speedMpsCurrent * speedMpsCurrent;
-            var rollingForce = _rollingResistanceCoefficient * _massKg * 9.80665f;
-            var netForce = wheelForce - dragForce - rollingForce;
-            var accelMps2 = netForce / _massKg;
+            var accelMps2 = inReverse
+                ? Calculator.ReverseAccel(
+                    _powertrainConfiguration,
+                    speedMpsCurrent,
+                    throttle,
+                    surfaceTractionMod,
+                    longitudinalGripFactor)
+                : Calculator.DriveAccel(
+                    _powertrainConfiguration,
+                    GetDriveGear(),
+                    speedMpsCurrent,
+                    throttle,
+                    surfaceTractionMod,
+                    longitudinalGripFactor);
+            accelMps2 *= (_factor1 / 100f);
             var newSpeedMps = speedMpsCurrent + (accelMps2 * elapsed);
             if (newSpeedMps < 0f)
                 newSpeedMps = 0f;
 
             _speedDiff = (newSpeedMps - speedMpsCurrent) * 3.6f;
-            _lastDriveRpm = CalculateDriveRpm(newSpeedMps, throttle);
+            _lastDriveRpm = Calculator.DriveRpm(
+                _powertrainConfiguration,
+                GetDriveGear(),
+                newSpeedMps,
+                throttle,
+                inReverse);
             if (_backfirePlayed)
                 _backfirePlayed = false;
         }
@@ -102,8 +106,12 @@ namespace TopSpeed.Vehicles
             float longitudinalGripFactor)
         {
             _speed += _speedDiff;
-            if (_speed > _topSpeed)
-                _speed = _topSpeed;
+            if (!inReverse)
+            {
+                var safetySpeed = ResolveForwardSafetySpeedKph();
+                if (_speed > safetySpeed)
+                    _speed = safetySpeed;
+            }
             if (_speed < 0f)
                 _speed = 0f;
             if (!IsFinite(_speed))
@@ -144,7 +152,7 @@ namespace TopSpeed.Vehicles
 
         private void SyncEngineFromSpeed(float elapsed)
         {
-            _engine.SyncFromSpeed(_speed, GetDriveGear(), elapsed, _currentThrottle);
+            _engine.SyncFromSpeed(_speed, GetDriveGear(), elapsed, _currentThrottle, _gear == ReverseGear, _reverseGearRatio);
             if (_lastDriveRpm > 0f && _lastDriveRpm > _engine.Rpm)
                 _engine.OverrideRpm(_lastDriveRpm);
         }
@@ -183,3 +191,5 @@ namespace TopSpeed.Vehicles
         }
     }
 }
+
+

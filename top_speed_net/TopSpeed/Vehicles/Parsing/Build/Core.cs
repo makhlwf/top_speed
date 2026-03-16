@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using TopSpeed.Physics.Powertrain;
+using TopSpeed.Physics.Torque;
 
 namespace TopSpeed.Vehicles.Parsing
 {
@@ -16,6 +18,8 @@ namespace TopSpeed.Vehicles.Parsing
             var sounds = sections["sounds"];
             var general = sections["general"];
             var engine = sections["engine"];
+            var torque = sections["torque"];
+            var torqueCurve = sections["torque_curve"];
             var drivetrain = sections["drivetrain"];
             var gears = sections["gears"];
             var steeringSection = sections["steering"];
@@ -56,16 +60,20 @@ namespace TopSpeed.Vehicles.Parsing
             var engineBraking = RequireFloatRange(engine, "engine_braking", 0f, 1.5f, issues);
             var massKg = RequireFloatRange(engine, "mass_kg", 20f, 10000f, issues);
             var drivetrainEfficiency = RequireFloatRange(engine, "drivetrain_efficiency", 0.1f, 1.0f, issues);
-            var engineBrakingTorque = RequireFloatRange(engine, "engine_braking_torque", 0f, 3000f, issues);
-            var peakTorque = RequireFloatRange(engine, "peak_torque", 10f, 3000f, issues);
-            var peakTorqueRpm = RequireFloatRange(engine, "peak_torque_rpm", 500f, 18000f, issues);
-            var idleTorque = RequireFloatRange(engine, "idle_torque", 0f, 3000f, issues);
-            var redlineTorque = RequireFloatRange(engine, "redline_torque", 0f, 3000f, issues);
             var dragCoefficient = RequireFloatRange(engine, "drag_coefficient", 0.01f, 1.5f, issues);
             var frontalArea = RequireFloatRange(engine, "frontal_area", 0.05f, 10f, issues);
             var rollingResistance = RequireFloatRange(engine, "rolling_resistance", 0.001f, 0.1f, issues);
             var launchRpm = RequireFloatRange(engine, "launch_rpm", 0f, 18000f, issues);
-            var powerFactor = RequireFloatRange(engine, "power_factor", 0.05f, 2f, issues);
+
+            var engineBrakingTorque = RequireFloatRange(torque, "engine_braking_torque", 0f, 3000f, issues);
+            var peakTorque = RequireFloatRange(torque, "peak_torque", 10f, 3000f, issues);
+            var peakTorqueRpm = RequireFloatRange(torque, "peak_torque_rpm", 500f, 18000f, issues);
+            var idleTorque = RequireFloatRange(torque, "idle_torque", 0f, 3000f, issues);
+            var redlineTorque = RequireFloatRange(torque, "redline_torque", 0f, 3000f, issues);
+            var powerFactor = RequireFloatRange(torque, "power_factor", 0.05f, 2f, issues);
+            var engineInertiaKgm2 = RequireFloatRange(torque, "engine_inertia_kgm2", 0.01f, 5f, issues);
+            var engineFrictionTorqueNm = RequireFloatRange(torque, "engine_friction_torque_nm", 0f, 1000f, issues);
+            var drivelineCouplingRate = RequireFloatRange(torque, "driveline_coupling_rate", 0.1f, 80f, issues);
 
             var finalDrive = RequireFloatRange(drivetrain, "final_drive", 0.5f, 8f, issues);
             var reverseMaxSpeed = RequireFloatRange(drivetrain, "reverse_max_speed", 1f, 100f, issues);
@@ -137,7 +145,7 @@ namespace TopSpeed.Vehicles.Parsing
             if (autoShiftRpm > 0f && (autoShiftRpm < idleRpm || autoShiftRpm > revLimiter))
                 issues.Add(new VehicleTsvIssue(VehicleTsvIssueSeverity.Error, engine.Entries["auto_shift_rpm"].Line, "auto_shift_rpm must be 0 or between idle_rpm and rev_limiter."));
             if (peakTorqueRpm < idleRpm || peakTorqueRpm > revLimiter)
-                issues.Add(new VehicleTsvIssue(VehicleTsvIssueSeverity.Error, engine.Entries["peak_torque_rpm"].Line, "peak_torque_rpm must be between idle_rpm and rev_limiter."));
+                issues.Add(new VehicleTsvIssue(VehicleTsvIssueSeverity.Error, torque.Entries["peak_torque_rpm"].Line, "peak_torque_rpm must be between idle_rpm and rev_limiter."));
             if (launchRpm > revLimiter)
                 issues.Add(new VehicleTsvIssue(VehicleTsvIssueSeverity.Error, engine.Entries["launch_rpm"].Line, "launch_rpm must not exceed rev_limiter."));
             if (topFreq < idleFreq)
@@ -146,6 +154,22 @@ namespace TopSpeed.Vehicles.Parsing
                 issues.Add(new VehicleTsvIssue(VehicleTsvIssueSeverity.Error, sounds.Entries["shift_freq"].Line, "shift_freq must be between idle_freq and top_freq."));
             if (highSpeedSteerFullKph <= highSpeedSteerStartKph)
                 issues.Add(new VehicleTsvIssue(VehicleTsvIssueSeverity.Error, steeringSection.Entries["high_speed_steer_full_kph"].Line, "high_speed_steer_full_kph must be greater than high_speed_steer_start_kph."));
+
+            if (!TryBuildTorqueCurve(
+                    torqueCurve,
+                    idleRpm,
+                    revLimiter,
+                    peakTorqueRpm,
+                    idleTorque,
+                    peakTorque,
+                    redlineTorque,
+                    issues,
+                    out var torqueCurvePreset,
+                    out var torqueCurveRpm,
+                    out var torqueCurveTorqueNm))
+            {
+                return false;
+            }
 
             float tireCircumferenceResolved = 0f;
             if (tireCircumference.HasValue && tireCircumference.Value > 0f)
@@ -220,7 +244,13 @@ namespace TopSpeed.Vehicles.Parsing
                 FrontalAreaM2 = frontalArea,
                 RollingResistanceCoefficient = rollingResistance,
                 LaunchRpm = launchRpm,
+                EngineInertiaKgm2 = engineInertiaKgm2,
+                EngineFrictionTorqueNm = engineFrictionTorqueNm,
+                DrivelineCouplingRate = drivelineCouplingRate,
                 PowerFactor = powerFactor,
+                TorqueCurvePreset = torqueCurvePreset,
+                TorqueCurveRpm = torqueCurveRpm,
+                TorqueCurveTorqueNm = torqueCurveTorqueNm,
                 FinalDriveRatio = finalDrive,
                 ReverseMaxSpeedKph = reverseMaxSpeed,
                 ReversePowerFactor = reversePowerFactor,
@@ -255,6 +285,138 @@ namespace TopSpeed.Vehicles.Parsing
             return true;
         }
 
+        private static bool TryBuildTorqueCurve(
+            Section torqueCurveSection,
+            float idleRpm,
+            float revLimiter,
+            float peakTorqueRpm,
+            float idleTorque,
+            float peakTorque,
+            float redlineTorque,
+            List<VehicleTsvIssue> issues,
+            out string? presetName,
+            out float[] rpmPoints,
+            out float[] torquePoints)
+        {
+            presetName = null;
+            var merged = new SortedDictionary<float, float>();
+
+            if (torqueCurveSection.Entries.TryGetValue("preset", out var presetEntry))
+            {
+                var rawPreset = presetEntry.Value.Trim();
+                if (!PresetCatalog.TryNormalize(rawPreset, out var normalizedPreset))
+                {
+                    issues.Add(new VehicleTsvIssue(
+                        VehicleTsvIssueSeverity.Error,
+                        presetEntry.Line,
+                        $"Unknown torque curve preset '{rawPreset}'. Valid values: {PresetCatalog.NamesText}."));
+                    rpmPoints = Array.Empty<float>();
+                    torquePoints = Array.Empty<float>();
+                    return false;
+                }
+
+                presetName = normalizedPreset;
+                var presetPoints = CurveFactory.BuildPreset(
+                    normalizedPreset,
+                    idleRpm,
+                    revLimiter,
+                    peakTorqueRpm,
+                    idleTorque,
+                    peakTorque,
+                    redlineTorque);
+                for (var i = 0; i < presetPoints.Count; i++)
+                    merged[presetPoints[i].Rpm] = presetPoints[i].TorqueNm;
+            }
+
+            foreach (var entryPair in torqueCurveSection.Entries)
+            {
+                if (string.Equals(entryPair.Key, "preset", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (!TryParseRpmKey(entryPair.Key, out var rpm))
+                {
+                    issues.Add(new VehicleTsvIssue(
+                        VehicleTsvIssueSeverity.Error,
+                        entryPair.Value.Line,
+                        $"Invalid torque curve key '{entryPair.Key}'. Use format like 2000rpm=200."));
+                    continue;
+                }
+
+                if (!TryParseFloat(entryPair.Value.Value, out var torqueNm))
+                {
+                    issues.Add(new VehicleTsvIssue(
+                        VehicleTsvIssueSeverity.Error,
+                        entryPair.Value.Line,
+                        $"Invalid torque value '{entryPair.Value.Value}' for '{entryPair.Key}'."));
+                    continue;
+                }
+
+                if (rpm < 300f || rpm > 25000f)
+                {
+                    issues.Add(new VehicleTsvIssue(
+                        VehicleTsvIssueSeverity.Error,
+                        entryPair.Value.Line,
+                        $"Torque curve RPM '{rpm:F0}' must be between 300 and 25000."));
+                    continue;
+                }
+
+                if (torqueNm < 0f || torqueNm > 5000f)
+                {
+                    issues.Add(new VehicleTsvIssue(
+                        VehicleTsvIssueSeverity.Error,
+                        entryPair.Value.Line,
+                        $"Torque value '{torqueNm:F1}' must be between 0 and 5000 Nm."));
+                    continue;
+                }
+
+                merged[rpm] = torqueNm;
+            }
+
+            if (HasErrors(issues))
+            {
+                rpmPoints = Array.Empty<float>();
+                torquePoints = Array.Empty<float>();
+                return false;
+            }
+
+            if (merged.Count < 2)
+            {
+                issues.Add(new VehicleTsvIssue(
+                    VehicleTsvIssueSeverity.Error,
+                    torqueCurveSection.Line,
+                    "Section [torque_curve] must define at least two RPM points, or a preset with enough points."));
+                rpmPoints = Array.Empty<float>();
+                torquePoints = Array.Empty<float>();
+                return false;
+            }
+
+            rpmPoints = new float[merged.Count];
+            torquePoints = new float[merged.Count];
+            var index = 0;
+            foreach (var point in merged)
+            {
+                rpmPoints[index] = point.Key;
+                torquePoints[index] = point.Value;
+                index++;
+            }
+
+            return true;
+        }
+
+        private static bool TryParseRpmKey(string key, out float rpm)
+        {
+            rpm = 0f;
+            if (string.IsNullOrWhiteSpace(key))
+                return false;
+
+            var trimmed = key.Trim();
+            if (!trimmed.EndsWith("rpm", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            var numberPart = trimmed.Substring(0, trimmed.Length - 3);
+            return TryParseFloat(numberPart, out rpm);
+        }
+
         private static float ReadFloat(Dictionary<string, string> values, string key, float defaultValue)
         {
             if (values.TryGetValue(key, out var raw) && float.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
@@ -281,3 +443,5 @@ namespace TopSpeed.Vehicles.Parsing
         }
     }
 }
+
+

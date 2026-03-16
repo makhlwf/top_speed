@@ -1,4 +1,6 @@
 using System;
+using TopSpeed.Physics.Powertrain;
+using TopSpeed.Physics.Torque;
 
 namespace TopSpeed.Vehicles
 {
@@ -12,6 +14,11 @@ namespace TopSpeed.Vehicles
         private readonly float _revLimiter;
         private readonly float _autoShiftRpm;
         private readonly float _engineBraking;
+        private readonly float _engineBrakingTorqueNm;
+        private readonly float _powerFactor;
+        private readonly float _engineInertiaKgm2;
+        private readonly float _engineFrictionTorqueNm;
+        private readonly float _drivelineCouplingRate;
         private readonly float _topSpeedKmh;
         private readonly float _finalDriveRatio;
         private readonly float _tireCircumferenceM;
@@ -20,8 +27,11 @@ namespace TopSpeed.Vehicles
         private readonly float[] _gearMaxSpeedMps;
         private readonly float[] _gearAutoShiftSpeedMps;
         private readonly float[] _gearMinSpeedMps;
+        private readonly CurveProfile _torqueCurve;
 
         private float _rpm;
+        private float _grossHorsepower;
+        private float _netHorsepower;
         private float _distanceMeters;
         private float _speedMps;
 
@@ -35,7 +45,17 @@ namespace TopSpeed.Vehicles
             float finalDriveRatio,
             float tireCircumferenceM,
             int gearCount,
-            float[]? gearRatios = null)
+            float[]? gearRatios = null,
+            float peakTorqueNm = 0f,
+            float peakTorqueRpm = 0f,
+            float idleTorqueNm = 0f,
+            float redlineTorqueNm = 0f,
+            float engineBrakingTorqueNm = 0f,
+            float powerFactor = 1f,
+            float engineInertiaKgm2 = 0.24f,
+            float engineFrictionTorqueNm = 20f,
+            float drivelineCouplingRate = 12f,
+            CurveProfile? torqueCurve = null)
         {
             _idleRpm = Math.Max(500f, idleRpm);
             _maxRpm = Math.Max(_idleRpm + 1000f, maxRpm);
@@ -44,11 +64,18 @@ namespace TopSpeed.Vehicles
                 ? _revLimiter * 0.92f
                 : Math.Max(_idleRpm, Math.Min(_revLimiter, autoShiftRpm));
             _engineBraking = Math.Max(0.05f, Math.Min(1.0f, engineBraking));
+            _engineBrakingTorqueNm = Math.Max(0f, engineBrakingTorqueNm);
+            _powerFactor = Math.Max(0.05f, powerFactor);
+            _engineInertiaKgm2 = Math.Max(0.01f, engineInertiaKgm2);
+            _engineFrictionTorqueNm = Math.Max(0f, engineFrictionTorqueNm);
+            _drivelineCouplingRate = Math.Max(0.1f, drivelineCouplingRate);
             _topSpeedKmh = Math.Max(50f, topSpeedKmh);
             _finalDriveRatio = Math.Max(0.1f, finalDriveRatio);
             _tireCircumferenceM = Math.Max(0.5f, tireCircumferenceM);
             _gearCount = Math.Max(1, gearCount);
             _rpm = 0f;
+            _grossHorsepower = 0f;
+            _netHorsepower = 0f;
             _distanceMeters = 0f;
             _speedMps = 0f;
 
@@ -67,9 +94,20 @@ namespace TopSpeed.Vehicles
                 _gearAutoShiftSpeedMps[i] = SpeedMpsFromRpm(_autoShiftRpm, gearIndex);
                 _gearMinSpeedMps[i] = i == 0 ? 0f : SpeedMpsFromRpm(shiftRpm, gearIndex);
             }
+
+            _torqueCurve = torqueCurve ?? CurveFactory.FromLegacy(
+                _idleRpm,
+                _revLimiter,
+                peakTorqueRpm,
+                idleTorqueNm,
+                peakTorqueNm,
+                redlineTorqueNm);
         }
 
         public float Rpm => _rpm;
+        public float Horsepower => _grossHorsepower;
+        public float GrossHorsepower => _grossHorsepower;
+        public float NetHorsepower => _netHorsepower;
         public float SpeedKmh => _speedMps * 3.6f;
         public float SpeedMps => _speedMps;
         public float DistanceMeters => _distanceMeters;
@@ -122,3 +160,5 @@ namespace TopSpeed.Vehicles
         }
     }
 }
+
+

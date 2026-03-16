@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using TopSpeed.Physics.Powertrain;
 using TopSpeed.Protocol;
 using TopSpeed.Vehicles;
 
@@ -39,6 +40,9 @@ namespace TopSpeed.Data
         public float FrontalAreaM2 { get; }
         public float RollingResistanceCoefficient { get; }
         public float LaunchRpm { get; }
+        public float EngineInertiaKgm2 { get; }
+        public float EngineFrictionTorqueNm { get; }
+        public float DrivelineCouplingRate { get; }
         public float FinalDriveRatio { get; }
         public float ReverseMaxSpeedKph { get; }
         public float ReversePowerFactor { get; }
@@ -66,6 +70,9 @@ namespace TopSpeed.Data
         public float LengthM { get; }
         public float PowerFactor { get; }
         public float[]? GearRatios { get; }
+        public float[]? TorqueCurveRpm { get; }
+        public float[]? TorqueCurveTorqueNm { get; }
+        public string? TorqueCurvePreset { get; }
         public float BrakeStrength { get; }
         public TransmissionPolicy TransmissionPolicy { get; }
 
@@ -104,6 +111,9 @@ namespace TopSpeed.Data
             float frontalAreaM2 = 2.2f,
             float rollingResistanceCoefficient = 0.015f,
             float launchRpm = 1800f,
+            float engineInertiaKgm2 = 0.24f,
+            float engineFrictionTorqueNm = 20f,
+            float drivelineCouplingRate = 12f,
             float finalDriveRatio = 3.5f,
             float reverseMaxSpeedKph = 35f,
             float reversePowerFactor = 0.55f,
@@ -131,6 +141,9 @@ namespace TopSpeed.Data
             float lengthM = 4.5f,
             float powerFactor = 0.5f,
             float[]? gearRatios = null,
+            float[]? torqueCurveRpm = null,
+            float[]? torqueCurveTorqueNm = null,
+            string? torqueCurvePreset = null,
             float brakeStrength = 1.0f,
             TransmissionPolicy? transmissionPolicy = null)
         {
@@ -169,6 +182,9 @@ namespace TopSpeed.Data
             FrontalAreaM2 = frontalAreaM2;
             RollingResistanceCoefficient = rollingResistanceCoefficient;        
             LaunchRpm = launchRpm;
+            EngineInertiaKgm2 = engineInertiaKgm2;
+            EngineFrictionTorqueNm = engineFrictionTorqueNm;
+            DrivelineCouplingRate = drivelineCouplingRate;
             FinalDriveRatio = finalDriveRatio;
             ReverseMaxSpeedKph = reverseMaxSpeedKph;
             ReversePowerFactor = reversePowerFactor;
@@ -196,6 +212,9 @@ namespace TopSpeed.Data
             LengthM = lengthM;
             PowerFactor = powerFactor;
             GearRatios = gearRatios;
+            TorqueCurveRpm = torqueCurveRpm;
+            TorqueCurveTorqueNm = torqueCurveTorqueNm;
+            TorqueCurvePreset = torqueCurvePreset;
             BrakeStrength = brakeStrength;
             TransmissionPolicy = transmissionPolicy ?? TransmissionPolicy.Default;
         }
@@ -245,6 +264,9 @@ namespace TopSpeed.Data
                 spec.FrontalAreaM2,
                 spec.RollingResistanceCoefficient,
                 spec.LaunchRpm,
+                spec.EngineInertiaKgm2,
+                spec.EngineFrictionTorqueNm,
+                spec.DrivelineCouplingRate,
                 spec.FinalDriveRatio,
                 spec.ReverseMaxSpeedKph,
                 spec.ReversePowerFactor,
@@ -272,6 +294,9 @@ namespace TopSpeed.Data
                 spec.LengthM,
                 spec.PowerFactor,
                 spec.GearRatios,
+                spec.TorqueCurveRpm,
+                spec.TorqueCurveTorqueNm,
+                spec.TorqueCurvePreset,
                 spec.BrakeStrength,
                 spec.TransmissionPolicy);
         }

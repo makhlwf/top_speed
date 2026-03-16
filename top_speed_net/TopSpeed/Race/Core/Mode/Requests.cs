@@ -96,14 +96,15 @@ namespace TopSpeed.Race
             {
                 var speedKmh = _car.SpeedKmh;
                 var rpm = _car.EngineRpm;
+                var horsepower = _car.EngineNetHorsepower;
                 if (_settings.Units == UnitSystem.Imperial)
                 {
                     var speedMph = speedKmh * KmToMiles;
-                    SpeakText($"{speedMph:F0} miles per hour, {rpm:F0} RPM");
+                    SpeakText($"{speedMph:F0} miles per hour, {rpm:F0} RPM, {horsepower:F0} horsepower");
                 }
                 else
                 {
-                    SpeakText($"{speedKmh:F0} kilometers per hour, {rpm:F0} RPM");
+                    SpeakText($"{speedKmh:F0} kilometers per hour, {rpm:F0} RPM, {horsepower:F0} horsepower");
                 }
             }
         }

@@ -23,7 +23,7 @@ namespace TopSpeed.Bots
             int currentGear,
             int gears,
             float speedMps,
-            float topSpeedMps,
+            float referenceTopSpeedMps,
             float idleRpm,
             float revLimiter,
             float currentRpm,
@@ -34,7 +34,7 @@ namespace TopSpeed.Bots
             CurrentGear = currentGear;
             Gears = gears;
             SpeedMps = speedMps;
-            TopSpeedMps = topSpeedMps;
+            ReferenceTopSpeedMps = referenceTopSpeedMps;
             IdleRpm = idleRpm;
             RevLimiter = revLimiter;
             CurrentRpm = currentRpm;
@@ -46,7 +46,7 @@ namespace TopSpeed.Bots
         public int CurrentGear { get; }
         public int Gears { get; }
         public float SpeedMps { get; }
-        public float TopSpeedMps { get; }
+        public float ReferenceTopSpeedMps { get; }
         public float IdleRpm { get; }
         public float RevLimiter { get; }
         public float CurrentRpm { get; }
@@ -64,8 +64,8 @@ namespace TopSpeed.Bots
                 return new AutomaticShiftDecision(false, input.CurrentGear, 0f);
 
             var intendedTopSpeedGear = p.ResolveIntendedTopSpeedGear(input.Gears);
-            var topSpeedPursuitThreshold = input.TopSpeedMps > 0f
-                ? input.TopSpeedMps * p.TopSpeedPursuitSpeedFraction
+            var topSpeedPursuitThreshold = input.ReferenceTopSpeedMps > 0f
+                ? input.ReferenceTopSpeedMps * p.TopSpeedPursuitSpeedFraction
                 : float.MaxValue;
             var nearTopSpeed = input.SpeedMps >= topSpeedPursuitThreshold;
             var upshiftRpm = p.ResolveUpshiftRpm(input.IdleRpm, input.RevLimiter);
@@ -125,7 +125,7 @@ namespace TopSpeed.Bots
 
             if (!policy.AllowOverdriveAboveGameTopSpeed &&
                 nextGear > intendedTopSpeedGear &&
-                input.SpeedMps < input.TopSpeedMps * 0.999f)
+                input.SpeedMps < input.ReferenceTopSpeedMps * 0.999f)
             {
                 return false;
             }

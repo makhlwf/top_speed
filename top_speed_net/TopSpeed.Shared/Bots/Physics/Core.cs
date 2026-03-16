@@ -41,21 +41,7 @@ namespace TopSpeed.Bots
             {
                 var tireOutput = SolveTireModel(config, input.ElapsedSeconds, speedMpsCurrent, steeringInput, surfaceTractionMod, 1f, tireState);
                 longitudinalGripFactor = tireOutput.LongitudinalGripFactor;
-
-                var driveRpm = CalculateDriveRpm(config, state.Gear, speedMpsCurrent, throttle);
-                var engineTorque = CalculateEngineTorqueNm(config, driveRpm) * throttle * config.PowerFactor;
-                var gearRatio = config.GetGearRatio(state.Gear);
-                var wheelTorque = engineTorque * gearRatio * config.FinalDriveRatio * config.DrivetrainEfficiency;
-                var wheelForce = wheelTorque / config.WheelRadiusM;
-                var tractionLimit = config.TireGripCoefficient * surfaceTractionMod * config.MassKg * 9.80665f;
-                if (wheelForce > tractionLimit)
-                    wheelForce = tractionLimit;
-                wheelForce *= longitudinalGripFactor;
-
-                var dragForce = 0.5f * 1.225f * config.DragCoefficient * config.FrontalAreaM2 * speedMpsCurrent * speedMpsCurrent;
-                var rollingForce = config.RollingResistanceCoefficient * config.MassKg * 9.80665f;
-                var netForce = wheelForce - dragForce - rollingForce;
-                var accelMps2 = netForce / config.MassKg;
+                var accelMps2 = ComputeNetAccelForGear(config, state.Gear, speedMpsCurrent, throttle, surfaceTractionMod, longitudinalGripFactor);
                 var newSpeedMps = speedMpsCurrent + (accelMps2 * input.ElapsedSeconds);
                 if (newSpeedMps < 0f)
                     newSpeedMps = 0f;
@@ -72,8 +58,9 @@ namespace TopSpeed.Bots
             }
 
             speedKph += speedDiffKph;
-            if (speedKph > config.TopSpeedKph)
-                speedKph = config.TopSpeedKph;
+            var safetySpeed = ResolveForwardSafetySpeedKph(config.TopSpeedKph);
+            if (speedKph > safetySpeed)
+                speedKph = safetySpeed;
             if (speedKph < 0f)
                 speedKph = 0f;
 

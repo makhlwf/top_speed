@@ -30,6 +30,9 @@ namespace TopSpeed.Vehicles.Loader
             def.FrontalAreaM2 = spec.FrontalAreaM2;
             def.RollingResistanceCoefficient = spec.RollingResistanceCoefficient;
             def.LaunchRpm = spec.LaunchRpm;
+            def.EngineInertiaKgm2 = spec.EngineInertiaKgm2;
+            def.EngineFrictionTorqueNm = spec.EngineFrictionTorqueNm;
+            def.DrivelineCouplingRate = spec.DrivelineCouplingRate;
             def.FinalDriveRatio = spec.FinalDriveRatio;
             def.ReverseMaxSpeedKph = spec.ReverseMaxSpeedKph;
             def.ReversePowerFactor = spec.ReversePowerFactor;
@@ -57,6 +60,9 @@ namespace TopSpeed.Vehicles.Loader
             def.LengthM = spec.LengthM;
             def.PowerFactor = spec.PowerFactor;
             def.GearRatios = spec.GearRatios;
+            def.TorqueCurveRpm = spec.TorqueCurveRpm;
+            def.TorqueCurveTorqueNm = spec.TorqueCurveTorqueNm;
+            def.TorqueCurvePreset = spec.TorqueCurvePreset;
             def.BrakeStrength = spec.BrakeStrength;
             def.TransmissionPolicy = spec.TransmissionPolicy;
         }

@@ -1,4 +1,6 @@
 using System;
+using TopSpeed.Physics.Powertrain;
+using TopSpeed.Physics.Torque;
 using TopSpeed.Protocol;
 using TopSpeed.Vehicles;
 
@@ -19,6 +21,7 @@ namespace TopSpeed.Bots
         private static BotPhysicsConfig Create(OfficialVehicleSpec spec)
         {
             var wheelRadiusM = Math.Max(0.01f, spec.TireCircumferenceM / (2.0f * (float)Math.PI));
+            var torqueCurve = BuildTorqueCurve(spec);
 
             return new BotPhysicsConfig(
                 spec.SurfaceTractionFactor,
@@ -43,6 +46,11 @@ namespace TopSpeed.Bots
                 spec.FrontalAreaM2,
                 spec.RollingResistanceCoefficient,
                 spec.LaunchRpm,
+                spec.ReversePowerFactor,
+                spec.ReverseGearRatio,
+                spec.EngineInertiaKgm2,
+                spec.EngineFrictionTorqueNm,
+                spec.DrivelineCouplingRate,
                 spec.LateralGripCoefficient,
                 spec.HighSpeedStability,
                 spec.WheelbaseM,
@@ -65,8 +73,61 @@ namespace TopSpeed.Bots
                 spec.SteeringCurve,
                 spec.TransientDamping,
                 spec.Gears,
+                torqueCurve,
                 spec.GearRatios,
                 spec.TransmissionPolicy);
         }
+
+        private static CurveProfile BuildTorqueCurve(OfficialVehicleSpec spec)
+        {
+            if (spec.TorqueCurveRpm != null
+                && spec.TorqueCurveTorqueNm != null
+                && spec.TorqueCurveRpm.Length >= 2
+                && spec.TorqueCurveRpm.Length == spec.TorqueCurveTorqueNm.Length)
+            {
+                var points = new CurvePoint[spec.TorqueCurveRpm.Length];
+                for (var i = 0; i < points.Length; i++)
+                    points[i] = new CurvePoint(spec.TorqueCurveRpm[i], spec.TorqueCurveTorqueNm[i]);
+                return CurveFactory.FromPoints(
+                    points,
+                    spec.IdleRpm,
+                    spec.RevLimiter,
+                    spec.PeakTorqueRpm,
+                    spec.IdleTorqueNm,
+                    spec.PeakTorqueNm,
+                    spec.RedlineTorqueNm);
+            }
+
+            if (!string.IsNullOrWhiteSpace(spec.TorqueCurvePreset)
+                && PresetCatalog.TryNormalize(spec.TorqueCurvePreset, out var presetName))
+            {
+                var presetPoints = CurveFactory.BuildPreset(
+                    presetName,
+                    spec.IdleRpm,
+                    spec.RevLimiter,
+                    spec.PeakTorqueRpm,
+                    spec.IdleTorqueNm,
+                    spec.PeakTorqueNm,
+                    spec.RedlineTorqueNm);
+                return CurveFactory.FromPoints(
+                    presetPoints,
+                    spec.IdleRpm,
+                    spec.RevLimiter,
+                    spec.PeakTorqueRpm,
+                    spec.IdleTorqueNm,
+                    spec.PeakTorqueNm,
+                    spec.RedlineTorqueNm);
+            }
+
+            return CurveFactory.FromLegacy(
+                spec.IdleRpm,
+                spec.RevLimiter,
+                spec.PeakTorqueRpm,
+                spec.IdleTorqueNm,
+                spec.PeakTorqueNm,
+                spec.RedlineTorqueNm);
+        }
     }
 }
+
+

@@ -33,6 +33,9 @@ namespace TopSpeed.Vehicles
             float frontalAreaM2,
             float rollingResistanceCoefficient,
             float launchRpm,
+            float engineInertiaKgm2,
+            float engineFrictionTorqueNm,
+            float drivelineCouplingRate,
             float finalDriveRatio,
             float reverseMaxSpeedKph,
             float reversePowerFactor,
@@ -61,6 +64,9 @@ namespace TopSpeed.Vehicles
             float yawInertiaScale = 1.0f,
             float steeringCurve = 1.0f,
             float transientDamping = 1.0f,
+            float[]? torqueCurveRpm = null,
+            float[]? torqueCurveTorqueNm = null,
+            string? torqueCurvePreset = null,
             TransmissionPolicy? transmissionPolicy = null)
         {
             CarType = carType;
@@ -91,6 +97,9 @@ namespace TopSpeed.Vehicles
             FrontalAreaM2 = frontalAreaM2;
             RollingResistanceCoefficient = rollingResistanceCoefficient;
             LaunchRpm = launchRpm;
+            EngineInertiaKgm2 = engineInertiaKgm2;
+            EngineFrictionTorqueNm = engineFrictionTorqueNm;
+            DrivelineCouplingRate = drivelineCouplingRate;
             FinalDriveRatio = finalDriveRatio;
             ReverseMaxSpeedKph = reverseMaxSpeedKph;
             ReversePowerFactor = reversePowerFactor;
@@ -119,6 +128,9 @@ namespace TopSpeed.Vehicles
             PowerFactor = powerFactor;
             GearRatios = gearRatios;
             BrakeStrength = brakeStrength;
+            TorqueCurveRpm = torqueCurveRpm;
+            TorqueCurveTorqueNm = torqueCurveTorqueNm;
+            TorqueCurvePreset = torqueCurvePreset;
             TransmissionPolicy = transmissionPolicy ?? TransmissionPolicy.Default;
         }
 
@@ -150,6 +162,9 @@ namespace TopSpeed.Vehicles
         public float FrontalAreaM2 { get; }
         public float RollingResistanceCoefficient { get; }
         public float LaunchRpm { get; }
+        public float EngineInertiaKgm2 { get; }
+        public float EngineFrictionTorqueNm { get; }
+        public float DrivelineCouplingRate { get; }
         public float FinalDriveRatio { get; }
         public float ReverseMaxSpeedKph { get; }
         public float ReversePowerFactor { get; }
@@ -178,6 +193,9 @@ namespace TopSpeed.Vehicles
         public float PowerFactor { get; }
         public float[] GearRatios { get; }
         public float BrakeStrength { get; }
+        public float[]? TorqueCurveRpm { get; }
+        public float[]? TorqueCurveTorqueNm { get; }
+        public string? TorqueCurvePreset { get; }
         public TransmissionPolicy TransmissionPolicy { get; }
     }
 }

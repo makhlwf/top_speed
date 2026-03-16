@@ -42,6 +42,9 @@ namespace TopSpeed.Vehicles
         public float FrontalAreaM2 { get; set; } = 2.2f;
         public float RollingResistanceCoefficient { get; set; } = 0.015f;       
         public float LaunchRpm { get; set; } = 1800f;
+        public float EngineInertiaKgm2 { get; set; } = 0.24f;
+        public float EngineFrictionTorqueNm { get; set; } = 20f;
+        public float DrivelineCouplingRate { get; set; } = 12f;
         public float FinalDriveRatio { get; set; } = 3.5f;
         public float ReverseMaxSpeedKph { get; set; } = 35f;
         public float ReversePowerFactor { get; set; } = 0.55f;
@@ -79,6 +82,9 @@ namespace TopSpeed.Vehicles
         /// Each gear ratio affects torque multiplication - higher = more torque, lower speed.
         /// </summary>
         public float[]? GearRatios { get; set; }
+        public float[]? TorqueCurveRpm { get; set; }
+        public float[]? TorqueCurveTorqueNm { get; set; }
+        public string? TorqueCurvePreset { get; set; }
         
         /// <summary>
         /// Brake strength multiplier (0.5 = weak brakes, 1.0 = normal, 2.0 = strong).

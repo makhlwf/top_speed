@@ -35,7 +35,7 @@ namespace TopSpeed.Vehicles.Parsing
 
         private static readonly string[] s_requiredSections =
         {
-            "meta", "sounds", "general", "engine", "drivetrain", "gears", "steering", "tire_model", "dynamics", "dimensions", "tires"
+            "meta", "sounds", "general", "engine", "torque", "torque_curve", "drivetrain", "gears", "steering", "tire_model", "dynamics", "dimensions", "tires"
         };
 
         private static readonly Dictionary<string, HashSet<string>> s_allowedKeys = BuildAllowedKeys();
@@ -158,8 +158,11 @@ namespace TopSpeed.Vehicles.Parsing
                 ["general"] = Set("surface_traction_factor", "deceleration", "max_speed", "has_wipers"),
                 ["engine"] = Set(
                     "idle_rpm", "max_rpm", "rev_limiter", "auto_shift_rpm", "engine_braking", "mass_kg", "drivetrain_efficiency",
+                    "drag_coefficient", "frontal_area", "rolling_resistance", "launch_rpm"),
+                ["torque"] = Set(
                     "engine_braking_torque", "peak_torque", "peak_torque_rpm", "idle_torque", "redline_torque",
-                    "drag_coefficient", "frontal_area", "rolling_resistance", "launch_rpm", "power_factor"),
+                    "power_factor", "engine_inertia_kgm2", "engine_friction_torque_nm", "driveline_coupling_rate"),
+                ["torque_curve"] = Set("preset"),
                 ["drivetrain"] = Set("final_drive", "reverse_max_speed", "reverse_power_factor", "reverse_gear_ratio", "brake_strength"),
                 ["gears"] = Set("number_of_gears", "gear_ratios"),
                 ["steering"] = Set("steering_response", "wheelbase", "max_steer_deg", "high_speed_stability", "high_speed_steer_gain", "high_speed_steer_start_kph", "high_speed_steer_full_kph"),
@@ -191,7 +194,12 @@ namespace TopSpeed.Vehicles.Parsing
                 return true;
 
             if (!string.Equals(section, "policy", StringComparison.OrdinalIgnoreCase))
-                return false;
+            {
+                if (!string.Equals(section, "torque_curve", StringComparison.OrdinalIgnoreCase))
+                    return false;
+
+                return key.EndsWith("rpm", StringComparison.OrdinalIgnoreCase);
+            }
 
             if (key.StartsWith("upshift_delay_", StringComparison.OrdinalIgnoreCase))
                 return true;

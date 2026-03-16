@@ -99,7 +99,7 @@ namespace TopSpeed.Shared.Tests.Physics
         }
 
         [Fact]
-        public void Solve_HighSpeedRange_MakesSteeringSharper()
+        public void Solve_HighSpeedRange_ReducesYawPerSpeed()
         {
             var parameters = BuildParameters(highSpeedSteerGain: 1.35f);
             var mediumInput = new TireModelInput(elapsedSeconds: 1f / 60f, speedMps: 36f, steeringInput: 35, surfaceTractionMod: 1f, surfaceLateralMultiplier: 1f);
@@ -109,7 +109,29 @@ namespace TopSpeed.Shared.Tests.Physics
             var medium = TireModelSolver.Solve(parameters, mediumInput, state);
             var high = TireModelSolver.Solve(parameters, highInput, state);
 
-            Assert.True(System.Math.Abs(high.LateralSpeedMps) > System.Math.Abs(medium.LateralSpeedMps));
+            var mediumYawPerSpeed = System.Math.Abs(medium.State.YawRateRad) / mediumInput.SpeedMps;
+            var highYawPerSpeed = System.Math.Abs(high.State.YawRateRad) / highInput.SpeedMps;
+
+            Assert.True(highYawPerSpeed < mediumYawPerSpeed);
+            Assert.True(System.Math.Abs(high.LateralSpeedMps) > 0.01f);
+        }
+
+        [Fact]
+        public void Solve_HighSpeedSteerGain_RemainsABoundedBoost()
+        {
+            var lowGain = BuildParameters(highSpeedSteerGain: 0.90f);
+            var highGain = BuildParameters(highSpeedSteerGain: 1.35f);
+            var input = new TireModelInput(elapsedSeconds: 1f / 60f, speedMps: 58f, steeringInput: 35, surfaceTractionMod: 1f, surfaceLateralMultiplier: 1f);
+            var state = new TireModelState(lateralVelocityMps: 0f, yawRateRad: 0f);
+
+            var low = TireModelSolver.Solve(lowGain, input, state);
+            var high = TireModelSolver.Solve(highGain, input, state);
+
+            var lowYaw = System.Math.Abs(low.State.YawRateRad);
+            var highYaw = System.Math.Abs(high.State.YawRateRad);
+
+            Assert.True(highYaw > lowYaw);
+            Assert.True(highYaw < lowYaw * 1.35f);
         }
 
         [Fact]
