@@ -1,7 +1,8 @@
 {
-  "version": "2026.3.17.2",
+  "version": "2026.3.17.3",
   "serverVersion": "2026.3.17.2",
   "changes": [
+    "Motorcycles no longer have crazy top speeds.",
     "Fixed a regression for bots that was introduced from an earlier change.",
     "Clients now carry a disconnect reason from the server. This is used when the host requests to shutdown the server.",
     "Add the ability to remap menu shortcuts, for example those are found in certain menus, such as online mode. You can find all shortcuts in settings, > controls, > map menu shortcuts."
