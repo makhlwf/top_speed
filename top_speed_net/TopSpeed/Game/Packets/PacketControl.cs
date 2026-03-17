@@ -12,9 +12,16 @@ namespace TopSpeed.Game
             _mpPktReg.Add("control", Command.Pong, HandleMpPongPacket);
         }
 
-        private bool HandleMpDisconnectPacket(IncomingPacket _)
+        private bool HandleMpDisconnectPacket(IncomingPacket packet)
         {
-            _speech.Speak("Disconnected from server.");
+            var message = "Disconnected from server.";
+            if (ClientPacketSerializer.TryReadDisconnect(packet.Payload, out var disconnectMessage) &&
+                !string.IsNullOrWhiteSpace(disconnectMessage))
+            {
+                message = disconnectMessage;
+            }
+
+            _speech.Speak(message);
             DisconnectFromServer();
             return true;
         }

@@ -91,12 +91,18 @@ namespace TopSpeed.Server.Network
             }
         }
 
-        private void RemoveConnection(PlayerConnection player, bool notifyRoom, bool sendDisconnectPacket, string reason, string? disconnectMessage = null)
+        private void RemoveConnection(
+            PlayerConnection player,
+            bool notifyRoom,
+            bool sendDisconnectPacket,
+            string reason,
+            string? disconnectMessage = null,
+            bool announcePresenceDisconnect = true)
         {
             var roomId = player.RoomId;
             if (player.RoomId.HasValue)
                 HandleLeaveRoom(player, notifyRoom);
-            if (player.ServerPresenceAnnounced)
+            if (announcePresenceDisconnect && player.ServerPresenceAnnounced)
                 BroadcastServerDisconnectAnnouncement(player, reason);
             if (sendDisconnectPacket)
             {
@@ -125,6 +131,8 @@ namespace TopSpeed.Server.Network
                     return "Connection refused due to invalid protocol negotiation.";
                 case "server_full":
                     return "This server is full.";
+                case "host_shutdown":
+                    return "The server will be shut down immediately by the host.";
                 case "peer_disconnect":
                     return "Connection closed.";
                 default:

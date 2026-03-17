@@ -1,13 +1,12 @@
 {
-  "version": "2026.3.16.2",
-  "serverVersion": "2026.3.11.4",
+  "version": "2026.3.17.1",
+  "serverVersion": "2026.3.17.1",
   "changes": [
+    "Clients now carry a disconnect reason from the server. This is used when the host requests to shutdown the server.",
     "Add the ability to remap menu shortcuts, for example those are found in certain menus, such as online mode. You can find all shortcuts in settings, > controls, > map menu shortcuts."
   ],
   "serverChanges": [
-    "Added server support for race-preparation withdrawal, allowing a player to skip the current prep round without leaving the room.",
-    "Race preparation now starts only with ready participants and cancels clearly when there are not enough active racers after loadout decisions.",
-    "Room numbering now compacts player and bot slots after joins/leaves so assignments remain contiguous and predictable.",
-    "Server release revision updated for protocol compatibility alignment with the latest client."
+    "Add an automatic updater to the server.",
+    "Add the ability to control the server from the commandline, for example changing options, updating the server or viewing the list of connected players."
   ]
 }

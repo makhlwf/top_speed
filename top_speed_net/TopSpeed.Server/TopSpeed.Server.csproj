@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup Condition="'$(Configuration)' == ''">
+  <PropertyGroup Condition="'$(Configuration)' == '' or '$(Configuration)' == 'Debug'">
     <Configuration>Release</Configuration>
   </PropertyGroup>
 
@@ -83,4 +83,16 @@
     <PackageReference Include="SIPSorcery" Version="10.0.3" />
     <ProjectReference Include="..\TopSpeed.Shared\TopSpeed.Shared.csproj" />
   </ItemGroup>
+
+  <Target Name="CopyUpdaterToServerOutput" AfterTargets="Build">
+    <MSBuild Projects="..\Updater\Updater.csproj" Targets="Build" Properties="Configuration=$(Configuration);Platform=$(Platform);RuntimeIdentifier=" />
+    <Copy SourceFiles="..\Updater\bin\$(Configuration)\net472\Updater.exe" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="..\Updater\bin\$(Configuration)\net472\Updater.pdb" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" Condition="Exists('..\Updater\bin\$(Configuration)\net472\Updater.pdb')" />
+  </Target>
+
+  <Target Name="CopyUpdaterToServerPublish" AfterTargets="Publish" Condition="'$(PublishDir)' != ''">
+    <MSBuild Projects="..\Updater\Updater.csproj" Targets="Build" Properties="Configuration=$(Configuration);Platform=$(Platform);RuntimeIdentifier=" />
+    <Copy SourceFiles="..\Updater\bin\$(Configuration)\net472\Updater.exe" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="..\Updater\bin\$(Configuration)\net472\Updater.pdb" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="true" Condition="Exists('..\Updater\bin\$(Configuration)\net472\Updater.pdb')" />
+  </Target>
 </Project>

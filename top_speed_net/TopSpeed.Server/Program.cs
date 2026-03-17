@@ -2,9 +2,11 @@ using System;
 using System.IO;
 using System.Threading;
 using TopSpeed.Protocol;
+using TopSpeed.Server.Commands;
 using TopSpeed.Server.Config;
 using TopSpeed.Server.Logging;
 using TopSpeed.Server.Network;
+using TopSpeed.Server.Updates;
 
 namespace TopSpeed.Server
 {
@@ -47,6 +49,9 @@ namespace TopSpeed.Server
             var settings = store.LoadOrCreate(logger);
             ApplyArgumentOverrides(settings, args, logger);
             store.Save(settings, logger);
+            var updater = new ServerUpdateRunner(ServerUpdateConfig.Default, logger);
+            if (settings.CheckForUpdatesOnStartup && updater.RunInteractiveCheck())
+                return 0;
 
             var config = new RaceServerConfig
             {
@@ -61,6 +66,7 @@ namespace TopSpeed.Server
             using var server = new RaceServer(config, logger);
             using var discovery = new ServerDiscoveryService(server, config, logger);
             using var cts = new CancellationTokenSource();
+            using var commandHost = new CommandHost(server, settings, store, logger, cts, updater);
             Console.CancelKeyPress += (_, e) =>
             {
                 e.Cancel = true;
@@ -69,6 +75,7 @@ namespace TopSpeed.Server
 
             server.Start();
             discovery.Start();
+            commandHost.Start();
             if (!loggingEnabled)
                 ConsoleSink.WriteLine("Server started. Press Ctrl+C to stop.");
             RunLoop(server, cts.Token);

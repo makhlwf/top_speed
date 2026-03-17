@@ -6,14 +6,14 @@ namespace TopSpeed.Protocol
         // Client release version used by updater checks and release packaging.
         public const ushort ClientYear = 2026;
         public const byte ClientMonth = 3;
-        public const byte ClientDay = 16;
-        public const byte ClientRevision = 2;
+        public const byte ClientDay = 17;
+        public const byte ClientRevision = 1;
 
-        // Server release version used by packaging metadata.
+        // Server release version used by updater checks and packaging.
         public const ushort ServerYear = 2026;
         public const byte ServerMonth = 3;
-        public const byte ServerDay = 11;
-        public const byte ServerRevision = 4;
+        public const byte ServerDay = 17;
+        public const byte ServerRevision = 1;
     }
 
     // Edit protocol compatibility values here (network handshake only).
@@ -25,27 +25,27 @@ namespace TopSpeed.Protocol
         // Current protocol implementation version (year.month.day.revision).
         public const ushort CurrentYear = 2026;
         public const byte CurrentMonth = 3;
-        public const byte CurrentDay = 11;
-        public const byte CurrentRevision = 4;
+        public const byte CurrentDay = 17;
+        public const byte CurrentRevision = 1;
 
         // Client supported protocol range (explicit values by design).
         public const ushort ClientMinYear = 2026;
         public const byte ClientMinMonth = 3;
-        public const byte ClientMinDay = 2;
-        public const byte ClientMinRevision = 1;
+        public const byte ClientMinDay = 11;
+        public const byte ClientMinRevision = 4;
         public const ushort ClientMaxYear = 2026;
         public const byte ClientMaxMonth = 3;
-        public const byte ClientMaxDay = 11;
+        public const byte ClientMaxDay = 17;
         public const byte ClientMaxRevision = 4;
 
         // Server supported protocol range (explicit values by design).
         public const ushort ServerMinYear = 2026;
         public const byte ServerMinMonth = 3;
-        public const byte ServerMinDay = 2;
-        public const byte ServerMinRevision = 1;
+        public const byte ServerMinDay = 11;
+        public const byte ServerMinRevision = 4;
         public const ushort ServerMaxYear = 2026;
         public const byte ServerMaxMonth = 3;
-        public const byte ServerMaxDay = 11;
+        public const byte ServerMaxDay = 17;
         public const byte ServerMaxRevision = 4;
     }
 }
