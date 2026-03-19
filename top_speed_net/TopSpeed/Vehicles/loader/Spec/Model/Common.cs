@@ -10,6 +10,7 @@ namespace TopSpeed.Vehicles.Loader
             public int IdleFreq { get; set; }
             public int TopFreq { get; set; }
             public int ShiftFreq { get; set; }
+            public float PitchCurveExponent { get; set; } = 0.85f;
             public int Gears { get; set; }
             public float Steering { get; set; }
             public int HasWipers { get; set; }

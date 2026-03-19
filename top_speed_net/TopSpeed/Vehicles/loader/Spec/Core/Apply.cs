@@ -10,6 +10,7 @@ namespace TopSpeed.Vehicles.Loader
             def.IdleFreq = spec.IdleFreq;
             def.TopFreq = spec.TopFreq;
             def.ShiftFreq = spec.ShiftFreq;
+            def.PitchCurveExponent = spec.PitchCurveExponent;
             def.Gears = spec.Gears;
             def.Steering = spec.Steering;
             def.HasWipers = spec.HasWipers;

@@ -109,6 +109,7 @@ namespace TopSpeed.Vehicles
         private int _idleFreq;
         private int _topFreq;
         private int _shiftFreq;
+        private float _pitchCurveExponent;
         private int _gears;
         private float _steering;
         private float _thrust;

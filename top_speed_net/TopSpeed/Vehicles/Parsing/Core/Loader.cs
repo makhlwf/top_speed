@@ -154,7 +154,7 @@ namespace TopSpeed.Vehicles.Parsing
             return new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase)
             {
                 ["meta"] = Set("name", "version", "description"),
-                ["sounds"] = Set("engine", "start", "horn", "throttle", "crash", "brake", "backfire", "idle_freq", "top_freq", "shift_freq"),
+                ["sounds"] = Set("engine", "start", "horn", "throttle", "crash", "brake", "backfire", "idle_freq", "top_freq", "shift_freq", "pitch_curve_exponent"),
                 ["general"] = Set("surface_traction_factor", "deceleration", "max_speed", "has_wipers"),
                 ["engine"] = Set(
                     "idle_rpm", "max_rpm", "rev_limiter", "auto_shift_rpm", "engine_braking", "mass_kg", "drivetrain_efficiency",

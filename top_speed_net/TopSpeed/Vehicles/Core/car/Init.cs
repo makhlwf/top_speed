@@ -165,6 +165,7 @@ namespace TopSpeed.Vehicles
             _idleFreq = definition.IdleFreq;
             _topFreq = definition.TopFreq;
             _shiftFreq = definition.ShiftFreq;
+            _pitchCurveExponent = VehicleDefinition.ClampPitchCurveExponent(definition.PitchCurveExponent);
             _gears = Math.Max(1, definition.Gears);
             _steering = SanitizeFinite(definition.Steering, 0.1f);
             _frequency = _idleFreq;

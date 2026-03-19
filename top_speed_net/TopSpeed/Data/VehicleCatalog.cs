@@ -20,6 +20,7 @@ namespace TopSpeed.Data
         public int IdleFreq { get; }
         public int TopFreq { get; }
         public int ShiftFreq { get; }
+        public float PitchCurveExponent { get; }
         public int Gears { get; }
         public float Steering { get; }
         // Engine simulation parameters
@@ -94,6 +95,7 @@ namespace TopSpeed.Data
             int shiftFreq,
             int gears,
             float steering,
+            float pitchCurveExponent = VehicleDefinition.PitchCurveExponentDefault,
             float idleRpm = 800f,
             float maxRpm = 7000f,
             float revLimiter = 6500f,
@@ -163,6 +165,7 @@ namespace TopSpeed.Data
             IdleFreq = idleFreq;
             TopFreq = topFreq;
             ShiftFreq = shiftFreq;
+            PitchCurveExponent = VehicleDefinition.ClampPitchCurveExponent(pitchCurveExponent);
             Gears = gears;
             Steering = steering;
             IdleRpm = idleRpm;
@@ -247,7 +250,9 @@ namespace TopSpeed.Data
                 spec.TopFreq,
                 spec.ShiftFreq,
                 spec.Gears,
-                spec.Steering,                spec.IdleRpm,
+                spec.Steering,
+                VehicleDefinition.PitchCurveExponentDefault,
+                spec.IdleRpm,
                 spec.MaxRpm,
                 spec.RevLimiter,
                 spec.AutoShiftRpm,

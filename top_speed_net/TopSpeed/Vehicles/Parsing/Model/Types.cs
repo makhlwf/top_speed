@@ -71,6 +71,7 @@ namespace TopSpeed.Vehicles.Parsing
         public int IdleFreq { get; set; }
         public int TopFreq { get; set; }
         public int ShiftFreq { get; set; }
+        public float PitchCurveExponent { get; set; } = VehicleDefinition.PitchCurveExponentDefault;
 
         public int Gears { get; set; }
         public float[] GearRatios { get; set; } = Array.Empty<float>();

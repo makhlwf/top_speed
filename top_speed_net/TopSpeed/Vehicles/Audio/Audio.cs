@@ -18,7 +18,28 @@ namespace TopSpeed.Vehicles
         private void UpdateEngineFreqManual()
         {
             var idleRpm = Math.Max(1f, _engine.IdleRpm);
-            _frequency = (int)(_idleFreq * (_engine.Rpm / idleRpm));
+            var revLimiter = Math.Max(idleRpm + 1f, _engine.RevLimiter);
+            var rpmNormalized = (_engine.Rpm - idleRpm) / (revLimiter - idleRpm);
+            if (rpmNormalized < 0f)
+                rpmNormalized = 0f;
+            else if (rpmNormalized > 1f)
+                rpmNormalized = 1f;
+
+            var curved = (float)Math.Pow(rpmNormalized, _pitchCurveExponent);
+            var minFrequency = Math.Min(_idleFreq, _topFreq);
+            var maxFrequency = Math.Max(_idleFreq, _topFreq);
+            if (maxFrequency <= minFrequency)
+            {
+                _frequency = minFrequency;
+            }
+            else
+            {
+                _frequency = minFrequency + (int)Math.Round(curved * (maxFrequency - minFrequency));
+                if (_frequency < minFrequency)
+                    _frequency = minFrequency;
+                else if (_frequency > maxFrequency)
+                    _frequency = maxFrequency;
+            }
 
             if (_frequency == _prevFrequency)
                 return;

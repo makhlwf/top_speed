@@ -6,6 +6,10 @@ namespace TopSpeed.Vehicles
 {
     internal sealed class VehicleDefinition
     {
+        public const float PitchCurveExponentDefault = 0.85f;
+        public const float PitchCurveExponentMin = 0.5f;
+        public const float PitchCurveExponentMax = 1.5f;
+
         public CarType CarType { get; set; }
         public string Name { get; set; } = LocalizationService.Mark("Vehicle");
         public bool UserDefined { get; set; }
@@ -21,6 +25,7 @@ namespace TopSpeed.Vehicles
         public int IdleFreq { get; set; }
         public int TopFreq { get; set; }
         public int ShiftFreq { get; set; }
+        public float PitchCurveExponent { get; set; } = PitchCurveExponentDefault;
         public int Gears { get; set; }
         public float Steering { get; set; }
         public int HasWipers { get; set; }
@@ -118,6 +123,17 @@ namespace TopSpeed.Vehicles
                 copy[i] = paths[i];
             _soundVariants[action] = copy;
             _sounds[(int)action] = copy[0];
+        }
+
+        public static float ClampPitchCurveExponent(float value)
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value))
+                return PitchCurveExponentDefault;
+            if (value < PitchCurveExponentMin)
+                return PitchCurveExponentMin;
+            if (value > PitchCurveExponentMax)
+                return PitchCurveExponentMax;
+            return value;
         }
     }
 }

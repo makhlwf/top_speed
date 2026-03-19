@@ -44,6 +44,8 @@ namespace TopSpeed.Vehicles.Parsing
             var idleFreq = RequireIntRange(sounds, "idle_freq", 100, 200000, issues);
             var topFreq = RequireIntRange(sounds, "top_freq", 100, 200000, issues);
             var shiftFreq = RequireIntRange(sounds, "shift_freq", 100, 200000, issues);
+            var pitchCurveExponent = OptionalFloat(sounds, "pitch_curve_exponent", issues)
+                ?? TopSpeed.Vehicles.VehicleDefinition.PitchCurveExponentDefault;
 
             var surfaceTractionFactor = RequireFloatRange(general, "surface_traction_factor", 0f, 5f, issues);
             var deceleration = RequireFloatRange(general, "deceleration", 0f, 5f, issues);
@@ -152,6 +154,19 @@ namespace TopSpeed.Vehicles.Parsing
                 issues.Add(new VehicleTsvIssue(VehicleTsvIssueSeverity.Error, sounds.Entries["top_freq"].Line, Localized("top_freq must be greater than or equal to idle_freq.")));
             if (shiftFreq < idleFreq || shiftFreq > topFreq)
                 issues.Add(new VehicleTsvIssue(VehicleTsvIssueSeverity.Error, sounds.Entries["shift_freq"].Line, Localized("shift_freq must be between idle_freq and top_freq.")));
+            if (float.IsNaN(pitchCurveExponent)
+                || float.IsInfinity(pitchCurveExponent)
+                || pitchCurveExponent < TopSpeed.Vehicles.VehicleDefinition.PitchCurveExponentMin
+                || pitchCurveExponent > TopSpeed.Vehicles.VehicleDefinition.PitchCurveExponentMax)
+            {
+                issues.Add(new VehicleTsvIssue(
+                    VehicleTsvIssueSeverity.Error,
+                    sounds.Entries["pitch_curve_exponent"].Line,
+                    Localized(
+                        "pitch_curve_exponent must be between {0} and {1}.",
+                        TopSpeed.Vehicles.VehicleDefinition.PitchCurveExponentMin,
+                        TopSpeed.Vehicles.VehicleDefinition.PitchCurveExponentMax)));
+            }
             if (highSpeedSteerFullKph <= highSpeedSteerStartKph)
                 issues.Add(new VehicleTsvIssue(VehicleTsvIssueSeverity.Error, steeringSection.Entries["high_speed_steer_full_kph"].Line, Localized("high_speed_steer_full_kph must be greater than high_speed_steer_start_kph.")));
 
@@ -226,6 +241,7 @@ namespace TopSpeed.Vehicles.Parsing
                 IdleFreq = idleFreq,
                 TopFreq = topFreq,
                 ShiftFreq = shiftFreq,
+                PitchCurveExponent = TopSpeed.Vehicles.VehicleDefinition.ClampPitchCurveExponent(pitchCurveExponent),
                 Gears = gearCount,
                 GearRatios = gearRatios!.ToArray(),
                 IdleRpm = idleRpm,
