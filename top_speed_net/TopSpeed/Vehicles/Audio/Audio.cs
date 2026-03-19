@@ -12,13 +12,7 @@ namespace TopSpeed.Vehicles
     {
         private void UpdateEngineFreq()
         {
-            var gearForSound = _gear;
-            if (gearForSound > _gears)
-                gearForSound = _gears;
-            if (gearForSound < 1)
-                gearForSound = 1;
-
-            UpdateEngineFreqForGear(gearForSound);
+            UpdateEngineFreqManual();
         }
 
         private void UpdateEngineFreqManual()
