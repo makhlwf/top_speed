@@ -9,9 +9,7 @@ namespace TopSpeed.Vehicles.Control
             int clutch,
             bool horn,
             bool gearUp,
-            bool gearDown,
-            bool reverseRequested,
-            bool forwardRequested)
+            bool gearDown)
         {
             Steering = ClampPercent(steering);
             Throttle = ClampPercent(throttle);
@@ -20,8 +18,6 @@ namespace TopSpeed.Vehicles.Control
             Horn = horn;
             GearUp = gearUp;
             GearDown = gearDown;
-            ReverseRequested = reverseRequested;
-            ForwardRequested = forwardRequested;
         }
 
         public int Steering { get; }
@@ -31,10 +27,8 @@ namespace TopSpeed.Vehicles.Control
         public bool Horn { get; }
         public bool GearUp { get; }
         public bool GearDown { get; }
-        public bool ReverseRequested { get; }
-        public bool ForwardRequested { get; }
 
-        public static CarControlIntent Neutral { get; } = new CarControlIntent(0, 0, 0, 0, false, false, false, false, false);
+        public static CarControlIntent Neutral { get; } = new CarControlIntent(0, 0, 0, 0, false, false, false);
 
         private static int ClampPercent(int value)
         {

@@ -33,9 +33,25 @@ namespace TopSpeed.Race
             if (_input.GetCurrentGear() && _started && _lap <= _nrOfLaps)
             {
                 var gear = _car.Gear;
-                SpeakText(_car.InReverseGear
-                    ? LocalizationService.Mark("Gear reverse")
-                    : LocalizationService.Format(LocalizationService.Mark("Gear {0}"), gear));
+                string code;
+                if (_car.InReverseGear)
+                {
+                    code = "R";
+                }
+                else if (gear == 0)
+                {
+                    code = "N";
+                }
+                else if (_car.ManualTransmission)
+                {
+                    code = gear.ToString();
+                }
+                else
+                {
+                    code = "D";
+                }
+
+                SpeakText(LocalizationService.Format(LocalizationService.Mark("Gear {0}"), code));
             }
         }
 

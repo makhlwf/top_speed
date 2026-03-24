@@ -4,7 +4,7 @@ namespace TopSpeed.Input
 {
     internal sealed partial class RaceInput
     {
-        private const float KeyboardClutchRampSeconds = 0.35f;
+        private const float KeyboardClutchRampSeconds = 0.15f;
 
         private void UpdateSimulatedInputs(float deltaSeconds)
         {

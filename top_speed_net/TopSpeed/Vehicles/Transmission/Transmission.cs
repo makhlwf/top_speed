@@ -21,6 +21,12 @@ namespace TopSpeed.Vehicles
         {
             if (_gears <= 1)
                 return;
+            if (_gear < FirstForwardGear)
+            {
+                _switchingGear = 0;
+                _autoShiftCooldown = 0f;
+                return;
+            }
             if (EffectiveTransmissionType() == TransmissionType.Cvt)
             {
                 _gear = FirstForwardGear;
@@ -49,7 +55,7 @@ namespace TopSpeed.Vehicles
             var upAccel = _gear < _gears
                 ? ComputeNetAccelForGear(_gear + 1, speedMps, throttle, surfaceTractionMod, longitudinalGripFactor, null)
                 : float.NegativeInfinity;
-            var downAccel = _gear > 1
+            var downAccel = _gear > FirstForwardGear
                 ? ComputeNetAccelForGear(_gear - 1, speedMps, throttle, surfaceTractionMod, longitudinalGripFactor, null)
                 : float.NegativeInfinity;
 

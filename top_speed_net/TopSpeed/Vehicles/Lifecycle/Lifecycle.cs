@@ -169,7 +169,7 @@ namespace TopSpeed.Vehicles
             _soundHorn.Stop();
             _soundHorn.SeekToStart();
             _soundHorn.SetPanPercent(0);
-            _gear = 1;
+            _gear = NeutralGear;
             _switchingGear = 0;
             ClearStallState();
             SetState(CarState.Crashing);

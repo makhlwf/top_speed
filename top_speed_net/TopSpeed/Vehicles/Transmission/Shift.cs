@@ -8,20 +8,20 @@ namespace TopSpeed.Vehicles
     {
         private void HandleTransmissionInput(in CarControlIntent intent)
         {
+            if (!intent.GearUp && !intent.GearDown)
+                _stickReleased = true;
+
             if (_manualTransmission)
             {
                 HandleManualShift(intent.GearUp, intent.GearDown, intent.Clutch);
                 return;
             }
 
-            HandleAutomaticDirectionShift(intent.ReverseRequested, intent.ForwardRequested);
+            HandleAutomaticDirectionShift(intent.GearUp, intent.GearDown);
         }
 
         private void HandleManualShift(bool gearUp, bool gearDown, int clutch)
         {
-            if (!gearUp && !gearDown)
-                _stickReleased = true;
-
             if (gearDown && _stickReleased)
             {
                 if (!CanShiftManual(clutch))
@@ -43,6 +43,13 @@ namespace TopSpeed.Vehicles
                     PushEvent(EventType.InGear, 0.2f);
                 }
                 else if (_gear == FirstForwardGear)
+                {
+                    _stickReleased = false;
+                    _switchingGear = -1;
+                    _gear = NeutralGear;
+                    PushEvent(EventType.InGear, 0.2f);
+                }
+                else if (_gear == NeutralGear)
                 {
                     _stickReleased = false;
                     if (_speed <= ReverseShiftMaxSpeedKmh)
@@ -69,16 +76,16 @@ namespace TopSpeed.Vehicles
                 if (_gear == ReverseGear)
                 {
                     _stickReleased = false;
-                    if (_speed <= ReverseShiftMaxSpeedKmh)
-                    {
-                        _switchingGear = 1;
-                        _gear = FirstForwardGear;
-                        PushEvent(EventType.InGear, 0.2f);
-                    }
-                    else
-                    {
-                        _soundBadSwitch.Play(loop: false);
-                    }
+                    _switchingGear = 1;
+                    _gear = NeutralGear;
+                    PushEvent(EventType.InGear, 0.2f);
+                }
+                else if (_gear == NeutralGear)
+                {
+                    _stickReleased = false;
+                    _switchingGear = 1;
+                    _gear = FirstForwardGear;
+                    PushEvent(EventType.InGear, 0.2f);
                 }
                 else if (_gear < _gears)
                 {
@@ -99,34 +106,49 @@ namespace TopSpeed.Vehicles
             return clutch >= 90;
         }
 
-        private void HandleAutomaticDirectionShift(bool reverseRequested, bool forwardRequested)
+        private void HandleAutomaticDirectionShift(bool gearUp, bool gearDown)
         {
-            if (reverseRequested && _gear != ReverseGear)
+            if (gearDown && _stickReleased)
             {
-                if (_speed <= ReverseShiftMaxSpeedKmh)
+                _stickReleased = false;
+                if (_gear >= FirstForwardGear)
                 {
                     _switchingGear = -1;
-                    _gear = ReverseGear;
+                    _gear = NeutralGear;
                     PushEvent(EventType.InGear, 0.2f);
+                    return;
                 }
-                else
+
+                if (_gear == NeutralGear)
                 {
-                    _currentThrottle = 0;
-                    _currentBrake = -100;
-                    _soundBadSwitch.Play(loop: false);
+                    if (_speed <= ReverseShiftMaxSpeedKmh)
+                    {
+                        _switchingGear = -1;
+                        _gear = ReverseGear;
+                        PushEvent(EventType.InGear, 0.2f);
+                    }
+                    else
+                    {
+                        _currentThrottle = 0;
+                        _currentBrake = -100;
+                        _soundBadSwitch.Play(loop: false);
+                    }
                 }
             }
-            else if (forwardRequested && _gear == ReverseGear)
+            else if (gearUp && _stickReleased)
             {
-                if (_speed <= ReverseShiftMaxSpeedKmh)
+                _stickReleased = false;
+                if (_gear == ReverseGear)
+                {
+                    _switchingGear = 1;
+                    _gear = NeutralGear;
+                    PushEvent(EventType.InGear, 0.2f);
+                }
+                else if (_gear == NeutralGear)
                 {
                     _switchingGear = 1;
                     _gear = FirstForwardGear;
                     PushEvent(EventType.InGear, 0.2f);
-                }
-                else
-                {
-                    _soundBadSwitch.Play(loop: false);
                 }
             }
         }

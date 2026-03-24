@@ -61,7 +61,7 @@ namespace TopSpeed.Vehicles
         private void InitializeRuntimeDefaults(Track track)
         {
             _surface = track.InitialSurface;
-            _gear = 1;
+            _gear = NeutralGear;
             SetState(CarState.Stopped);
             _manualTransmission = false;
             _engineStalled = false;

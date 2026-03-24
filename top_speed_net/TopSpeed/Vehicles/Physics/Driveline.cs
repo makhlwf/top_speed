@@ -15,11 +15,29 @@ namespace TopSpeed.Vehicles
             var type = EffectiveTransmissionType();
             if (TransmissionTypes.IsAutomaticFamily(type))
             {
+                if (IsNeutralGear())
+                {
+                    _drivelineCouplingFactor = 0f;
+                    _drivelineState = DrivelineState.Disengaged;
+                    _effectiveDriveRatioOverride = 0f;
+                    _automaticCreepAccelMps2 = 0f;
+                    return _drivelineCouplingFactor;
+                }
+
                 UpdateAutomaticDriveline(type, elapsed, speedMps, throttle, inReverse);
                 return _drivelineCouplingFactor;
             }
 
             if (_engineStalled)
+            {
+                _drivelineCouplingFactor = 0f;
+                _drivelineState = DrivelineState.Disengaged;
+                _effectiveDriveRatioOverride = 0f;
+                _automaticCreepAccelMps2 = 0f;
+                return _drivelineCouplingFactor;
+            }
+
+            if (IsNeutralGear())
             {
                 _drivelineCouplingFactor = 0f;
                 _drivelineState = DrivelineState.Disengaged;
@@ -94,6 +112,11 @@ namespace TopSpeed.Vehicles
 
             var type = EffectiveTransmissionType();
             if (type != TransmissionType.Manual || _switchingGear != 0)
+            {
+                _stallTimer = 0f;
+                return;
+            }
+            if (IsNeutralGear())
             {
                 _stallTimer = 0f;
                 return;

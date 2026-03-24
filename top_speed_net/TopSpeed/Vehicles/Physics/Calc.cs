@@ -152,9 +152,12 @@ namespace TopSpeed.Vehicles
 
             if (_manualTransmission)
             {
-                var gearMax = _engine.GetGearMaxSpeedKmh(_gear);
-                if (_speed > gearMax)
-                    _speed = gearMax;
+                if (_gear >= FirstForwardGear)
+                {
+                    var gearMax = _engine.GetGearMaxSpeedKmh(_gear);
+                    if (_speed > gearMax)
+                        _speed = gearMax;
+                }
             }
             else
             {

@@ -19,7 +19,8 @@ namespace TopSpeed.Vehicles
         private const int MaxSurfaceFreq = 100000;
         private const float CrashVibrationSeconds = 1.5f;
         private const float BumpVibrationSeconds = 0.2f;
-        private const int ReverseGear = 0;
+        private const int ReverseGear = -1;
+        private const int NeutralGear = 0;
         private const int FirstForwardGear = 1;
         private const float ReverseShiftMaxSpeedKmh = 15.0f;
 

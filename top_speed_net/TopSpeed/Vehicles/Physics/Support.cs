@@ -69,6 +69,9 @@ namespace TopSpeed.Vehicles
 
         private float CalculateEngineBrakingDecel(float surfaceDecelMod)
         {
+            if (IsNeutralGear() || _drivelineCouplingFactor <= 0.05f)
+                return 0f;
+
             return Calculator.EngineBrakeDecelKph(
                 _powertrainConfiguration,
                 GetDriveGear(),
@@ -93,6 +96,11 @@ namespace TopSpeed.Vehicles
         private int GetDriveGear()
         {
             return _gear < FirstForwardGear ? FirstForwardGear : _gear;
+        }
+
+        private bool IsNeutralGear()
+        {
+            return _gear == NeutralGear;
         }
     }
 }

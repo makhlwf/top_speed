@@ -73,10 +73,6 @@ namespace TopSpeed.Input
             return Math.Max(joystickClutch, keyboardClutch);
         }
 
-        public bool GetReverseRequested() => _allowDrivingInput && UseKeyboard && WasPressed(Key.Z);
-
-        public bool GetForwardRequested() => _allowDrivingInput && UseKeyboard && WasPressed(Key.A);
-
         private int ApplySteeringDeadZone(int value)
         {
             var deadZone = _settings.JoystickSteeringDeadZone;

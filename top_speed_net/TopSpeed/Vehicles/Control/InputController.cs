@@ -20,9 +20,7 @@ namespace TopSpeed.Vehicles.Control
                 _input.GetClutch(),
                 _input.GetHorn(),
                 _input.GetGearUp(),
-                _input.GetGearDown(),
-                _input.GetReverseRequested(),
-                _input.GetForwardRequested());
+                _input.GetGearDown());
         }
     }
 }

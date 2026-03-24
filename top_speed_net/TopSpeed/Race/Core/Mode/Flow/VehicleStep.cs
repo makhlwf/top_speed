@@ -36,9 +36,18 @@ namespace TopSpeed.Race
             if (!_input.GetGearUp() && !_input.GetGearDown())
                 return;
 
-            SpeakText(currentGear <= 0
-                ? LocalizationService.Mark("Reverse")
-                : currentGear.ToString());
+            if (currentGear < 0)
+            {
+                SpeakText("R");
+            }
+            else if (currentGear == 0)
+            {
+                SpeakText("N");
+            }
+            else
+            {
+                SpeakText(currentGear.ToString());
+            }
         }
 
         private void HandleTurnEndCue(Track.Road road)
