@@ -25,6 +25,7 @@ namespace TopSpeed.Race
         private const int SnapshotBufferMax = 8;
 
         private readonly MultiplayerSession _session;
+        private readonly Func<byte, string> _resolvePlayerName;
         private readonly uint _playerId;
         private readonly byte _playerNumber;
         private readonly Dictionary<byte, RemotePlayer> _remotePlayers;
@@ -74,10 +75,12 @@ namespace TopSpeed.Race
             IVibrationDevice? vibrationDevice,
             MultiplayerSession session,
             uint playerId,
-            byte playerNumber)
+            byte playerNumber,
+            Func<byte, string> resolvePlayerName)
             : base(audio, speech, settings, input, trackName, automaticTransmission, nrOfLaps, vehicle, vehicleFile, vibrationDevice, trackData, trackData.UserDefined)
         {
             _session = session ?? throw new ArgumentNullException(nameof(session));
+            _resolvePlayerName = resolvePlayerName ?? throw new ArgumentNullException(nameof(resolvePlayerName));
             _playerId = playerId;
             _playerNumber = playerNumber;
             _remotePlayers = new Dictionary<byte, RemotePlayer>();

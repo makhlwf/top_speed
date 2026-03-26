@@ -108,8 +108,7 @@ namespace TopSpeed.Server.Network
             bot.HornSecondsRemaining = 0f;
             bot.BackfirePulseSeconds = 0f;
             bot.BackfireArmed = true;
-            if (!room.RaceResults.Contains(bot.PlayerNumber))
-                room.RaceResults.Add(bot.PlayerNumber);
+            RecordRaceFinish(room, bot.PlayerNumber, CaptureFinishTimeMs(room));
 
             SendToRoomOnStream(room, PacketSerializer.WritePlayer(Command.PlayerFinished, bot.Id, bot.PlayerNumber), PacketStream.RaceEvent);
             _botFinishEvents++;
@@ -119,6 +118,7 @@ namespace TopSpeed.Server.Network
                 bot.Id,
                 bot.PlayerNumber,
                 room.RaceResults.Count));
+            UpdateRaceStopState(room, 0f);
         }
     }
 }

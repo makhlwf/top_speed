@@ -1,4 +1,5 @@
 using SharpDX.DirectInput;
+using TopSpeed.Race;
 
 namespace TopSpeed.Game
 {
@@ -16,7 +17,7 @@ namespace TopSpeed.Game
             if (_timeTrial.WantsPause)
                 EnterPause(AppState.TimeTrial);
             if (_timeTrial.WantsExit || _input.WasPressed(Key.Escape))
-                EndRace();
+                EndRace(_timeTrial.WantsExit ? _timeTrial.ConsumeResultSummary() : null);
         }
 
         private void RunSingleRace(float elapsed)
@@ -31,10 +32,10 @@ namespace TopSpeed.Game
             if (_singleRace.WantsPause)
                 EnterPause(AppState.SingleRace);
             if (_singleRace.WantsExit || _input.WasPressed(Key.Escape))
-                EndRace();
+                EndRace(_singleRace.WantsExit ? _singleRace.ConsumeResultSummary() : null);
         }
 
-        private void EndRace()
+        private void EndRace(RaceResultSummary? resultSummary = null)
         {
             _timeTrial?.FinalizeTimeTrialMode();
             _timeTrial?.Dispose();
@@ -47,6 +48,8 @@ namespace TopSpeed.Game
             _state = AppState.Menu;
             _menu.ShowRoot("main");
             _menu.FadeInMenuMusic();
+            if (resultSummary != null)
+                ShowRaceResultDialog(resultSummary);
         }
     }
 }

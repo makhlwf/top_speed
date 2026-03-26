@@ -29,6 +29,10 @@ namespace TopSpeed.Server.Network
 
             room.RaceStarted = true;
             room.RaceResults.Clear();
+            room.RaceFinishTimesMs.Clear();
+            room.RaceStartedUtc = DateTime.UtcNow;
+            room.RaceStopPending = false;
+            room.RaceStopDelaySeconds = 0f;
             room.ActiveBumpPairs.Clear();
             room.RaceSnapshotSequence = 0;
             room.RaceSnapshotTick = 0;
@@ -112,7 +116,21 @@ namespace TopSpeed.Server.Network
             room.PrepareSkips.Clear();
             room.ActiveBumpPairs.Clear();
 
-            var results = room.RaceResults.ToArray();
+            var order = room.RaceResults.ToArray();
+            var results = new PacketRaceResultEntry[order.Length];
+            for (var i = 0; i < order.Length; i++)
+            {
+                var playerNumber = order[i];
+                var timeMs = 0;
+                if (room.RaceFinishTimesMs.TryGetValue(playerNumber, out var savedTime))
+                    timeMs = Math.Max(0, savedTime);
+
+                results[i] = new PacketRaceResultEntry
+                {
+                    PlayerNumber = playerNumber,
+                    TimeMs = timeMs
+                };
+            }
             SendToRoomOnStream(room, PacketSerializer.WriteRaceResults(new PacketRaceResults
             {
                 NPlayers = (byte)Math.Min(results.Length, ProtocolConstants.MaxPlayers),
@@ -120,6 +138,10 @@ namespace TopSpeed.Server.Network
             }), PacketStream.RaceEvent);
 
             room.RaceResults.Clear();
+            room.RaceFinishTimesMs.Clear();
+            room.RaceStartedUtc = default(DateTime);
+            room.RaceStopPending = false;
+            room.RaceStopDelaySeconds = 0f;
             room.RaceSnapshotSequence = 0;
             room.RaceSnapshotTick = 0;
             foreach (var id in room.PlayerIds)
@@ -157,7 +179,7 @@ namespace TopSpeed.Server.Network
                 LocalizationService.Mark("Race stopped: room={0} \"{1}\", results={2}."),
                 room.Id,
                 room.Name,
-                string.Join(",", results)));
+                string.Join(",", order)));
         }
 
     }

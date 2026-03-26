@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-26 13:06+0200\n"
+"POT-Creation-Date: 2026-03-26 14:35+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -96,7 +96,7 @@ msgstr ""
 msgid "Bot crashed: room={0}, bot={1}, number={2}, y={3:0.0}."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Bots\Drive.cs:117
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Bots\Drive.cs:116
 #, csharp-format
 msgid "Bot finished: room={0}, bot={1}, number={2}, place={3}."
 msgstr ""
@@ -187,12 +187,12 @@ msgstr ""
 msgid "Command failed. Check server logs for details."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:145
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:146
 #, csharp-format
 msgid "Connection closed by server. Reason: {0}."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:143
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:144
 msgid "Connection closed."
 msgstr ""
 
@@ -206,21 +206,21 @@ msgstr ""
 msgid "Connection pending protocol negotiation: playerId={0}, endpoint={1}."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:137
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:138
 msgid "Connection refused due to invalid protocol negotiation."
 msgstr ""
 
 #: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Protocol\Handshake.cs:120
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:135
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:136
 msgid "Connection refused due to protocol mismatch."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:118
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:119
 #, csharp-format
 msgid "Connection removed: player={0}, endpoint={1}, room={2}, reason={3}."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:133
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:134
 msgid "Connection timed out."
 msgstr ""
 
@@ -585,7 +585,7 @@ msgstr ""
 msgid "Options:"
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Players\RaceEvents.cs:40
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Players\RaceEvents.cs:43
 #, csharp-format
 msgid "Player finished: room={0}, player={1}, number={2}, results={3}."
 msgstr ""
@@ -635,7 +635,7 @@ msgstr ""
 msgid "Player {0}"
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Players\RaceEvents.cs:66
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Players\RaceEvents.cs:68
 #, csharp-format
 msgid ""
 "PlayerCrashed payload mismatch: room={0}, connectionPlayer={1}/{2}, payload="
@@ -748,13 +748,13 @@ msgstr ""
 msgid "Race start cancelled because there are not enough ready players."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Rooms\Race\Lifecycle.cs:96
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Rooms\Race\Lifecycle.cs:100
 #, csharp-format
 msgid ""
 "Race started: room={0} \"{1}\", track={2}, laps={3}, humans={4}, bots={5}."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Rooms\Race\Lifecycle.cs:157
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Rooms\Race\Lifecycle.cs:179
 #, csharp-format
 msgid "Race stopped: room={0} \"{1}\", results={2}."
 msgstr ""
@@ -982,13 +982,13 @@ msgstr ""
 msgid "Standard input is not available. Update download was skipped."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:128
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:129
 msgid "The server closed the connection."
 msgstr ""
 
 #: D:\top_speed\top_speed_net\TopSpeed.Server\Commands\Host.cs:138
 #: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\admin.cs:46
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:141
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:142
 msgid "The server will be shut down immediately by the host."
 msgstr ""
 
@@ -1014,7 +1014,7 @@ msgid "This game room is unavailable because it is full."
 msgstr ""
 
 #: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Packets\pkt_core.cs:42
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:139
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:140
 msgid "This server is full."
 msgstr ""
 
@@ -1236,11 +1236,11 @@ msgstr ""
 msgid "main room"
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:157
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:158
 msgid "multiple"
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:121
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\core.cs:122
 #: D:\top_speed\top_speed_net\TopSpeed.Server\Program.Args.cs:77
 #: D:\top_speed\top_speed_net\TopSpeed.Server\Program.Args.cs:91
 #: D:\top_speed\top_speed_net\TopSpeed.Server\Program.cs:42

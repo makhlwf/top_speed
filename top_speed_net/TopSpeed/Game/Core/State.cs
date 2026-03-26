@@ -20,6 +20,7 @@ using TopSpeed.Shortcuts;
 using TopSpeed.Speech;
 using TopSpeed.Windowing;
 using CoreRaceMode = TopSpeed.Core.RaceMode;
+using TS.Audio;
 
 namespace TopSpeed.Game
 {
@@ -102,6 +103,7 @@ namespace TopSpeed.Game
         private bool _audioLoopActive;
         private bool _textInputPromptActive;
         private Action<TextInputResult>? _textInputPromptCallback;
+        private AudioSourceHandle? _raceWinSound;
         public bool IsModalInputActive { get; private set; }
         internal int LoopIntervalMs => IsMenuState(_state) ? 15 : 8;
 

@@ -1,16 +1,14 @@
 {
-  "version": "2026.3.26.1",
-  "serverVersion": "2026.3.19.2",
+  "version": "2026.3.26.2",
+  "serverVersion": "2026.3.26.1",
   "changes": [
+    "Replaced the race finished event with a better experience.",
     "Added different transmission types for automatic, and true manual.",
     "Manual now is no longer just a manual shift. You control the clutch and when to shift, and you also handle stalling. There is now engine stalling in manual if engine rpm drops below idle.",
     "Automatic vehicles have different transmission behaviors, for example ATC is different than CVT.",
-    "Vehicles can define shift-on-demand in automatic mode, which allows the user to enable manual shifting. This is closer to the previous manual experience.",
+    "Vehicles can define shift-on-demand in automatic mode, which allows the user to enable manual shifting. This is closer to the previous manual experience."
   ],
   "serverChanges": [
-    "Added the ability to override server architecture used by the update.",
-    "Applied shared collision resolution for humans and bots in all race pairings.",
-    "Updated race bump packets and protocol compatibility for the collision update.",
-    "Adjusted room-created notifications so players already in a room are not interrupted."
+    "Updated race finished event to carry time and other information.",
   ]
 }

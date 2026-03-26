@@ -26,6 +26,7 @@ namespace TopSpeed.Race
         protected const float DefaultCarStartDelaySeconds = 3.0f;
         protected const float DefaultStartCueDelaySeconds = 1.0f;
         protected const float DefaultRaceStartDelaySeconds = 4.0f;
+        private const float PostFinishStopSpeedKph = 0.5f;
         private const float KmToMiles = 0.621371f;
         private const float MetersPerMile = 1609.344f;
         private const float MetersToFeet = 3.28084f;
@@ -69,6 +70,7 @@ namespace TopSpeed.Race
         private readonly VehiclePanelManager _panelManager;
         private long _eventSequence;
         private uint _nextMediaId;
+        private RaceResultSummary? _pendingResultSummary;
 
         protected bool _manualTransmission;
         protected int _nrOfLaps;
@@ -112,6 +114,7 @@ namespace TopSpeed.Race
         protected bool ExitRequested { get; set; }
         protected bool PauseRequested { get; set; }
         private bool _exitWhenQueueIdle;
+        private bool _requirePostFinishStopBeforeExit;
     }
 }
 

@@ -21,5 +21,10 @@ namespace TopSpeed.Core.Multiplayer
         {
             OpenRoomChatHotkey();
         }
+
+        string IMultiplayerRuntime.ResolvePlayerName(byte playerNumber)
+        {
+            return ResolvePlayerName(playerNumber);
+        }
     }
 }

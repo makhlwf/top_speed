@@ -139,8 +139,8 @@ namespace TopSpeed.Server.Network
             {
                 if (room.HostId == player.Id)
                     room.HostId = room.PlayerIds.OrderBy(x => x).First();
-                if (room.RaceStarted && CountActiveRaceParticipants(room) == 0)
-                    StopRace(room);
+                if (room.RaceStarted)
+                    UpdateRaceStopState(room, 0f);
                 if (room.PreparingRace)
                     TryStartRaceAfterLoadout(room);
                 CompactRoomNumbers(room);

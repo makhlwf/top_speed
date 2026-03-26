@@ -78,7 +78,7 @@ namespace TopSpeed.Race
             RemovePlayerFromSnapshotFrames(playerNumber);
         }
 
-        public void HandleServerRaceStopped(PacketRaceResults _)
+        public void HandleServerRaceStopped(PacketRaceResults results)
         {
             if (_serverStopReceived)
                 return;
@@ -87,7 +87,12 @@ namespace TopSpeed.Race
             _snapshotFrames.Clear();
             _hasSnapshotTickNow = false;
             foreach (var remote in _remotePlayers.Values)
+            {
+                remote.Finished = true;
+                remote.State = PlayerState.Finished;
                 remote.Player.StopLiveStream();
+                remote.Player.Stop();
+            }
             _remoteLiveStates.Clear();
             if (!_sentFinish)
             {
@@ -96,6 +101,7 @@ namespace TopSpeed.Race
                 TrySendRace(_session.SendPlayerState(_currentState));
             }
 
+            SetResultSummary(BuildResultSummary(results));
             RequestExitWhenQueueIdle();
         }
 

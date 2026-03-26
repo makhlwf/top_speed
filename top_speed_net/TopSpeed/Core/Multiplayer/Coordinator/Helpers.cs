@@ -54,5 +54,21 @@ namespace TopSpeed.Core.Multiplayer
                     action));
             return false;
         }
+
+        internal string ResolvePlayerName(byte playerNumber)
+        {
+            var players = _state.Rooms.CurrentRoom.Players ?? Array.Empty<RoomParticipant>();
+            for (var i = 0; i < players.Length; i++)
+            {
+                var player = players[i];
+                if (player == null || player.PlayerNumber != playerNumber)
+                    continue;
+                if (!string.IsNullOrWhiteSpace(player.Name))
+                    return player.Name.Trim();
+                break;
+            }
+
+            return LocalizationService.Format(LocalizationService.Mark("Player {0}"), playerNumber + 1);
+        }
     }
 }

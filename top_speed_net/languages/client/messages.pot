@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-26 13:06+0200\n"
+"POT-Creation-Date: 2026-03-26 14:35+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -317,6 +317,7 @@ msgstr ""
 msgid "Choose your vehicle"
 msgstr ""
 
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Race\Results.cs:86
 #: D:\top_speed\top_speed_net\TopSpeed\Game\Updates\Check.cs:145
 msgid "Close"
 msgstr ""
@@ -355,6 +356,10 @@ msgstr ""
 
 #: D:\top_speed\top_speed_net\TopSpeed\Core\Multiplayer\Rooms\Menu.cs:92
 msgid "Confirm game options"
+msgstr ""
+
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Race\Results.cs:19
+msgid "Congratulations! You have made it to the first position."
 msgstr ""
 
 #: D:\top_speed\top_speed_net\TopSpeed\Core\Multiplayer\Connection\Connect.cs:107
@@ -844,9 +849,17 @@ msgstr ""
 msgid "File: {0}"
 msgstr ""
 
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Race\Results.cs:28
+msgid "Final results are ready."
+msgstr ""
+
 #: D:\top_speed\top_speed_net\TopSpeed\Core\TrackList.cs:31
 #: D:\top_speed\top_speed_net\TopSpeed\Race\Core\Mode\Format.cs:83
 msgid "Finland"
+msgstr ""
+
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Race\Results.cs:21
+msgid "First position achieved. Great race."
 msgstr ""
 
 #: D:\top_speed\top_speed_net\TopSpeed\Menu\registry\options\Controls.cs:25
@@ -906,6 +919,14 @@ msgstr ""
 msgid "Go back to vehicle selection"
 msgstr ""
 
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Race\Results.cs:34
+msgid "Here are the final standings for everyone."
+msgstr ""
+
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Race\Results.cs:39
+msgid "Here are the final standings."
+msgstr ""
+
 #: D:\top_speed\top_speed_net\TopSpeed\Menu\registry\Core.cs:57
 msgid "History"
 msgstr ""
@@ -916,7 +937,7 @@ msgid ""
 "and multiPlayer modes."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed\Game\Core\State.cs:113
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Core\State.cs:115
 msgid ""
 "I really have nothing interesting to put here not even the secret to life "
 "except this really long run on sentence that is probably the most boring "
@@ -1383,7 +1404,7 @@ msgstr ""
 msgid "Network send failed while sending live stop."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed\Race\Multiplayer\MultiplayerMode\Run.cs:124
+#: D:\top_speed\top_speed_net\TopSpeed\Race\Multiplayer\MultiplayerMode\Run.cs:127
 msgid "Network send failed. Please check your connection."
 msgstr ""
 
@@ -1625,6 +1646,10 @@ msgstr ""
 msgid "Other vehicles event sounds"
 msgstr ""
 
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Race\Results.cs:20
+msgid "Outstanding drive. You secured first position."
+msgstr ""
+
 #: D:\top_speed\top_speed_net\TopSpeed\Race\Core\Mode\Panels.cs:79
 msgid "Panel"
 msgstr ""
@@ -1642,6 +1667,7 @@ msgstr ""
 msgid "Ping check already in progress."
 msgstr ""
 
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Race\Results.cs:97
 #: D:\top_speed\top_speed_net\TopSpeed\Network\Connect\Connector\Helpers.cs:89
 msgid "Player"
 msgstr ""
@@ -1652,9 +1678,11 @@ msgid "Player "
 msgstr ""
 
 #: D:\top_speed\top_speed_net\TopSpeed\Core\Multiplayer\Chat\HistoryText.cs:62
+#: D:\top_speed\top_speed_net\TopSpeed\Core\Multiplayer\Coordinator\Helpers.cs:71
 #: D:\top_speed\top_speed_net\TopSpeed\Core\Multiplayer\Rooms\Menu.cs:145
 #: D:\top_speed\top_speed_net\TopSpeed\Core\Multiplayer\Rooms\Online.cs:58
 #: D:\top_speed\top_speed_net\TopSpeed\Game\Packets\PacketRoom.cs:32
+#: D:\top_speed\top_speed_net\TopSpeed\Race\Multiplayer\MultiplayerMode\Results.cs:30
 #, csharp-format
 msgid "Player {0}"
 msgstr ""
@@ -1742,6 +1770,10 @@ msgstr ""
 
 #: D:\top_speed\top_speed_net\TopSpeed\Game\Multiplayer\Quit.cs:19
 msgid "Quit race?"
+msgstr ""
+
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Race\Results.cs:26
+msgid "Race complete."
 msgstr ""
 
 #: D:\top_speed\top_speed_net\TopSpeed\Race\Core\Mode\Format.cs:42
@@ -1958,7 +1990,7 @@ msgstr ""
 msgid "Screen reader rate is not a valid number and was reset to default."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed\Game\Core\State.cs:111
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Core\State.cs:113
 msgid ""
 "Screen-reader calibration. You'll be presented with a short piece of text on "
 "the next screen. Press ENTER when your screen-reader finishes speaking it."
@@ -2382,6 +2414,14 @@ msgid ""
 "this error before continuing."
 msgstr ""
 
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Race\Results.cs:33
+msgid "The following are the details of all players."
+msgstr ""
+
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Race\Results.cs:40
+msgid "The following are the race details for all players."
+msgstr ""
+
 #: D:\top_speed\top_speed_net\TopSpeed\Game\Updates\Check.cs:81
 msgid "The game could not check for updates."
 msgstr ""
@@ -2410,6 +2450,10 @@ msgstr ""
 #: D:\top_speed\top_speed_net\TopSpeed\Core\Multiplayer\Connection\Ping.cs:50
 #, csharp-format
 msgid "The ping took {0} milliseconds."
+msgstr ""
+
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Race\Results.cs:27
+msgid "The race has finished."
 msgstr ""
 
 #: D:\top_speed\top_speed_net\TopSpeed\Core\Settings\Manager\Apply\Core.cs:26
@@ -3149,6 +3193,12 @@ msgstr ""
 msgid "player"
 msgstr ""
 
+#: D:\top_speed\top_speed_net\TopSpeed\Race\Modes\single\Results.cs:51
+#: D:\top_speed\top_speed_net\TopSpeed\Race\Modes\TimeTrialMode.cs:83
+#, csharp-format
+msgid "player {0}"
+msgstr ""
+
 #: D:\top_speed\top_speed_net\TopSpeed\Core\Multiplayer\Coordinator\Core.cs:31
 msgid "players"
 msgstr ""
@@ -3409,4 +3459,26 @@ msgstr ""
 #: D:\top_speed\top_speed_net\TopSpeed\Core\Multiplayer\Rooms\Browser.cs:78
 #, csharp-format
 msgid "{0}, {1} game with {2} people, maximum {3} players"
+msgstr ""
+
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Race\Results.cs:58
+#, csharp-format
+msgid "{0}: completed in position {1} with a time of {2}."
+msgstr ""
+
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Race\Results.cs:52
+#, csharp-format
+msgid "{0}: crossed in position {1} after {2}."
+msgstr ""
+
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Race\Results.cs:46
+#, csharp-format
+msgid "{0}: finished in position {1} with {2}."
+msgstr ""
+
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Race\Results.cs:45
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Race\Results.cs:51
+#: D:\top_speed\top_speed_net\TopSpeed\Game\Race\Results.cs:57
+#, csharp-format
+msgid "{0}: position {1}, time {2}."
 msgstr ""

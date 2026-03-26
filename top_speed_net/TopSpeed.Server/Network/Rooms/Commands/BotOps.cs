@@ -99,8 +99,8 @@ namespace TopSpeed.Server.Network
                 LocalizationService.Format(
                     LocalizationService.Mark("Removed bot {0}."),
                     bot.Name));
-            if (room.RaceStarted && CountActiveRaceParticipants(room) == 0)
-                StopRace(room);
+            if (room.RaceStarted)
+                UpdateRaceStopState(room, 0f);
             if (room.PreparingRace)
                 TryStartRaceAfterLoadout(room);
         }

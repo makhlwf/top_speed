@@ -33,6 +33,8 @@ namespace TopSpeed.Race
             _started = false;
             _finished = false;
             _engineStarted = false;
+            _pendingResultSummary = null;
+            _requirePostFinishStopBeforeExit = false;
             _currentRoad.Surface = _track.InitialSurface;
             _lastRoadTypeAtPosition = TrackType.Straight;
             _hasLastRoadTypeAtPosition = false;
@@ -65,6 +67,7 @@ namespace TopSpeed.Race
             _car.Quiet();
             _car.Stop();
             _raceTime = (int)(_stopwatch.ElapsedMilliseconds - _stopwatchDiffMs);
+            _requirePostFinishStopBeforeExit = true;
         }
 
         protected void PauseCore(Action? pauseExtras = null)
@@ -94,6 +97,16 @@ namespace TopSpeed.Race
             _exitWhenQueueIdle = true;
         }
 
+        protected void SetResultSummary(RaceResultSummary summary)
+        {
+            _pendingResultSummary = summary;
+        }
+
+        protected virtual bool AreVehiclesSettledForExit()
+        {
+            return _car.Speed <= PostFinishStopSpeedKph;
+        }
+
         protected void ScheduleDefaultStartSequence(float raceStartDelaySeconds = DefaultRaceStartDelaySeconds)
         {
             PushEvent(Events.RaceEventType.CarStart, DefaultCarStartDelaySeconds);
@@ -104,6 +117,8 @@ namespace TopSpeed.Race
         protected bool UpdateExitWhenQueueIdle()
         {
             if (!_exitWhenQueueIdle)
+                return false;
+            if (_requirePostFinishStopBeforeExit && !AreVehiclesSettledForExit())
                 return false;
             if (!_soundQueue.IsIdle)
                 return false;

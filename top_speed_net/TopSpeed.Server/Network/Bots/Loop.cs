@@ -45,9 +45,6 @@ namespace TopSpeed.Server.Network
 
                     SimulateBotRaceStep(room, bot, roadModel, raceDistance, deltaSeconds);
                 }
-
-                if (CountActiveRaceParticipants(room) == 0)
-                    StopRace(room);
             }
         }
 

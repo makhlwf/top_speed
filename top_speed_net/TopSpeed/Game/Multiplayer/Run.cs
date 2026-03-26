@@ -25,7 +25,7 @@ namespace TopSpeed.Game
             _multiplayerRace.Run(elapsed);
             if (_multiplayerRace.WantsExit)
             {
-                EndMultiplayerRace();
+                EndMultiplayerRace(_multiplayerRace.ConsumeResultSummary());
                 return;
             }
 
@@ -86,12 +86,13 @@ namespace TopSpeed.Game
                 _input.VibrationDevice,
                 _session,
                 _session.PlayerId,
-                _session.PlayerNumber);
+                _session.PlayerNumber,
+                number => _multiplayerCoordinator.ResolvePlayerName(number));
             _multiplayerRace.Initialize();
             _state = AppState.MultiplayerRace;
         }
 
-        private void EndMultiplayerRace()
+        private void EndMultiplayerRace(RaceResultSummary? resultSummary = null)
         {
             _multiplayerRace?.FinalizeMultiplayerMode();
             _multiplayerRace?.Dispose();
@@ -103,12 +104,16 @@ namespace TopSpeed.Game
                 TrySendSession(_session.SendPlayerState(PlayerState.NotReady), "not-ready state");
                 _state = AppState.Menu;
                 _multiplayerCoordinator.ShowMultiplayerMenuAfterRace();
+                if (resultSummary != null)
+                    ShowRaceResultDialog(resultSummary);
             }
             else
             {
                 _state = AppState.Menu;
                 _menu.ShowRoot("main");
                 _menu.FadeInMenuMusic();
+                if (resultSummary != null)
+                    ShowRaceResultDialog(resultSummary);
             }
         }
     }

@@ -93,10 +93,17 @@ namespace TopSpeed.Network
             reader.ReadByte();
             reader.ReadByte();
             var count = reader.ReadByte();
-            var max = Math.Min(count, (byte)Math.Max(0, data.Length - 3));
-            var results = new byte[max];
+            var availableEntries = Math.Max(0, (data.Length - 3) / 5);
+            var max = Math.Min(count, (byte)availableEntries);
+            var results = new PacketRaceResultEntry[max];
             for (var i = 0; i < max; i++)
-                results[i] = reader.ReadByte();
+            {
+                results[i] = new PacketRaceResultEntry
+                {
+                    PlayerNumber = reader.ReadByte(),
+                    TimeMs = reader.ReadInt32()
+                };
+            }
             packet.Results = results;
             packet.NPlayers = max;
             return true;

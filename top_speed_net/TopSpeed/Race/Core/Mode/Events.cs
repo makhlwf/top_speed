@@ -83,8 +83,7 @@ namespace TopSpeed.Race
 
         protected virtual void OnRaceFinishEvent()
         {
-            AppendDefaultRaceFinishAnnouncement();
-            PushEvent(RaceEventType.RaceTimeFinalize, _sayTimeLength);
+            PushEvent(RaceEventType.RaceTimeFinalize, 0f);
         }
 
         protected virtual void OnRaceTimeFinalizeEvent()

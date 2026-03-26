@@ -20,6 +20,8 @@ namespace TopSpeed.Race
         private readonly AudioSourceHandle?[] _soundPosition;
         private readonly AudioSourceHandle?[] _soundPlayerNr;
         private readonly AudioSourceHandle?[] _soundFinished;
+        private readonly Dictionary<int, int> _finishTimesMs;
+        private readonly List<int> _finishOrder;
 
         private AudioSourceHandle? _soundYouAre;
         private AudioSourceHandle? _soundPlayer;
@@ -58,6 +60,8 @@ namespace TopSpeed.Race
             _soundPosition = new AudioSourceHandle?[MaxPlayers];
             _soundPlayerNr = new AudioSourceHandle?[MaxPlayers];
             _soundFinished = new AudioSourceHandle?[MaxPlayers];
+            _finishTimesMs = new Dictionary<int, int>(MaxPlayers);
+            _finishOrder = new List<int>(MaxPlayers);
         }
 
         public void Initialize(int playerNumber)
@@ -69,6 +73,8 @@ namespace TopSpeed.Race
             _raceStartDelay = DefaultRaceStartDelaySeconds;
             _botsScheduled = false;
             _activeBumpPairs.Clear();
+            _finishTimesMs.Clear();
+            _finishOrder.Clear();
 
             for (var i = 0; i < _nComputerPlayers; i++)
             {

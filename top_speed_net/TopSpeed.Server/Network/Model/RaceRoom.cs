@@ -37,6 +37,10 @@ namespace TopSpeed.Server.Network
         public string TrackName { get; set; }
         public byte Laps { get; set; }
         public List<byte> RaceResults { get; } = new List<byte>();
+        public Dictionary<byte, int> RaceFinishTimesMs { get; } = new Dictionary<byte, int>();
+        public DateTime RaceStartedUtc { get; set; }
+        public bool RaceStopPending { get; set; }
+        public float RaceStopDelaySeconds { get; set; }
         public HashSet<ulong> ActiveBumpPairs { get; } = new HashSet<ulong>();
         public Dictionary<uint, MediaBlob> MediaMap { get; } = new Dictionary<uint, MediaBlob>();
         public uint RaceSnapshotSequence { get; set; }

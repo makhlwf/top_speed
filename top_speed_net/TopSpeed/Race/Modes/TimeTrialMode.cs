@@ -2,6 +2,7 @@ using System;
 using TopSpeed.Common;
 using TopSpeed.Audio;
 using TopSpeed.Input;
+using TopSpeed.Localization;
 using TopSpeed.Race.Events;
 using TopSpeed.Race.TimeTrial;
 using TopSpeed.Speech;
@@ -67,22 +68,22 @@ namespace TopSpeed.Race
 
         protected override void OnRaceFinishEvent()
         {
-            AppendDefaultRaceFinishAnnouncement();
             _highscore = _scores.Read(_track.TrackName, _nrOfLaps);
-            if ((_raceTime < _highscore) || (_highscore == 0))
-            {
+            var beatRecord = (_raceTime < _highscore) || (_highscore == 0);
+            if (beatRecord)
                 _scores.Write(_track.TrackName, _nrOfLaps, _raceTime);
-                PushEvent(RaceEventType.PlaySound, _sayTimeLength, _soundNewTime);
-                _sayTimeLength += _soundNewTime.GetLengthSeconds();
-            }
-            else
-            {
-                PushEvent(RaceEventType.PlaySound, _sayTimeLength, _soundBestTime);
-                _sayTimeLength += _soundBestTime.GetLengthSeconds() + 0.5f;
-                SayTime(_highscore);
-            }
 
-            PushEvent(RaceEventType.RaceTimeFinalize, _sayTimeLength);
+            SetResultSummary(new RaceResultSummary
+            {
+                Mode = RaceResultMode.TimeTrial,
+                IsMultiplayer = false,
+                LocalPosition = 1,
+                TimeTrialBeatRecord = beatRecord,
+                TimeTrialCurrentTimeMs = _raceTime,
+                TimeTrialPreviousBestTimeMs = beatRecord ? 0 : _highscore,
+                Entries = Array.Empty<RaceResultEntry>()
+            });
+            PushEvent(RaceEventType.RaceTimeFinalize, 0f);
         }
 
         protected override void OnRaceTimeFinalizeEvent()

@@ -105,7 +105,13 @@ namespace TopSpeed.Protocol
     public sealed class PacketRaceResults
     {
         public byte NPlayers;
-        public byte[] Results = Array.Empty<byte>();
+        public PacketRaceResultEntry[] Results = Array.Empty<PacketRaceResultEntry>();
+    }
+
+    public sealed class PacketRaceResultEntry
+    {
+        public byte PlayerNumber;
+        public int TimeMs;
     }
 
     public sealed class PacketServerInfo

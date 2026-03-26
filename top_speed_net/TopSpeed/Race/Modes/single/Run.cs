@@ -20,6 +20,7 @@ namespace TopSpeed.Race
                 {
                     bot.Stop();
                     bot.SetFinished(true);
+                    RecordFinish(bot.PlayerNumber, ReadCurrentRaceTimeMs());
                     AnnounceFinishOrder(_soundPlayerNr, _soundFinished, bot.PlayerNumber, ref _positionFinish);
                     if (CheckFinish())
                         PushEvent(RaceEventType.RaceFinish, 1.0f + _speakTime - _elapsedTotal);
@@ -30,6 +31,7 @@ namespace TopSpeed.Race
             HandlePlayerLapProgress(
                 onPlayerFinished: () =>
                 {
+                    RecordFinish(_playerNumber, _raceTime);
                     AnnounceFinishOrder(_soundPlayerNr, _soundFinished, _playerNumber, ref _positionFinish);
                     if (CheckFinish())
                         PushEvent(RaceEventType.RaceFinish, 1.0f + _speakTime - _elapsedTotal);

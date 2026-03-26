@@ -64,14 +64,17 @@ namespace TopSpeed.Server.Protocol
         public static byte[] WriteRaceResults(PacketRaceResults results)
         {
             var count = Math.Min(results.Results.Length, ProtocolConstants.MaxPlayers);
-            var payload = 1 + count;
+            var payload = 1 + (count * 5);
             var buffer = WritePacketHeader(Command.StopRace, payload);
             var writer = new PacketWriter(buffer);
             writer.WriteByte(ProtocolConstants.Version);
             writer.WriteByte((byte)Command.StopRace);
             writer.WriteByte((byte)count);
             for (var i = 0; i < count; i++)
-                writer.WriteByte(results.Results[i]);
+            {
+                writer.WriteByte(results.Results[i].PlayerNumber);
+                writer.WriteInt32(results.Results[i].TimeMs);
+            }
             return buffer;
         }
     }

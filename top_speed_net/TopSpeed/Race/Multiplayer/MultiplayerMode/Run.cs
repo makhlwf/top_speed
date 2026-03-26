@@ -1,7 +1,6 @@
 using TopSpeed.Data;
 using TopSpeed.Localization;
 using TopSpeed.Protocol;
-using TopSpeed.Race.Events;
 using TopSpeed.Vehicles;
 
 namespace TopSpeed.Race
@@ -20,6 +19,11 @@ namespace TopSpeed.Race
                 foreach (var remote in _remotePlayers.Values)
                     remote.Player.UpdateRemoteAudio(_car.PositionX, _car.PositionY, spatialTrackLength, elapsed);
             });
+            if (_serverStopReceived)
+            {
+                foreach (var remote in _remotePlayers.Values)
+                    remote.Player.Run(elapsed, _car.PositionX, _car.PositionY);
+            }
             DrainRemoteLiveFrames();
 
             if (_started
@@ -43,7 +47,6 @@ namespace TopSpeed.Race
                         TrySendRace(_session.SendPlayerFinished());
                         TrySendRace(_session.SendPlayerState(_currentState));
                     }
-                    PushEvent(RaceEventType.RaceFinish, 1.0f + _speakTime - _elapsedTotal);
                 });
 
             HandleCoreRaceMetricsRequests(includeFinishedRaceTime: true);

@@ -32,8 +32,11 @@ namespace TopSpeed.Server.Network
             }
 
             player.State = PlayerState.Finished;
-            if (!room.RaceResults.Contains(player.PlayerNumber))
-                room.RaceResults.Add(player.PlayerNumber);
+            var raceDistance = GetRaceDistance(room);
+            if (raceDistance > 0f && player.PositionY < raceDistance)
+                player.PositionY = raceDistance;
+
+            RecordRaceFinish(room, player.PlayerNumber, CaptureFinishTimeMs(room));
 
             SendToRoomExceptOnStream(room, player.Id, PacketSerializer.WritePlayer(Command.PlayerFinished, player.Id, player.PlayerNumber), PacketStream.RaceEvent);
             _logger.Debug(LocalizationService.Format(
@@ -42,8 +45,7 @@ namespace TopSpeed.Server.Network
                 player.Id,
                 player.PlayerNumber,
                 room.RaceResults.Count));
-            if (CountActiveRaceParticipants(room) == 0)
-                StopRace(room);
+            UpdateRaceStopState(room, 0f);
         }
 
         private void HandlePlayerCrashed(PlayerConnection player, PacketPlayer crashed)

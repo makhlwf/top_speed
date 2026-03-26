@@ -1,3 +1,4 @@
+using System;
 using TopSpeed.Audio;
 using TopSpeed.Data;
 using TopSpeed.Input;
@@ -37,7 +38,8 @@ namespace TopSpeed.Game
             IVibrationDevice? vibrationDevice,
             MultiplayerSession session,
             uint playerId,
-            byte playerNumber);
+            byte playerNumber,
+            Func<byte, string> resolvePlayerName);
     }
 
     internal sealed class RaceModeFactory : IRaceModeFactory
@@ -111,7 +113,8 @@ namespace TopSpeed.Game
             IVibrationDevice? vibrationDevice,
             MultiplayerSession session,
             uint playerId,
-            byte playerNumber)
+            byte playerNumber,
+            Func<byte, string> resolvePlayerName)
         {
             return new MultiplayerMode(
                 _audio,
@@ -127,7 +130,8 @@ namespace TopSpeed.Game
                 vibrationDevice,
                 session,
                 playerId,
-                playerNumber);
+                playerNumber,
+                resolvePlayerName);
         }
     }
 }
