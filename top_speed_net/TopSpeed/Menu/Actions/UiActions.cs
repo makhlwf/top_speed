@@ -11,3 +11,4 @@ namespace TopSpeed.Menu
         void SpeakNotImplemented();
     }
 }
+

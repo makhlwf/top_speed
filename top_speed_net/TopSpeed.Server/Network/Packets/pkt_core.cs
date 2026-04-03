@@ -51,7 +51,7 @@ namespace TopSpeed.Server.Network
             _players[playerId] = player;
             _endpointIndex[key] = playerId;
 
-            _logger.Info(LocalizationService.Format(
+            _logger.Debug(LocalizationService.Format(
                 LocalizationService.Mark("Connection pending protocol negotiation: playerId={0}, endpoint={1}."),
                 player.Id,
                 endpoint));

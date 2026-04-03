@@ -13,3 +13,4 @@ namespace TopSpeed.Race.Multiplayer
         public bool IsComplete => Data.Length > 0 && Offset >= Data.Length;
     }
 }
+

@@ -14,3 +14,4 @@ namespace TopSpeed.Menu
         void UpdateSetting(Action update);
     }
 }
+

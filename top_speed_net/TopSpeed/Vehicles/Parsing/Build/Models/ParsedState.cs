@@ -12,6 +12,8 @@ namespace TopSpeed.Vehicles.Parsing
             public Section General { get; set; } = null!;
             public Section Engine { get; set; } = null!;
             public Section Torque { get; set; } = null!;
+            public Section EngineRot { get; set; } = null!;
+            public Section Resistance { get; set; } = null!;
             public Section TorqueCurve { get; set; } = null!;
             public Section Transmission { get; set; } = null!;
             public Section? TransmissionAtc { get; set; }
@@ -35,6 +37,7 @@ namespace TopSpeed.Vehicles.Parsing
 
             public string EngineSound { get; set; } = string.Empty;
             public string StartSound { get; set; } = string.Empty;
+            public string? StopSound { get; set; }
             public string HornSound { get; set; } = string.Empty;
             public string? ThrottleSound { get; set; }
             public IReadOnlyList<string> CrashVariants { get; set; } = Array.Empty<string>();
@@ -65,10 +68,13 @@ namespace TopSpeed.Vehicles.Parsing
             public float EngineBraking { get; set; }
             public float MassKg { get; set; }
             public float DrivetrainEfficiency { get; set; }
+            public float LaunchRpm { get; set; }
+
             public float DragCoefficient { get; set; }
             public float FrontalArea { get; set; }
             public float RollingResistance { get; set; }
-            public float LaunchRpm { get; set; }
+            public float CoastDragBaseMps2 { get; set; } = -1f;
+            public float CoastDragLinearPerMps { get; set; } = -1f;
 
             public float EngineBrakingTorque { get; set; }
             public float PeakTorque { get; set; }
@@ -77,8 +83,17 @@ namespace TopSpeed.Vehicles.Parsing
             public float RedlineTorque { get; set; }
             public float PowerFactor { get; set; }
             public float EngineInertiaKgm2 { get; set; }
-            public float EngineFrictionTorqueNm { get; set; }
+            public float EngineFrictionBaseNm { get; set; }
+            public float EngineFrictionLinearNmPerKrpm { get; set; } = -1f;
+            public float EngineFrictionQuadraticNmPerKrpm2 { get; set; } = -1f;
             public float DrivelineCouplingRate { get; set; }
+            public float IdleControlWindowRpm { get; set; } = -1f;
+            public float IdleControlGainNmPerRpm { get; set; } = -1f;
+            public float MinCoupledRiseIdleRpmPerSecond { get; set; } = -1f;
+            public float MinCoupledRiseFullRpmPerSecond { get; set; } = -1f;
+            public float EngineOverrunIdleLossFraction { get; set; } = -1f;
+            public float OverrunCurveExponent { get; set; } = -1f;
+            public float EngineBrakeTransferEfficiency { get; set; } = -1f;
 
             public float FinalDrive { get; set; }
             public float ReverseMaxSpeed { get; set; }
@@ -119,3 +134,4 @@ namespace TopSpeed.Vehicles.Parsing
         }
     }
 }
+

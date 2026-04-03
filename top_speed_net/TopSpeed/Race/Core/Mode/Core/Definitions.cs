@@ -8,6 +8,7 @@ using TopSpeed.Input;
 using TopSpeed.Race.Events;
 using TopSpeed.Race.Panels;
 using TopSpeed.Race.Runtime;
+using TopSpeed.Runtime;
 using TopSpeed.Speech;
 using TopSpeed.Tracks;
 using TopSpeed.Vehicles;
@@ -57,6 +58,7 @@ namespace TopSpeed.Race
         protected readonly RaceSettings _settings;
         protected readonly RaceInput _input;
         protected readonly IVibrationDevice? _vibrationDevice;
+        protected readonly IFileDialogs _fileDialogs;
         protected readonly Track _track;
         protected readonly ICar _car;
         protected readonly List<RaceEvent> _events;
@@ -64,7 +66,7 @@ namespace TopSpeed.Race
         protected readonly AudioSourceHandle[] _soundNumbers;
         protected readonly AudioSourceHandle?[][] _randomSounds;
         protected readonly int[] _totalRandomSounds;
-        private static readonly ICarController FinishLockController = new FixedIntentCarController(CarControlIntent.Neutral);
+        private readonly ICarController _finishLockController;
         private readonly SoundQueue _soundQueue;
         private readonly List<RaceEvent> _dueEvents;
         private readonly VehicleRadioController _localRadio;
@@ -119,4 +121,6 @@ namespace TopSpeed.Race
         private bool _requirePostFinishStopBeforeExit;
     }
 }
+
+
 

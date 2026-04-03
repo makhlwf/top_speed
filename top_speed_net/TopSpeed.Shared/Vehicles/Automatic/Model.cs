@@ -67,7 +67,13 @@ namespace TopSpeed.Vehicles
             if (shifting)
                 return Clamp01(tuning.ShiftReleaseCoupling);
 
-            var launchTarget = Lerp(tuning.LaunchCouplingMin, tuning.LaunchCouplingMax, throttle);
+            var launchBaseTarget = Lerp(tuning.LaunchCouplingMin, tuning.LaunchCouplingMax, throttle);
+            // Under higher throttle, the converter should stay looser at launch to avoid
+            // pulling engine RPM down before vehicle speed has built.
+            var throttleSlipBias = 0.22f * throttle;
+            var launchTarget = launchBaseTarget - throttleSlipBias;
+            var launchTargetFloor = Math.Max(0f, tuning.LaunchCouplingMin * 0.60f);
+            launchTarget = Clamp(launchTarget, launchTargetFloor, tuning.LaunchCouplingMax);
             var cruiseTarget = 0.82f + (0.14f * throttle);
             var launchHoldSpeedKph = Lerp(LaunchTransitionSpeedMinKph, LaunchTransitionSpeedMaxKph, throttle);
             if (speedKph <= launchHoldSpeedKph)

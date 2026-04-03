@@ -23,6 +23,14 @@ namespace TopSpeed.Server.Network
         private readonly object _lock = new object();
         private readonly UdpServerTransport _transport;
         private readonly ServerPktReg _pktReg;
+        private readonly Session _session;
+        private readonly Runtime _runtime;
+        private readonly Room _room;
+        private readonly Race _race;
+        private readonly Media _media;
+        private readonly Live _live;
+        private readonly Chat _chat;
+        private readonly Notify _notify;
         private readonly Dictionary<uint, PlayerConnection> _players = new Dictionary<uint, PlayerConnection>();
         private readonly Dictionary<string, uint> _endpointIndex = new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<uint, RaceRoom> _rooms = new Dictionary<uint, RaceRoom>();
@@ -39,7 +47,6 @@ namespace TopSpeed.Server.Network
         private int _authorityDropsPlayerState;
         private int _authorityDropsPlayerData;
         private int _authorityDropsPlayerStarted;
-        private int _authorityDropsPlayerFinished;
         private int _authorityDropsPlayerCrashed;
         private int _joinDeniedRaceInProgress;
         private int _roomMutationDenied;
@@ -61,6 +68,14 @@ namespace TopSpeed.Server.Network
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _transport = new UdpServerTransport(_logger);
             _pktReg = new ServerPktReg();
+            _session = new Session(this);
+            _runtime = new Runtime(this);
+            _room = new Room(this);
+            _race = new Race(this);
+            _media = new Media(this);
+            _live = new Live(this);
+            _chat = new Chat(this);
+            _notify = new Notify(this);
             RegisterPackets();
             _transport.PacketReceived += OnPacket;
             _transport.PeerDisconnected += OnPeerDisconnected;

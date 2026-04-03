@@ -98,7 +98,7 @@ namespace TopSpeed.Race
 
         private int CalculatePlayerPerc(int player)
         {
-            if (player == _playerNumber)
+            if (player == LocalPlayerNumber)
                 return ClampPercent(_car.PositionY);
 
             var targetNumber = (byte)player;
@@ -132,7 +132,7 @@ namespace TopSpeed.Race
             var raceDistance = GetRaceDistance();
             if (raceDistance <= 0f)
                 return _track.Length;
-            return raceDistance * 2f;
+            return raceDistance;
         }
 
         private float GetRelativeRaceDelta(float otherPositionY)
@@ -142,7 +142,7 @@ namespace TopSpeed.Race
 
         private string GetVehicleNameForPlayer(int playerIndex)
         {
-            if (playerIndex == _playerNumber)
+            if (playerIndex == LocalPlayerNumber)
             {
                 if (_car.UserDefined && !string.IsNullOrWhiteSpace(_car.CustomFile))
                     return FormatVehicleName(_car.CustomFile);
@@ -158,7 +158,7 @@ namespace TopSpeed.Race
 
         private bool HasPlayerInRace(int playerIndex)
         {
-            if (playerIndex == _playerNumber)
+            if (playerIndex == LocalPlayerNumber)
                 return true;
 
             if (playerIndex < 0 || playerIndex >= MaxPlayers)
@@ -168,4 +168,5 @@ namespace TopSpeed.Race
         }
     }
 }
+
 

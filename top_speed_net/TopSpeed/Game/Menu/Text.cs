@@ -1,6 +1,6 @@
 using System;
+using TopSpeed.Runtime;
 using TopSpeed.Speech;
-using TopSpeed.Windowing;
 
 namespace TopSpeed.Game
 {
@@ -28,7 +28,7 @@ namespace TopSpeed.Game
             _textInputPromptActive = true;
             _textInputPromptCallback = onCompleted;
             _input.Suspend();
-            _window.ShowTextInput(initialValue);
+            _textInput.ShowTextInput(initialValue);
         }
 
         private void UpdateTextInputPrompt()
@@ -36,7 +36,7 @@ namespace TopSpeed.Game
             if (!_textInputPromptActive)
                 return;
 
-            if (!_window.TryConsumeTextInput(out var result))
+            if (!_textInput.TryConsumeTextInput(out var result))
                 return;
 
             var callback = _textInputPromptCallback;
@@ -47,3 +47,4 @@ namespace TopSpeed.Game
         }
     }
 }
+

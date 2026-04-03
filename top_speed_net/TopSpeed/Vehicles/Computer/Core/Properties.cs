@@ -15,3 +15,4 @@ namespace TopSpeed.Vehicles
         public float MassKg => _massKg;
     }
 }
+

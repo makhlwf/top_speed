@@ -27,3 +27,4 @@ namespace TopSpeed.Race
         public bool IsLocalPlayer { get; set; }
     }
 }
+

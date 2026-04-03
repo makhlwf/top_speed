@@ -108,3 +108,4 @@ namespace TopSpeed.Race.Multiplayer
         public long ReceivedUtcTicks { get; }
     }
 }
+

@@ -20,12 +20,12 @@ namespace TopSpeed.Core.Multiplayer
                 return;
             }
 
-            if (_state.Rooms.IsOnlinePlayersOpenPending)
+            if (_state.RoomDrafts.IsOnlinePlayersOpenPending)
                 return;
 
-            _state.Rooms.IsOnlinePlayersOpenPending = true;
+            _state.RoomDrafts.IsOnlinePlayersOpenPending = true;
             if (!TrySend(session.SendOnlinePlayersRequest(), "online players request"))
-                _state.Rooms.IsOnlinePlayersOpenPending = false;
+                _state.RoomDrafts.IsOnlinePlayersOpenPending = false;
         }
 
         private void RebuildOnlinePlayersMenu()
@@ -70,6 +70,8 @@ namespace TopSpeed.Core.Multiplayer
         }
     }
 }
+
+
 
 
 

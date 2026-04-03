@@ -1,171 +1,91 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
-using SharpDX.DirectInput;
-using TopSpeed.Input.Devices.Joystick;
-using TopSpeed.Input.Devices.Vibration;
 using TopSpeed.Input.Devices.Controller;
+using TopSpeed.Input.Devices.Keyboard;
+using TopSpeed.Input.Devices.Vibration;
+using TopSpeed.Runtime;
 
 namespace TopSpeed.Input
 {
-    internal sealed partial class InputManager : IGameInput
+    internal sealed partial class InputService : IInputService
     {
-        private const int JoystickRescanIntervalMs = 1000;
-        private const int JoystickScanTimeoutMs = 5000;
         private const int MenuBackThreshold = 50;
 
-        private readonly DirectInput _directInput;
-        private readonly Keyboard _keyboard;
-        private readonly GamepadDevice _gamepad;
-        private JoystickDevice? _joystick;
+        private readonly IKeyboardDevice _keyboardBackend;
+        private readonly IControllerBackend _controllerBackend;
         private readonly InputState _current;
         private readonly InputState _previous;
         private readonly bool[] _keyLatch;
-        private readonly IntPtr _windowHandle;
-        private int _lastJoystickScan;
         private bool _suspended;
         private bool _menuBackLatched;
-        private readonly object _hidLock = new object();
-        private readonly object _hidScanLock = new object();
-        private Thread? _hidScanThread;
-        private CancellationTokenSource? _hidScanCts;
-        private bool _joystickEnabled;
-        private List<JoystickChoice>? _pendingJoystickChoices;
-        private bool _activeJoystickIsRacingWheel;
         private bool _disposed;
 
         public InputState Current => _current;
-        public bool IgnoreJoystickAxesForMenuNavigation => _joystickEnabled && !_gamepad.IsAvailable && _activeJoystickIsRacingWheel;
-        public bool ActiveJoystickIsRacingWheel => _joystickEnabled && !_gamepad.IsAvailable && _activeJoystickIsRacingWheel;
+        public bool IgnoreControllerAxesForMenuNavigation => _controllerBackend.IgnoreAxesForMenuNavigation;
+        public bool ActiveControllerIsRacingWheel => _controllerBackend.ActiveControllerIsRacingWheel;
+        public IVibrationDevice? VibrationDevice => _controllerBackend.VibrationDevice;
 
-        public event Action? JoystickScanTimedOut;
+        public event Action? ControllerScanTimedOut;
 
-        public InputManager(IntPtr windowHandle)
+        internal InputService(IntPtr windowHandle, IBackendRegistry backendRegistry, IKeyboardEventSource? keyboardEventSource = null)
         {
-            _windowHandle = windowHandle;
-            _directInput = new DirectInput();
-            _keyboard = new Keyboard(_directInput);
-            _keyboard.Properties.BufferSize = 128;
-            _keyboard.SetCooperativeLevel(windowHandle, CooperativeLevel.Foreground | CooperativeLevel.NonExclusive);
-            _gamepad = new GamepadDevice();
+            if (backendRegistry == null)
+                throw new ArgumentNullException(nameof(backendRegistry));
+
+            IKeyboardDevice? keyboardBackend = null;
+            IControllerBackend? controllerBackend = null;
+            try
+            {
+                keyboardBackend = backendRegistry.CreateKeyboard(windowHandle, keyboardEventSource);
+                controllerBackend = backendRegistry.CreateController(windowHandle);
+                _keyboardBackend = keyboardBackend;
+                _controllerBackend = controllerBackend;
+            }
+            catch
+            {
+                keyboardBackend?.Dispose();
+                controllerBackend?.Dispose();
+                throw;
+            }
+
             _current = new InputState();
             _previous = new InputState();
             _keyLatch = new bool[256];
-            TryAcquire();
+            _controllerBackend.ScanTimedOut += OnControllerScanTimedOut;
         }
 
-        public bool IsDown(Key key) => _current.IsDown(key);
+        internal InputService(IKeyboardDevice keyboardBackend, IControllerBackend controllerBackend)
+        {
+            _keyboardBackend = keyboardBackend ?? throw new ArgumentNullException(nameof(keyboardBackend));
+            _controllerBackend = controllerBackend ?? throw new ArgumentNullException(nameof(controllerBackend));
+            _current = new InputState();
+            _previous = new InputState();
+            _keyLatch = new bool[256];
+            _controllerBackend.ScanTimedOut += OnControllerScanTimedOut;
+        }
 
-        public IVibrationDevice? VibrationDevice => _gamepad.IsAvailable
-            ? (_joystickEnabled ? _gamepad : null)
-            : (_joystickEnabled ? GetJoystickDevice() : null);
+        public bool IsDown(InputKey key) => _current.IsDown(key);
 
         public void SetDeviceMode(InputDeviceMode mode)
         {
-            var enableJoystick = mode != InputDeviceMode.Keyboard;
-            if (enableJoystick == _joystickEnabled)
-                return;
-
-            _joystickEnabled = enableJoystick;
-            if (!_joystickEnabled)
-            {
-                StopHidScan();
-                lock (_hidLock)
-                {
-                    _pendingJoystickChoices = null;
-                }
-                ClearJoystickDevice();
-                return;
-            }
-
-            if (_gamepad.IsAvailable)
-            {
-                lock (_hidLock)
-                {
-                    _pendingJoystickChoices = null;
-                    _activeJoystickIsRacingWheel = false;
-                }
-                return;
-            }
-
-            if (GetJoystickDevice() == null)
-                StartHidScan();
+            var enableController = mode != InputDeviceMode.Keyboard;
+            _controllerBackend.SetEnabled(enableController);
         }
 
-        private JoystickDevice? GetJoystickDevice()
+        public bool TryGetPendingControllerChoices(out IReadOnlyList<Choice> choices)
         {
-            lock (_hidLock)
-            {
-                return _joystick != null && _joystick.IsAvailable ? _joystick : null;
-            }
+            return _controllerBackend.TryGetPendingChoices(out choices);
         }
 
-        public bool TryGetPendingJoystickChoices(out IReadOnlyList<JoystickChoice> choices)
+        public bool TrySelectController(Guid instanceGuid)
         {
-            lock (_hidLock)
-            {
-                if (_pendingJoystickChoices == null || _pendingJoystickChoices.Count == 0)
-                {
-                    choices = Array.Empty<JoystickChoice>();
-                    return false;
-                }
-
-                choices = _pendingJoystickChoices.ToArray();
-                return true;
-            }
+            return _controllerBackend.TrySelect(instanceGuid);
         }
 
-        public bool TrySelectJoystick(Guid instanceGuid)
+        private void OnControllerScanTimedOut()
         {
-            if (instanceGuid == Guid.Empty)
-                return false;
-
-            List<JoystickChoice>? pendingChoices;
-            lock (_hidLock)
-            {
-                pendingChoices = _pendingJoystickChoices == null
-                    ? null
-                    : new List<JoystickChoice>(_pendingJoystickChoices);
-            }
-
-            JoystickChoice? selected = null;
-            if (pendingChoices != null)
-            {
-                for (var i = 0; i < pendingChoices.Count; i++)
-                {
-                    if (pendingChoices[i].InstanceGuid == instanceGuid)
-                    {
-                        selected = pendingChoices[i];
-                        break;
-                    }
-                }
-            }
-
-            if (selected == null)
-            {
-                var discovered = JoystickDevice.Discover(_directInput);
-                for (var i = 0; i < discovered.Count; i++)
-                {
-                    if (discovered[i].InstanceGuid == instanceGuid)
-                    {
-                        selected = discovered[i];
-                        break;
-                    }
-                }
-            }
-
-            if (selected == null)
-                return false;
-
-            if (!TryAttachJoystick(selected))
-                return false;
-
-            lock (_hidLock)
-            {
-                _pendingJoystickChoices = null;
-            }
-            StopHidScan();
-            return true;
+            ControllerScanTimedOut?.Invoke();
         }
     }
 }
+

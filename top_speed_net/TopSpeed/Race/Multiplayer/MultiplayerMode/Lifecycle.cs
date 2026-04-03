@@ -8,8 +8,9 @@ namespace TopSpeed.Race
         public void Initialize()
         {
             InitializeMode();
+            var localPlayerNumber = LocalPlayerNumber;
             _positionFinish = 0;
-            _position = _playerNumber + 1;
+            _position = localPlayerNumber + 1;
             _positionComment = _position;
             _lastComment = 0.0f;
             _infoKeyReleased = true;
@@ -31,8 +32,8 @@ namespace TopSpeed.Race
             _liveTx.Resume();
 
             var rowSpacing = Math.Max(10.0f, _car.LengthM * 1.5f);
-            var positionX = CalculateGridStartX(_playerNumber, _car.WidthM, StartLineY);
-            var positionY = CalculateGridStartY(_playerNumber, rowSpacing, StartLineY);
+            var positionX = CalculateGridStartX(localPlayerNumber, _car.WidthM, StartLineY);
+            var positionY = CalculateGridStartY(localPlayerNumber, rowSpacing, StartLineY);
             _car.SetPosition(positionX, positionY);
 
             LoadPositionSounds(
@@ -42,10 +43,10 @@ namespace TopSpeed.Race
                 MaxPlayers,
                 MaxPlayers);
             LoadRaceUiSounds(out _soundYouAre, out _soundPlayer);
-            SpeakRaceIntro(_soundYouAre, _soundPlayer, _playerNumber + 1);
+            SpeakRaceIntro(_soundYouAre, _soundPlayer, localPlayerNumber + 1);
 
             _currentState = PlayerState.AwaitingStart;
-            TrySendRace(_session.SendPlayerState(_currentState));
+            TrySendRace(_session.SendPlayerState(_raceInstanceId, _currentState));
         }
 
         public void FinalizeMultiplayerMode()
@@ -105,5 +106,6 @@ namespace TopSpeed.Race
         }
     }
 }
+
 
 

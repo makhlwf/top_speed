@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+    <Title>Cross Speak</Title>
+    <Description>A cross platform screen reader interfacing libraray.</Description>
+    <NuspecFile>$(MSBuildProjectName).nuspec</NuspecFile>
+  </PropertyGroup>
+
+  <Target Name="CopyCustomContent" AfterTargets="AfterBuild">
+    <Copy SourceFiles="lib\linux\libspeechdwrapper.so" DestinationFolder="$(OutDir)lib\screen-reader-libs\linux" />
+    <Copy SourceFiles="lib\windows\nvdaControllerClient64.dll" DestinationFolder="$(OutDir)lib\screen-reader-libs\windows" />
+    <Copy SourceFiles="lib\windows\SAAPI64.dll" DestinationFolder="$(OutDir)lib\screen-reader-libs\windows" />
+    <Copy SourceFiles="lib\windows\BoyCtrl-x64.dll" DestinationFolder="$(OutDir)lib\screen-reader-libs\windows" />
+    <Copy SourceFiles="lib\windows\ZDSRAPI_x64.dll" DestinationFolder="$(OutDir)lib\screen-reader-libs\windows" />
+    <Copy SourceFiles="lib\windows\ZDSRAPI.ini" DestinationFolder="$(OutDir)lib\screen-reader-libs\windows" />
+    <Copy SourceFiles="lib\windows\Tolk.dll" DestinationFolder="$(OutDir)lib\screen-reader-libs\windows" />
+    <Copy SourceFiles="lib\macos\libspeak.dylib" DestinationFolder="$(OutDir)lib\screen-reader-libs\macos" />
+  </Target>
+
+</Project>

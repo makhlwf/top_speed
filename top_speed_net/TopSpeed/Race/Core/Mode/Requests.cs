@@ -15,6 +15,8 @@ namespace TopSpeed.Race
             {
                 if (_car.State == CarState.Crashing)
                     return;
+                if (_car.State == CarState.Starting || _car.State == CarState.Stopping)
+                    return;
 
                 if (_car.EngineRunning)
                 {
@@ -185,4 +187,5 @@ namespace TopSpeed.Race
         }
     }
 }
+
 

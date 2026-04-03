@@ -6,8 +6,10 @@ using TopSpeed.Data;
 using TopSpeed.Input;
 using TopSpeed.Race.Events;
 using TopSpeed.Race.Runtime;
+using TopSpeed.Runtime;
 using TopSpeed.Speech;
 using TopSpeed.Tracks;
+using TopSpeed.Vehicles.Control;
 using TS.Audio;
 using TopSpeed.Input.Devices.Vibration;
 
@@ -25,8 +27,9 @@ namespace TopSpeed.Race
             int nrOfLaps,
             int vehicle,
             string? vehicleFile,
-            IVibrationDevice? vibrationDevice)
-            : this(audio, speech, settings, input, track, automaticTransmission, nrOfLaps, vehicle, vehicleFile, vibrationDevice, null, userDefined: false)
+            IVibrationDevice? vibrationDevice,
+            IFileDialogs fileDialogs)
+            : this(audio, speech, settings, input, track, automaticTransmission, nrOfLaps, vehicle, vehicleFile, vibrationDevice, fileDialogs, null, userDefined: false)
         {
         }
 
@@ -41,6 +44,7 @@ namespace TopSpeed.Race
             int vehicle,
             string? vehicleFile,
             IVibrationDevice? vibrationDevice,
+            IFileDialogs fileDialogs,
             TrackData? trackData,
             bool userDefined)
         {
@@ -48,7 +52,9 @@ namespace TopSpeed.Race
             _speech = speech;
             _settings = settings;
             _input = input;
+            _finishLockController = new FinishLockInputController(input);
             _vibrationDevice = vibrationDevice;
+            _fileDialogs = fileDialogs ?? throw new ArgumentNullException(nameof(fileDialogs));
             _events = new List<RaceEvent>();
             _stopwatch = new Stopwatch();
             _soundQueue = new SoundQueue();
@@ -99,4 +105,6 @@ namespace TopSpeed.Race
         }
     }
 }
+
+
 

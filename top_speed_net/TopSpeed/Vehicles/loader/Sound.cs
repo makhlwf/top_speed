@@ -18,7 +18,7 @@ namespace TopSpeed.Vehicles.Loader
             if (File.Exists(primaryPath))
                 return primaryPath;
 
-            if (action == VehicleAction.Backfire || action == VehicleAction.Throttle)
+            if (action == VehicleAction.Backfire || action == VehicleAction.Throttle || action == VehicleAction.Stop)
                 return null;
 
             var fallbackPath = Path.GetFullPath(Path.Combine(root, DefaultVehicleFolder, fileName));
@@ -97,6 +97,7 @@ namespace TopSpeed.Vehicles.Loader
                 case VehicleAction.Crash: return "crash.wav";
                 case VehicleAction.Brake: return "brake.wav";
                 case VehicleAction.Backfire: return "backfire.wav";
+                case VehicleAction.Stop: return "stop.wav";
                 default: throw new ArgumentOutOfRangeException(nameof(action));
             }
         }
@@ -139,3 +140,4 @@ namespace TopSpeed.Vehicles.Loader
         }
     }
 }
+

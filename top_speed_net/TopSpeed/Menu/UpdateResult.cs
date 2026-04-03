@@ -17,3 +17,4 @@ namespace TopSpeed.Menu
         public static MenuUpdateResult Activated(MenuItem item) => new MenuUpdateResult(false, item);
     }
 }
+

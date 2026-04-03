@@ -118,3 +118,4 @@ namespace TopSpeed.Tracks
         public TrackSurface InitialSurface => _definition.Length > 0 ? _definition[0].Surface : TrackSurface.Asphalt;
     }
 }
+

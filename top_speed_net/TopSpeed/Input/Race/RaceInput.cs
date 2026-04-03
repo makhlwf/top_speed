@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using SharpDX.DirectInput;
-using TopSpeed.Input.Devices.Joystick;
+using Key = TopSpeed.Input.InputKey;
+using TopSpeed.Input.Devices.Controller;
 
 namespace TopSpeed.Input
 {
@@ -21,17 +21,17 @@ namespace TopSpeed.Input
 
         private readonly struct InputActionMeta
         {
-            public InputActionMeta(InputScope scope, TriggerMode keyboardMode, TriggerMode joystickMode, bool allowNumpadEnterAlias = false)
+            public InputActionMeta(InputScope scope, TriggerMode keyboardMode, TriggerMode controllerMode, bool allowNumpadEnterAlias = false)
             {
                 Scope = scope;
                 KeyboardMode = keyboardMode;
-                JoystickMode = joystickMode;
+                ControllerMode = controllerMode;
                 AllowNumpadEnterAlias = allowNumpadEnterAlias;
             }
 
             public InputScope Scope { get; }
             public TriggerMode KeyboardMode { get; }
-            public TriggerMode JoystickMode { get; }
+            public TriggerMode ControllerMode { get; }
             public bool AllowNumpadEnterAlias { get; }
         }
 
@@ -42,8 +42,8 @@ namespace TopSpeed.Input
                 InputActionMeta meta,
                 Func<Key> getKey,
                 Action<Key> setKey,
-                Func<JoystickAxisOrButton> getAxis,
-                Action<JoystickAxisOrButton> setAxis)
+                Func<AxisOrButton> getAxis,
+                Action<AxisOrButton> setAxis)
             {
                 Label = label;
                 Meta = meta;
@@ -57,8 +57,8 @@ namespace TopSpeed.Input
             public InputActionMeta Meta { get; }
             public Func<Key> GetKey { get; }
             public Action<Key> SetKey { get; }
-            public Func<JoystickAxisOrButton> GetAxis { get; }
-            public Action<JoystickAxisOrButton> SetAxis { get; }
+            public Func<AxisOrButton> GetAxis { get; }
+            public Action<AxisOrButton> SetAxis { get; }
         }
 
         private readonly RaceSettings _settings;
@@ -66,25 +66,25 @@ namespace TopSpeed.Input
         private readonly InputState _prevState;
         private readonly List<InputActionDefinition> _actionDefinitions;
         private readonly Dictionary<InputAction, InputActionBinding> _actionBindings;
-        private JoystickAxisOrButton _left;
-        private JoystickAxisOrButton _right;
-        private JoystickAxisOrButton _throttle;
-        private JoystickAxisOrButton _brake;
-        private JoystickAxisOrButton _clutch;
-        private JoystickAxisOrButton _gearUp;
-        private JoystickAxisOrButton _gearDown;
-        private JoystickAxisOrButton _horn;
-        private JoystickAxisOrButton _requestInfo;
-        private JoystickAxisOrButton _currentGear;
-        private JoystickAxisOrButton _currentLapNr;
-        private JoystickAxisOrButton _currentRacePerc;
-        private JoystickAxisOrButton _currentLapPerc;
-        private JoystickAxisOrButton _currentRaceTime;
-        private JoystickAxisOrButton _startEngine;
-        private JoystickAxisOrButton _reportDistance;
-        private JoystickAxisOrButton _reportSpeed;
-        private JoystickAxisOrButton _trackName;
-        private JoystickAxisOrButton _pause;
+        private AxisOrButton _left;
+        private AxisOrButton _right;
+        private AxisOrButton _throttle;
+        private AxisOrButton _brake;
+        private AxisOrButton _clutch;
+        private AxisOrButton _gearUp;
+        private AxisOrButton _gearDown;
+        private AxisOrButton _horn;
+        private AxisOrButton _requestInfo;
+        private AxisOrButton _currentGear;
+        private AxisOrButton _currentLapNr;
+        private AxisOrButton _currentRacePerc;
+        private AxisOrButton _currentLapPerc;
+        private AxisOrButton _currentRaceTime;
+        private AxisOrButton _startEngine;
+        private AxisOrButton _reportDistance;
+        private AxisOrButton _reportSpeed;
+        private AxisOrButton _trackName;
+        private AxisOrButton _pause;
         private InputDeviceMode _deviceMode;
         private Key _kbLeft;
         private Key _kbRight;
@@ -123,24 +123,24 @@ namespace TopSpeed.Input
         private Key _kbPlayerPos7;
         private Key _kbPlayerPos8;
         private Key _kbFlush;
-        private JoystickStateSnapshot _center;
-        private JoystickStateSnapshot _lastJoystick;
-        private JoystickStateSnapshot _prevJoystick;
+        private State _center;
+        private State _lastController;
+        private State _prevController;
         private bool _hasCenter;
-        private bool _hasPrevJoystick;
-        private bool _joystickAvailable;
+        private bool _hasPrevController;
+        private bool _controllerAvailable;
         private bool _allowDrivingInput;
         private bool _allowAuxiliaryInput;
         private bool _overlayInputBlocked;
-        private bool _joystickIsRacingWheel;
+        private bool _controllerIsRacingWheel;
         private bool _hasPedalBaseline;
-        private JoystickStateSnapshot _pedalBaseline;
+        private State _pedalBaseline;
         private float _simThrottle;
         private float _simBrake;
         private float _simSteer;
         private float _simClutch;
-        private bool UseJoystick => _deviceMode != InputDeviceMode.Keyboard && _joystickAvailable;
-        private bool UseKeyboard => _deviceMode != InputDeviceMode.Joystick || !_joystickAvailable;
+        private bool UseController => _deviceMode != InputDeviceMode.Keyboard && _controllerAvailable;
+        private bool UseKeyboard => _deviceMode != InputDeviceMode.Controller || !_controllerAvailable;
 
         public KeyMapManager KeyMap { get; }
 
@@ -156,3 +156,5 @@ namespace TopSpeed.Input
         }
     }
 }
+
+

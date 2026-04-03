@@ -35,3 +35,4 @@ namespace TopSpeed.Core.Settings
         }
     }
 }
+

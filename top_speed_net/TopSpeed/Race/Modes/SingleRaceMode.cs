@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TopSpeed.Audio;
 using TopSpeed.Data;
 using TopSpeed.Input;
+using TopSpeed.Runtime;
 using TopSpeed.Speech;
 using TopSpeed.Vehicles;
 using TS.Audio;
@@ -47,8 +48,9 @@ namespace TopSpeed.Race
             int nrOfLaps,
             int vehicle,
             string? vehicleFile,
-            IVibrationDevice? vibrationDevice)
-            : base(audio, speech, settings, input, track, automaticTransmission, nrOfLaps, vehicle, vehicleFile, vibrationDevice)
+            IVibrationDevice? vibrationDevice,
+            IFileDialogs fileDialogs)
+            : base(audio, speech, settings, input, track, automaticTransmission, nrOfLaps, vehicle, vehicleFile, vibrationDevice, fileDialogs)
         {
             _nComputerPlayers = Math.Min(settings.NrOfComputers, MaxComputerPlayers);
             _playerNumber = 1;
@@ -139,5 +141,7 @@ namespace TopSpeed.Race
 
     }
 }
+
+
 
 

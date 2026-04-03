@@ -1,9 +1,17 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+#if NETFRAMEWORK
 using System.Windows.Forms;
+#endif
 using TopSpeed.Game;
 using TopSpeed.Localization;
+using TopSpeed.Runtime;
+#if NETFRAMEWORK
+using TopSpeed.Windowing.WinForms;
+#else
+using TopSpeed.Windowing.Eto;
+#endif
 
 namespace TopSpeed
 {
@@ -12,20 +20,42 @@ namespace TopSpeed
         [STAThread]
         private static void Main()
         {
+#if NETFRAMEWORK
             using var timerResolution = new WindowsTimerResolution(1);
+#endif
+#if NETFRAMEWORK
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
             Application.ThreadException += (_, args) => HandleException(args.Exception);
+#endif
             AppDomain.CurrentDomain.UnhandledException += (_, args) =>
                 HandleException(args.ExceptionObject as Exception ?? new Exception(LocalizationService.Mark("Unknown exception.")));
 
-            using (var app = new GameApp())
+            NativeLibraryBootstrap.Initialize();
+
+#if NETFRAMEWORK
+            var window = new WindowHost();
+            using (var app = new GameApp(
+                       window,
+                       window,
+                       new LoopHost(),
+                       new FileDialogService()))
+#else
+            var window = new WindowHost();
+            var textInput = new TextInputService(window);
+            using (var app = new GameApp(
+                       window,
+                       textInput,
+                       new LoopHost(),
+                       new FileDialogService(window)))
+#endif
             {
                 app.Run();
             }
         }
 
+#if NETFRAMEWORK
         private sealed class WindowsTimerResolution : IDisposable
         {
             private readonly uint _milliseconds;
@@ -65,6 +95,7 @@ namespace TopSpeed
             [DllImport("winmm.dll", EntryPoint = "timeEndPeriod")]
             private static extern uint timeEndPeriod(uint uPeriod);
         }
+#endif
 
         private static void HandleException(Exception exception)
         {
@@ -80,6 +111,7 @@ namespace TopSpeed
                 // Ignore logging failures.
             }
 
+#if NETFRAMEWORK
             try
             {
                 MessageBox.Show(
@@ -94,6 +126,9 @@ namespace TopSpeed
             {
                 // Ignore UI failures.
             }
+#endif
         }
     }
 }
+
+

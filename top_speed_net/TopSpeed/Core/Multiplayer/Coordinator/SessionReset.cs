@@ -1,4 +1,3 @@
-using System;
 using TopSpeed.Input;
 
 namespace TopSpeed.Core.Multiplayer
@@ -15,22 +14,17 @@ namespace TopSpeed.Core.Multiplayer
             _lifetime.CancelAllOperations();
             _lifetime.ResetPing();
             _lifetime.StopNetworkAudio();
-            _state.Rooms.RoomList = new RoomListInfo();
-            _state.Rooms.CurrentRoom = new RoomSnapshot { InRoom = false, Players = Array.Empty<RoomParticipant>() };
-            _state.Rooms.WasInRoom = false;
-            _state.Rooms.WasHost = false;
-            _state.Rooms.LastRoomId = 0;
-            _state.Rooms.IsRoomBrowserOpenPending = false;
-            _state.Rooms.OnlinePlayers = new OnlineListInfo();
-            _state.Rooms.IsOnlinePlayersOpenPending = false;
+            _state.Rooms.Reset();
             ResetCreateRoomDraft();
-            _state.Rooms.PendingLoadoutVehicleIndex = 0;
-            _state.Rooms.RoomOptionsDraftActive = false;
-            _state.Rooms.RoomOptionsTrackName = string.Empty;
-            _state.Rooms.RoomOptionsTrackRandom = false;
-            _state.Rooms.RoomOptionsLaps = 1;
-            _state.Rooms.RoomOptionsPlayersToStart = 2;
-            _state.Rooms.RoomOptionsGameRulesFlags = 0;
+            _state.RoomDrafts.IsRoomBrowserOpenPending = false;
+            _state.RoomDrafts.IsOnlinePlayersOpenPending = false;
+            _state.RoomDrafts.PendingLoadoutVehicleIndex = 0;
+            _state.RoomDrafts.RoomOptionsDraftActive = false;
+            _state.RoomDrafts.RoomOptionsTrackName = string.Empty;
+            _state.RoomDrafts.RoomOptionsTrackRandom = false;
+            _state.RoomDrafts.RoomOptionsLaps = 1;
+            _state.RoomDrafts.RoomOptionsPlayersToStart = 2;
+            _state.RoomDrafts.RoomOptionsGameRulesFlags = 0;
             _state.SavedServers.Draft = new SavedServerEntry();
             _state.SavedServers.Original = null;
             _state.SavedServers.EditIndex = -1;
@@ -54,6 +48,7 @@ namespace TopSpeed.Core.Multiplayer
         }
     }
 }
+
 
 
 

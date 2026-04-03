@@ -39,9 +39,20 @@ namespace TopSpeed.Vehicles.Loader
             def.FrontalAreaM2 = spec.FrontalAreaM2;
             def.RollingResistanceCoefficient = spec.RollingResistanceCoefficient;
             def.LaunchRpm = spec.LaunchRpm;
+            def.CoastDragBaseMps2 = spec.CoastDragBaseMps2;
+            def.CoastDragLinearPerMps = spec.CoastDragLinearPerMps;
             def.EngineInertiaKgm2 = spec.EngineInertiaKgm2;
             def.EngineFrictionTorqueNm = spec.EngineFrictionTorqueNm;
+            def.EngineFrictionLinearNmPerKrpm = spec.EngineFrictionLinearNmPerKrpm;
+            def.EngineFrictionQuadraticNmPerKrpm2 = spec.EngineFrictionQuadraticNmPerKrpm2;
             def.DrivelineCouplingRate = spec.DrivelineCouplingRate;
+            def.IdleControlWindowRpm = spec.IdleControlWindowRpm;
+            def.IdleControlGainNmPerRpm = spec.IdleControlGainNmPerRpm;
+            def.MinCoupledRiseIdleRpmPerSecond = spec.MinCoupledRiseIdleRpmPerSecond;
+            def.MinCoupledRiseFullRpmPerSecond = spec.MinCoupledRiseFullRpmPerSecond;
+            def.EngineOverrunIdleLossFraction = spec.EngineOverrunIdleLossFraction;
+            def.OverrunCurveExponent = spec.OverrunCurveExponent;
+            def.EngineBrakeTransferEfficiency = spec.EngineBrakeTransferEfficiency;
             def.FinalDriveRatio = spec.FinalDriveRatio;
             def.ReverseMaxSpeedKph = spec.ReverseMaxSpeedKph;
             def.ReversePowerFactor = spec.ReversePowerFactor;
@@ -77,3 +88,4 @@ namespace TopSpeed.Vehicles.Loader
         }
     }
 }
+

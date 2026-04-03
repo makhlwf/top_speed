@@ -5,3 +5,4 @@ namespace TopSpeed.Vehicles.Control
         CarControlIntent ReadIntent(in CarControlContext context);
     }
 }
+

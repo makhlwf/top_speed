@@ -36,6 +36,7 @@ namespace TopSpeed.Race
                 _audio,
                 _settings,
                 localRadio,
+                _fileDialogs,
                 NextLocalMediaId,
                 SpeakText,
                 HandleLocalRadioMediaLoaded,
@@ -146,3 +147,4 @@ namespace TopSpeed.Race
         }
     }
 }
+

@@ -1,15 +1,15 @@
 using System;
-using SharpDX.DirectInput;
+using Key = TopSpeed.Input.InputKey;
 using TopSpeed.Input;
-using TopSpeed.Input.Devices.Joystick;
+using TopSpeed.Input.Devices.Controller;
 
 namespace TopSpeed.Menu
 {
     internal static class MenuInputUtil
     {
-        private const int JoystickThreshold = 50;
+        private const int ControllerThreshold = 50;
 
-        public static bool TryGetPressedLetter(IGameInput input, out char letter)
+        public static bool TryGetPressedLetter(IInputService input, out char letter)
         {
             letter = '\0';
             for (var c = 'A'; c <= 'Z'; c++)
@@ -42,40 +42,40 @@ namespace TopSpeed.Menu
             return false;
         }
 
-        public static bool IsNearCenter(JoystickStateSnapshot state, bool useAxes)
+        public static bool IsNearCenter(State state, bool useAxes)
         {
             if (!useAxes)
                 return true;
-            return Math.Abs(state.X) <= JoystickThreshold && Math.Abs(state.Y) <= JoystickThreshold;
+            return Math.Abs(state.X) <= ControllerThreshold && Math.Abs(state.Y) <= ControllerThreshold;
         }
 
-        public static bool WasJoystickUpPressed(JoystickStateSnapshot current, JoystickStateSnapshot previous, bool useAxes)
+        public static bool WasControllerUpPressed(State current, State previous, bool useAxes)
         {
-            var currentUp = (useAxes && current.Y < -JoystickThreshold) || current.Pov1;
-            var previousUp = (useAxes && previous.Y < -JoystickThreshold) || previous.Pov1;
+            var currentUp = (useAxes && current.Y < -ControllerThreshold) || current.Pov1;
+            var previousUp = (useAxes && previous.Y < -ControllerThreshold) || previous.Pov1;
             return currentUp && !previousUp;
         }
 
-        public static bool WasJoystickDownPressed(JoystickStateSnapshot current, JoystickStateSnapshot previous, bool useAxes)
+        public static bool WasControllerDownPressed(State current, State previous, bool useAxes)
         {
-            var currentDown = (useAxes && current.Y > JoystickThreshold) || current.Pov3;
-            var previousDown = (useAxes && previous.Y > JoystickThreshold) || previous.Pov3;
+            var currentDown = (useAxes && current.Y > ControllerThreshold) || current.Pov3;
+            var previousDown = (useAxes && previous.Y > ControllerThreshold) || previous.Pov3;
             return currentDown && !previousDown;
         }
 
-        public static bool WasJoystickActivatePressed(JoystickStateSnapshot current, JoystickStateSnapshot previous, bool useAxes)
+        public static bool WasControllerActivatePressed(State current, State previous, bool useAxes)
         {
-            var currentRight = (useAxes && current.X > JoystickThreshold) || current.Pov2;
-            var previousRight = (useAxes && previous.X > JoystickThreshold) || previous.Pov2;
+            var currentRight = (useAxes && current.X > ControllerThreshold) || current.Pov2;
+            var previousRight = (useAxes && previous.X > ControllerThreshold) || previous.Pov2;
             if (currentRight && !previousRight)
                 return true;
             return current.B1 && !previous.B1;
         }
 
-        public static bool WasJoystickBackPressed(JoystickStateSnapshot current, JoystickStateSnapshot previous, bool useAxes)
+        public static bool WasControllerBackPressed(State current, State previous, bool useAxes)
         {
-            var currentLeft = (useAxes && current.X < -JoystickThreshold) || current.Pov4;
-            var previousLeft = (useAxes && previous.X < -JoystickThreshold) || previous.Pov4;
+            var currentLeft = (useAxes && current.X < -ControllerThreshold) || current.Pov4;
+            var previousLeft = (useAxes && previous.X < -ControllerThreshold) || previous.Pov4;
             return currentLeft && !previousLeft;
         }
 
@@ -114,4 +114,7 @@ namespace TopSpeed.Menu
         }
     }
 }
+
+
+
 

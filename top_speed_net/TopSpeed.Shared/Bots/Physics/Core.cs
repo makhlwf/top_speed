@@ -26,13 +26,7 @@ namespace TopSpeed.Bots
             var surfaceTraction = surface.Traction;
             var surfaceDecel = surface.Deceleration;
 
-            var thrust = 0f;
-            if (input.Throttle == 0)
-                thrust = input.Brake;
-            else if (input.Brake == 0 || -input.Brake <= input.Throttle)
-                thrust = input.Throttle;
-            else
-                thrust = input.Brake;
+            var thrust = LongitudinalStep.ResolveThrust(input.Throttle, input.Brake);
 
             var speedKph = Math.Max(0f, state.SpeedKph);
             var speedMpsCurrent = speedKph / 3.6f;
@@ -78,41 +72,40 @@ namespace TopSpeed.Bots
                 state.EffectiveDriveRatio = 0f;
             }
 
-            if (thrust > 10f)
+            var driveRequested = thrust > 10f;
+            if (driveRequested)
             {
                 var tireOutput = SolveTireModel(config, input.ElapsedSeconds, speedMpsCurrent, steeringInput, surfaceTractionMod, 1f, tireState);
                 longitudinalGripFactor = tireOutput.LongitudinalGripFactor;
-                var accelMps2 = Calculator.DriveAccel(
+            }
+
+            var surfaceDecelMod = surfaceDecel / config.Deceleration;
+            var couplingFactor = automaticFamily ? state.AutomaticCouplingFactor : 1f;
+            var engineRpmEstimate = Calculator.RpmAtSpeed(
+                config.Powertrain,
+                speedMpsCurrent,
+                state.Gear,
+                driveRatioOverride > 0f ? driveRatioOverride : (float?)null);
+            var longitudinalResult = LongitudinalStep.Compute(
+                new LongitudinalStepInput(
                     config.Powertrain,
-                    state.Gear,
+                    input.ElapsedSeconds,
                     speedMpsCurrent,
                     throttle,
+                    brake,
                     surfaceTractionMod,
-                    longitudinalGripFactor,
-                    driveRatioOverride > 0f ? driveRatioOverride : (float?)null);
-                if (automaticFamily)
-                    accelMps2 *= Math.Max(0f, Math.Min(1f, state.AutomaticCouplingFactor));
-                var newSpeedMps = speedMpsCurrent + (accelMps2 * input.ElapsedSeconds);
-                if (newSpeedMps < 0f)
-                    newSpeedMps = 0f;
-                speedDiffKph = (newSpeedMps - speedMpsCurrent) * 3.6f;
-            }
-            else
-            {
-                var surfaceDecelMod = surfaceDecel / config.Deceleration;
-                var brakeInput = Math.Max(0f, Math.Min(100f, -input.Brake)) / 100f;
-                var brakeDecel = CalculateBrakeDecel(config, brakeInput, surfaceDecelMod);
-                var engineBrakeDecel = CalculateEngineBrakingDecel(
-                    config,
-                    state.Gear,
-                    speedMpsCurrent,
                     surfaceDecelMod,
-                    driveRatioOverride > 0f ? driveRatioOverride : (float?)null);
-                var totalDecel = thrust < -10f ? (brakeDecel + engineBrakeDecel) : engineBrakeDecel;
-                speedDiffKph = -totalDecel * input.ElapsedSeconds;
-                if (automaticFamily)
-                    speedDiffKph += autoOutput.CreepAccelerationMps2 * input.ElapsedSeconds * 3.6f;
-            }
+                    longitudinalGripFactor,
+                    state.Gear,
+                    inReverse: false,
+                    couplingFactor,
+                    automaticFamily ? autoOutput.CreepAccelerationMps2 : 0f,
+                    engineRpmEstimate,
+                    requestDrive: driveRequested,
+                    requestBrake: thrust < -10f,
+                    applyEngineBraking: true,
+                    driveRatioOverride: driveRatioOverride > 0f ? driveRatioOverride : (float?)null));
+            speedDiffKph = longitudinalResult.SpeedDeltaKph;
 
             speedKph += speedDiffKph;
             var safetySpeed = ResolveForwardSafetySpeedKph(config.TopSpeedKph);

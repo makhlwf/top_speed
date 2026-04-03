@@ -28,152 +28,6 @@ namespace TopSpeed.Vehicles
             _speedDiff = 0f;
         }
 
-        private int ResolveThrust()
-        {
-            if (_currentThrottle == 0)
-                return _currentBrake;
-            if (_currentBrake == 0)
-                return _currentThrottle;
-            return -_currentBrake > _currentThrottle ? _currentBrake : _currentThrottle;
-        }
-
-        private void ApplyThrottleDrive(
-            float elapsed,
-            float speedMpsCurrent,
-            float throttle,
-            bool inReverse,
-            bool reverseBlockedAtLapStart,
-            float surfaceTractionMod,
-            float drivelineCouplingFactor,
-            ref float longitudinalGripFactor)
-        {
-            if (reverseBlockedAtLapStart)
-            {
-                _speedDiff = 0f;
-                _lastDriveRpm = 0f;
-                return;
-            }
-
-            var tireOutput = SolveTireModel(elapsed, speedMpsCurrent, _currentSteering, surfaceTractionMod, 1f, commitState: false);
-            longitudinalGripFactor = tireOutput.LongitudinalGripFactor;
-
-            var accelMps2 = inReverse
-                ? Calculator.ReverseAccel(
-                    _powertrainConfiguration,
-                    speedMpsCurrent,
-                    throttle,
-                    surfaceTractionMod,
-                    longitudinalGripFactor)
-                : Calculator.DriveAccel(
-                    _powertrainConfiguration,
-                    GetDriveGear(),
-                    speedMpsCurrent,
-                    throttle,
-                    surfaceTractionMod,
-                    longitudinalGripFactor,
-                    _effectiveDriveRatioOverride > 0f ? _effectiveDriveRatioOverride : (float?)null);
-            accelMps2 *= Math.Max(0f, Math.Min(1f, drivelineCouplingFactor));
-            accelMps2 *= (_factor1 / 100f);
-            var newSpeedMps = speedMpsCurrent + (accelMps2 * elapsed);
-            if (newSpeedMps < 0f)
-                newSpeedMps = 0f;
-
-            _speedDiff = (newSpeedMps - speedMpsCurrent) * 3.6f;
-            var wheelCircumference = _wheelRadiusM * 2.0f * (float)Math.PI;
-            if (wheelCircumference > 0f)
-            {
-                var gearRatio = inReverse
-                    ? _reverseGearRatio
-                    : (_effectiveDriveRatioOverride > 0f ? _effectiveDriveRatioOverride : _engine.GetGearRatio(GetDriveGear()));
-                var coupledRpm = (newSpeedMps / wheelCircumference) * 60f * gearRatio * _finalDriveRatio;
-                _lastDriveRpm = Math.Max(_idleRpm, Math.Min(_revLimiter, coupledRpm));
-            }
-            else
-            {
-                _lastDriveRpm = _idleRpm;
-            }
-            if (_backfirePlayed)
-                _backfirePlayed = false;
-        }
-
-        private void ApplyCoastDecel(float elapsed)
-        {
-            var surfaceDecelMod = _deceleration > 0f ? _currentDeceleration / _deceleration : 1.0f;
-            var brakeInput = Math.Max(0f, Math.Min(100f, -_currentBrake)) / 100f;
-            var brakeDecel = CalculateBrakeDecel(brakeInput, surfaceDecelMod);
-            var engineBrakeDecel = CalculateEngineBrakingDecel(surfaceDecelMod);
-            var totalDecel = _thrust < -10 ? (brakeDecel + engineBrakeDecel) : engineBrakeDecel;
-            _speedDiff = -totalDecel * elapsed;
-            if (_automaticCreepAccelMps2 > 0f)
-                _speedDiff += _automaticCreepAccelMps2 * elapsed * 3.6f;
-            _lastDriveRpm = 0f;
-        }
-
-        private void ClampSpeedAndTransmission(
-            float elapsed,
-            float throttle,
-            bool inReverse,
-            bool reverseBlockedAtLapStart,
-            float surfaceTractionMod,
-            float longitudinalGripFactor)
-        {
-            _speed += _speedDiff;
-            if (!inReverse)
-            {
-                var safetySpeed = ResolveForwardSafetySpeedKph();
-                if (_speed > safetySpeed)
-                    _speed = safetySpeed;
-            }
-            if (_speed < 0f)
-                _speed = 0f;
-            if (!IsFinite(_speed))
-            {
-                _speed = 0f;
-                _speedDiff = 0f;
-            }
-
-            if (!IsFinite(_lastDriveRpm))
-                _lastDriveRpm = _idleRpm;
-
-            if (reverseBlockedAtLapStart && _thrust > 10f)
-            {
-                _speed = 0f;
-                _speedDiff = 0f;
-                _lastDriveRpm = 0f;
-            }
-
-            if (inReverse)
-            {
-                var reverseMax = Math.Max(5.0f, _reverseMaxSpeedKph);
-                if (_speed > reverseMax)
-                    _speed = reverseMax;
-                return;
-            }
-
-            if (_manualTransmission)
-            {
-                if (_gear >= FirstForwardGear)
-                {
-                    var gearMax = _engine.GetGearMaxSpeedKmh(_gear);
-                    if (_speed > gearMax)
-                        _speed = gearMax;
-                }
-            }
-            else
-            {
-                if (IsShiftOnDemandActive() && _gear >= FirstForwardGear)
-                {
-                    var gearMax = _engine.GetGearMaxSpeedKmh(_gear);
-                    if (_speed > gearMax)
-                        _speed = gearMax;
-                }
-                else
-                {
-                    UpdateAutomaticGear(elapsed, _speed / 3.6f, throttle, surfaceTractionMod, longitudinalGripFactor);
-                }
-            }
-        }
-
         private void SyncEngineFromSpeed(float elapsed)
         {
             if (_engineStalled)
@@ -183,7 +37,23 @@ namespace TopSpeed.Vehicles
                 return;
             }
 
-            var couplingMode = ResolveEngineCouplingMode();
+            var driveRatioOverride = _effectiveDriveRatioOverride > 0f ? _effectiveDriveRatioOverride : (float?)null;
+            var syncState = EngineStateRuntime.Resolve(
+                new EngineStateRuntimeInput(
+                    _powertrainConfiguration,
+                    EffectiveTransmissionType(),
+                    IsNeutralGear(),
+                    _engineStalled,
+                    _drivelineState == DrivelineState.Locked,
+                    _drivelineState == DrivelineState.Disengaged,
+                    _speed / 3.6f,
+                    Math.Max(0f, Math.Min(100f, _currentThrottle)) / 100f,
+                    _drivelineCouplingFactor,
+                    _switchingGear,
+                    _engine.Rpm,
+                    ResolveCoupledDriveRpm()));
+            var couplingMode = (EngineCouplingMode)syncState.CouplingMode;
+
             _engine.SyncFromSpeed(
                 _speed,
                 GetDriveGear(),
@@ -193,7 +63,8 @@ namespace TopSpeed.Vehicles
                 _reverseGearRatio,
                 couplingMode,
                 _drivelineCouplingFactor,
-                _effectiveDriveRatioOverride > 0f ? _effectiveDriveRatioOverride : (float?)null);
+                driveRatioOverride,
+                syncState.MinimumCoupledRpm);
             if (couplingMode == EngineCouplingMode.Blended
                 && _switchingGear == 0
                 && _drivelineCouplingFactor > 0.65f
@@ -214,52 +85,6 @@ namespace TopSpeed.Vehicles
                 : (_effectiveDriveRatioOverride > 0f ? _effectiveDriveRatioOverride : _engine.GetGearRatio(GetDriveGear()));
             var coupledRpm = (speedMps / wheelCircumference) * 60f * gearRatio * _finalDriveRatio;
             return Math.Max(_idleRpm, Math.Min(_revLimiter, coupledRpm));
-        }
-
-        private EngineCouplingMode ResolveEngineCouplingMode()
-        {
-            var type = EffectiveTransmissionType();
-            if (TransmissionTypes.IsAutomaticFamily(type))
-            {
-                if (_drivelineState == DrivelineState.Disengaged)
-                    return EngineCouplingMode.Disengaged;
-
-                if (type == TransmissionType.Cvt)
-                    return EngineCouplingMode.Blended;
-
-                if (type == TransmissionType.Dct)
-                {
-                    if (_switchingGear != 0)
-                        return EngineCouplingMode.Blended;
-
-                    // Avoid a second RPM cliff after a DCT shift by only hard-locking once
-                    // engine/driveline slip is already small.
-                    var coupledRpm = ResolveCoupledDriveRpm();
-                    var slipRpm = Math.Abs(coupledRpm - _engine.Rpm);
-                    var lockSlipWindowRpm = Math.Max(120f, (_revLimiter - _idleRpm) * 0.025f);
-                    if (_drivelineCouplingFactor >= 0.995f && slipRpm <= lockSlipWindowRpm)
-                        return EngineCouplingMode.Locked;
-
-                    return EngineCouplingMode.Blended;
-                }
-
-                if (type == TransmissionType.Atc)
-                {
-                    // ATC lockup is modeled as near-locked blended coupling to avoid abrupt
-                    // RPM snaps when entering or leaving converter-clutch conditions.
-                    return EngineCouplingMode.Blended;
-                }
-            }
-
-            switch (_drivelineState)
-            {
-                case DrivelineState.Locked:
-                    return EngineCouplingMode.Locked;
-                case DrivelineState.Disengaged:
-                    return EngineCouplingMode.Disengaged;
-                default:
-                    return EngineCouplingMode.Blended;
-            }
         }
 
         private void UpdateBackfireStateAfterDrive()
@@ -296,5 +121,6 @@ namespace TopSpeed.Vehicles
         }
     }
 }
+
 
 

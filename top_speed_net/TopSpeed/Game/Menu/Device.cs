@@ -16,7 +16,7 @@ namespace TopSpeed.Game
                 return;
             if (_multiplayerCoordinator.Questions.HasActiveOverlayQuestion || _dialogs.HasActiveOverlayDialog)
                 return;
-            if (!_input.TryGetPendingJoystickChoices(out var discovered) || discovered.Count == 0)
+            if (!_input.TryGetPendingControllerChoices(out var discovered) || discovered.Count == 0)
                 return;
 
             var items = new Dictionary<int, string>();
@@ -47,7 +47,7 @@ namespace TopSpeed.Game
                     if (!guidByChoiceId.TryGetValue(result.ChoiceId, out var instanceGuid))
                         return;
 
-                    if (_input.TrySelectJoystick(instanceGuid))
+                    if (_input.TrySelectController(instanceGuid))
                     {
                         if (items.TryGetValue(result.ChoiceId, out var label))
                             _speech.Speak(LocalizationService.Format(LocalizationService.Mark("Controller selected. {0}."), label));
@@ -61,3 +61,4 @@ namespace TopSpeed.Game
         }
     }
 }
+

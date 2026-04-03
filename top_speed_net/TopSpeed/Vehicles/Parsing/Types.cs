@@ -50,6 +50,7 @@ namespace TopSpeed.Vehicles.Parsing
     {
         public string Engine { get; set; } = string.Empty;
         public string Start { get; set; } = string.Empty;
+        public string? Stop { get; set; }
         public string Horn { get; set; } = string.Empty;
         public string? Throttle { get; set; }
         public IReadOnlyList<string> CrashVariants { get; set; } = Array.Empty<string>();
@@ -97,9 +98,20 @@ namespace TopSpeed.Vehicles.Parsing
         public float FrontalAreaM2 { get; set; }
         public float RollingResistanceCoefficient { get; set; }
         public float LaunchRpm { get; set; }
+        public float CoastDragBaseMps2 { get; set; } = -1f;
+        public float CoastDragLinearPerMps { get; set; } = -1f;
         public float EngineInertiaKgm2 { get; set; }
         public float EngineFrictionTorqueNm { get; set; }
+        public float EngineFrictionLinearNmPerKrpm { get; set; } = -1f;
+        public float EngineFrictionQuadraticNmPerKrpm2 { get; set; } = -1f;
         public float DrivelineCouplingRate { get; set; }
+        public float IdleControlWindowRpm { get; set; } = -1f;
+        public float IdleControlGainNmPerRpm { get; set; } = -1f;
+        public float MinCoupledRiseIdleRpmPerSecond { get; set; } = -1f;
+        public float MinCoupledRiseFullRpmPerSecond { get; set; } = -1f;
+        public float EngineOverrunIdleLossFraction { get; set; } = -1f;
+        public float OverrunCurveExponent { get; set; } = -1f;
+        public float EngineBrakeTransferEfficiency { get; set; } = -1f;
         public float PowerFactor { get; set; }
         public string? TorqueCurvePreset { get; set; }
         public float[] TorqueCurveRpm { get; set; } = Array.Empty<float>();
@@ -139,4 +151,5 @@ namespace TopSpeed.Vehicles.Parsing
         public TransmissionPolicy TransmissionPolicy { get; set; } = TransmissionPolicy.Default;
     }
 }
+
 

@@ -19,6 +19,14 @@ namespace TopSpeed.Vehicles
         private readonly float _powerFactor;
         private readonly float _engineInertiaKgm2;
         private readonly float _engineFrictionTorqueNm;
+        private readonly float _engineFrictionLinearNmPerKrpm;
+        private readonly float _engineFrictionQuadraticNmPerKrpm2;
+        private readonly float _idleControlWindowRpm;
+        private readonly float _idleControlGainNmPerRpm;
+        private readonly float _minCoupledRiseIdleRpmPerSecond;
+        private readonly float _minCoupledRiseFullRpmPerSecond;
+        private readonly float _engineOverrunIdleLossFraction;
+        private readonly float _overrunCurveExponent;
         private readonly float _drivelineCouplingRate;
         private readonly float _topSpeedKmh;
         private readonly float _finalDriveRatio;
@@ -56,7 +64,15 @@ namespace TopSpeed.Vehicles
             float engineInertiaKgm2 = 0.24f,
             float engineFrictionTorqueNm = 20f,
             float drivelineCouplingRate = 12f,
-            CurveProfile? torqueCurve = null)
+            CurveProfile? torqueCurve = null,
+            float engineOverrunIdleLossFraction = 0.35f,
+            float engineFrictionLinearNmPerKrpm = 0f,
+            float engineFrictionQuadraticNmPerKrpm2 = 0f,
+            float idleControlWindowRpm = 150f,
+            float idleControlGainNmPerRpm = 0.08f,
+            float minCoupledRiseIdleRpmPerSecond = 2200f,
+            float minCoupledRiseFullRpmPerSecond = 6200f,
+            float overrunCurveExponent = 1f)
         {
             _idleRpm = Math.Max(500f, idleRpm);
             _stallRpm = Math.Max(200f, _idleRpm * 0.55f);
@@ -70,6 +86,14 @@ namespace TopSpeed.Vehicles
             _powerFactor = Math.Max(0.05f, powerFactor);
             _engineInertiaKgm2 = Math.Max(0.01f, engineInertiaKgm2);
             _engineFrictionTorqueNm = Math.Max(0f, engineFrictionTorqueNm);
+            _engineFrictionLinearNmPerKrpm = Math.Max(0f, engineFrictionLinearNmPerKrpm);
+            _engineFrictionQuadraticNmPerKrpm2 = Math.Max(0f, engineFrictionQuadraticNmPerKrpm2);
+            _idleControlWindowRpm = Math.Max(0f, idleControlWindowRpm);
+            _idleControlGainNmPerRpm = Math.Max(0f, idleControlGainNmPerRpm);
+            _minCoupledRiseIdleRpmPerSecond = Math.Max(0f, minCoupledRiseIdleRpmPerSecond);
+            _minCoupledRiseFullRpmPerSecond = Math.Max(_minCoupledRiseIdleRpmPerSecond, minCoupledRiseFullRpmPerSecond);
+            _engineOverrunIdleLossFraction = Math.Max(0f, Math.Min(1f, engineOverrunIdleLossFraction));
+            _overrunCurveExponent = Math.Max(0.2f, Math.Min(5f, overrunCurveExponent));
             _drivelineCouplingRate = Math.Max(0.1f, drivelineCouplingRate);
             _topSpeedKmh = Math.Max(50f, topSpeedKmh);
             _finalDriveRatio = Math.Max(0.1f, finalDriveRatio);
@@ -167,5 +191,6 @@ namespace TopSpeed.Vehicles
         }
     }
 }
+
 
 

@@ -1,5 +1,5 @@
-using SharpDX.DirectInput;
-using TopSpeed.Input.Devices.Joystick;
+using Key = TopSpeed.Input.InputKey;
+using TopSpeed.Input.Devices.Controller;
 
 namespace TopSpeed.Input
 {
@@ -119,8 +119,8 @@ namespace TopSpeed.Input
                 return false;
 
             var keyboard = IsActionActiveOnKeyboard(action, meta);
-            var joystick = IsActionActiveOnJoystick(action, meta);
-            return keyboard || joystick;
+            var controller = IsActionActiveOnController(action, meta);
+            return keyboard || controller;
         }
 
         private bool IsActionActiveOnKeyboard(InputAction action, InputActionMeta meta)
@@ -141,16 +141,16 @@ namespace TopSpeed.Input
             return active;
         }
 
-        private bool IsActionActiveOnJoystick(InputAction action, InputActionMeta meta)
+        private bool IsActionActiveOnController(InputAction action, InputActionMeta meta)
         {
-            if (!UseJoystick)
+            if (!UseController)
                 return false;
 
             var axis = GetAxisMapping(action);
-            if (axis == JoystickAxisOrButton.AxisNone)
+            if (axis == AxisOrButton.AxisNone)
                 return false;
 
-            return meta.JoystickMode == TriggerMode.Hold
+            return meta.ControllerMode == TriggerMode.Hold
                 ? GetAxis(axis) > 50
                 : AxisPressed(axis);
         }
@@ -174,3 +174,5 @@ namespace TopSpeed.Input
         }
     }
 }
+
+

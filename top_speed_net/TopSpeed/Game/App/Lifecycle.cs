@@ -1,31 +1,29 @@
-using System;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace TopSpeed.Game
 {
     internal sealed partial class GameApp
     {
-        private void OnLoad(object? sender, EventArgs e)
+        private void OnLoaded()
         {
-            _game = new Game(_window);
+            _game = new Game(_window, _textInput, _fileDialogs);
+            var game = _game;
             _game.ExitRequested += async () =>
             {
-                _game.FadeOutMenuMusic(500);
+                game.FadeOutMenuMusic(500);
                 await Task.Delay(500).ConfigureAwait(true);
-                _window.Close();
+                _window.RequestClose();
             };
-            _game.Initialize();
-            _stopwatch.Start();
-            _lastTicks = _stopwatch.ElapsedTicks;
-            StartGameThread();
+            game.Initialize();
+            StartGameLoop();
         }
 
-        private void OnFormClosed(object? sender, FormClosedEventArgs e)
+        private void OnClosed()
         {
-            StopGameThread();
+            StopGameLoop();
             _game?.Dispose();
             _game = null;
         }
     }
 }
+

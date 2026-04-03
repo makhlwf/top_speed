@@ -12,14 +12,33 @@ namespace TopSpeed.Vehicles.Parsing
             return new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase)
             {
                 ["meta"] = Set("name", "version", "description"),
-                ["sounds"] = Set("engine", "start", "horn", "throttle", "crash", "brake", "backfire", "idle_freq", "top_freq", "shift_freq", "pitch_curve_exponent"),
+                ["sounds"] = Set("engine", "start", "stop", "horn", "throttle", "crash", "brake", "backfire", "idle_freq", "top_freq", "shift_freq", "pitch_curve_exponent"),
                 ["general"] = Set("surface_traction_factor", "deceleration", "max_speed", "has_wipers"),
                 ["engine"] = Set(
                     "idle_rpm", "max_rpm", "rev_limiter", "auto_shift_rpm", "engine_braking", "mass_kg", "drivetrain_efficiency",
-                    "drag_coefficient", "frontal_area", "rolling_resistance", "launch_rpm"),
+                    "launch_rpm"),
                 ["torque"] = Set(
                     "engine_braking_torque", "peak_torque", "peak_torque_rpm", "idle_torque", "redline_torque",
-                    "power_factor", "engine_inertia_kgm2", "engine_friction_torque_nm", "driveline_coupling_rate"),
+                    "power_factor"),
+                ["engine_rot"] = Set(
+                    "inertia_kgm2",
+                    "coupling_rate",
+                    "friction_base_nm",
+                    "friction_linear_nm_per_krpm",
+                    "friction_quadratic_nm_per_krpm2",
+                    "idle_control_window_rpm",
+                    "idle_control_gain_nm_per_rpm",
+                    "min_coupled_rise_idle_rpm_per_s",
+                    "min_coupled_rise_full_rpm_per_s",
+                    "overrun_idle_fraction",
+                    "overrun_curve_exponent",
+                    "brake_transfer_efficiency"),
+                ["resistance"] = Set(
+                    "drag_coefficient",
+                    "frontal_area",
+                    "rolling_resistance",
+                    "coast_base_mps2",
+                    "coast_linear_per_mps"),
                 ["torque_curve"] = Set("preset"),
                 ["transmission"] = Set(
                     "primary_type",
@@ -101,3 +120,4 @@ namespace TopSpeed.Vehicles.Parsing
         }
     }
 }
+

@@ -17,12 +17,12 @@ namespace TopSpeed.Core.Multiplayer
                 return;
             }
 
-            if (_state.Rooms.IsRoomBrowserOpenPending)
+            if (_state.RoomDrafts.IsRoomBrowserOpenPending)
                 return;
 
-            _state.Rooms.IsRoomBrowserOpenPending = true;
+            _state.RoomDrafts.IsRoomBrowserOpenPending = true;
             if (!TrySend(session.SendRoomListRequest(), "room list request"))
-                _state.Rooms.IsRoomBrowserOpenPending = false;
+                _state.RoomDrafts.IsRoomBrowserOpenPending = false;
         }
 
         private void JoinRoom(uint roomId)
@@ -80,7 +80,7 @@ namespace TopSpeed.Core.Multiplayer
                     room.RoomName,
                     room.PlayerCount,
                     room.PlayersToStart);
-            if (room.RaceStarted)
+            if (room.RaceState == RoomRaceState.Preparing || room.RaceState == RoomRaceState.Racing)
                 label = LocalizationService.Format(LocalizationService.Mark("{0}, in progress"), label);
             else if (room.PlayerCount >= room.PlayersToStart)
                 label = LocalizationService.Format(LocalizationService.Mark("{0}, room is full"), label);
@@ -88,3 +88,5 @@ namespace TopSpeed.Core.Multiplayer
         }
     }
 }
+
+

@@ -4,7 +4,7 @@ namespace TopSpeed.Menu
 {
     internal sealed partial class MenuScreen
     {
-        private bool TryHandleLetterNavigation(IGameInput input)
+        private bool TryHandleLetterNavigation(IInputService input)
         {
             if (_items.Count == 0)
                 return false;
@@ -28,4 +28,6 @@ namespace TopSpeed.Menu
         }
     }
 }
+
+
 

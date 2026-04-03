@@ -71,23 +71,36 @@ namespace TopSpeed.Race
         private void ApplySnapshotFrame(SnapshotFrame frame)
         {
             var players = frame.Players ?? Array.Empty<PacketPlayerData>();
+            _missingSnapshotPlayers.Clear();
+            foreach (var key in _remotePlayers.Keys)
+                _missingSnapshotPlayers.Add(key);
+
             for (var i = 0; i < players.Length; i++)
             {
                 var data = players[i];
                 if (data == null)
                     continue;
+                _missingSnapshotPlayers.Remove(data.PlayerNumber);
                 ApplyRemoteData(data);
             }
+
+            RemoveMissingSnapshotPlayers();
         }
 
         private void ApplyInterpolatedSnapshotFrame(SnapshotFrame from, SnapshotFrame to, float alpha)
         {
             var players = to.Players ?? Array.Empty<PacketPlayerData>();
+            _missingSnapshotPlayers.Clear();
+            foreach (var key in _remotePlayers.Keys)
+                _missingSnapshotPlayers.Add(key);
+
             for (var i = 0; i < players.Length; i++)
             {
                 var target = players[i];
                 if (target == null)
                     continue;
+
+                _missingSnapshotPlayers.Remove(target.PlayerNumber);
 
                 if (!TryGetPlayerFrameData(from, target.PlayerNumber, out var source) || source == null)
                 {
@@ -116,7 +129,24 @@ namespace TopSpeed.Race
                     target.MediaPlaying,
                     target.MediaId);
             }
+
+            RemoveMissingSnapshotPlayers();
+        }
+
+        private void RemoveMissingSnapshotPlayers()
+        {
+            if (_missingSnapshotPlayers.Count == 0)
+                return;
+
+            for (var i = 0; i < _missingSnapshotPlayers.Count; i++)
+            {
+                var number = _missingSnapshotPlayers[i];
+                if (number == LocalPlayerNumber)
+                    continue;
+                RemoveRemotePlayer(number, markDisconnected: false);
+            }
         }
     }
 }
+
 

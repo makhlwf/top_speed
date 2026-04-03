@@ -6,7 +6,7 @@ namespace TopSpeed.Race
     {
         public void ApplyRemoteMediaBegin(PacketPlayerMediaBegin media)
         {
-            if (media.PlayerNumber == _playerNumber)
+            if (media.PlayerNumber == LocalPlayerNumber)
                 return;
             if (media.PlayerNumber < _disconnectedPlayerSlots.Length && _disconnectedPlayerSlots[media.PlayerNumber])
                 return;
@@ -25,7 +25,7 @@ namespace TopSpeed.Race
 
         public void ApplyRemoteMediaChunk(PacketPlayerMediaChunk media)
         {
-            if (media.PlayerNumber == _playerNumber)
+            if (media.PlayerNumber == LocalPlayerNumber)
                 return;
             if (media.PlayerNumber < _disconnectedPlayerSlots.Length && _disconnectedPlayerSlots[media.PlayerNumber])
                 return;
@@ -52,7 +52,7 @@ namespace TopSpeed.Race
 
         public void ApplyRemoteMediaEnd(PacketPlayerMediaEnd media)
         {
-            if (media.PlayerNumber == _playerNumber)
+            if (media.PlayerNumber == LocalPlayerNumber)
                 return;
             if (media.PlayerNumber < _disconnectedPlayerSlots.Length && _disconnectedPlayerSlots[media.PlayerNumber])
                 return;
@@ -72,4 +72,5 @@ namespace TopSpeed.Race
         }
     }
 }
+
 

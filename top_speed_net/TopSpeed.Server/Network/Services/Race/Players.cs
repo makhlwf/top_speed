@@ -1,0 +1,270 @@
+using TopSpeed.Localization;
+using TopSpeed.Protocol;
+using TopSpeed.Server.Protocol;
+
+namespace TopSpeed.Server.Network
+{
+    internal sealed partial class RaceServer
+    {
+        private sealed partial class Race
+        {
+            public void HandlePlayerState(PlayerConnection player, PacketRacePlayerState state)
+            {
+                if (!TryGetPlayerRoom(player, out var room))
+                {
+                    _owner._authorityDropsPlayerState++;
+                    return;
+                }
+                if (!ValidatePacket(room, player, state.RaceInstanceId, state.PlayerId, state.PlayerNumber, ref _owner._authorityDropsPlayerState, nameof(Command.PlayerState)))
+                    return;
+
+                var previousState = player.State;
+                var raceDistance = room.RaceState == RoomRaceState.Racing ? RaceServer.GetRaceDistance(room) : 0f;
+
+                if (state.State == PlayerState.AwaitingStart || state.State == PlayerState.Racing || state.State == PlayerState.Finished)
+                    player.State = state.State;
+                else
+                    _owner._authorityDropsPlayerState++;
+
+                if (room.RaceState == RoomRaceState.Preparing && player.State != PlayerState.AwaitingStart)
+                {
+                    _owner._authorityDropsPlayerState++;
+                    player.State = PlayerState.AwaitingStart;
+                }
+                if (player.State == PlayerState.Finished && raceDistance > 0f && player.PositionY < raceDistance)
+                    player.PositionY = raceDistance;
+                if (previousState == PlayerState.Finished && player.State != PlayerState.Finished)
+                {
+                    _owner._authorityDropsPlayerState++;
+                    player.State = PlayerState.Finished;
+                }
+
+                if (previousState != player.State)
+                    _owner._logger.Debug(LocalizationService.Format(
+                        LocalizationService.Mark("Player state transition: room={0}, player={1}, {2} -> {3} (packet={4})."),
+                        room.Id,
+                        player.Id,
+                        previousState,
+                        player.State,
+                        state.State));
+                if (previousState != player.State)
+                {
+                    _owner._room.TouchVersion(room);
+                    _owner._notify.RoomParticipant(
+                        room,
+                        RoomEventKind.ParticipantStateChanged,
+                        player.Id,
+                        player.PlayerNumber,
+                        player.State,
+                        string.IsNullOrWhiteSpace(player.Name)
+                            ? LocalizationService.Format(LocalizationService.Mark("Player {0}"), player.PlayerNumber + 1)
+                            : player.Name);
+                }
+
+                if (room.RaceState == RoomRaceState.Racing && previousState != PlayerState.Finished && player.State == PlayerState.Finished)
+                    MarkFinished(room, player);
+            }
+
+            public void HandlePlayerData(PlayerConnection player, PacketRacePlayerData data)
+            {
+                if (!TryGetPlayerRoom(player, out var room))
+                {
+                    _owner._authorityDropsPlayerData++;
+                    return;
+                }
+                if (!ValidatePacket(room, player, data.RaceInstanceId, data.PlayerId, data.PlayerNumber, ref _owner._authorityDropsPlayerData, nameof(Command.PlayerDataToServer)))
+                    return;
+
+                var previousState = player.State;
+                var raceDistance = room.RaceState == RoomRaceState.Racing ? RaceServer.GetRaceDistance(room) : 0f;
+                player.Car = RaceServer.NormalizeNetworkCar(data.Car);
+                RaceServer.ApplyVehicleDimensions(player, player.Car);
+                player.PositionX = data.RaceData.PositionX;
+                player.PositionY = data.RaceData.PositionY;
+                player.Speed = data.RaceData.Speed;
+                player.Frequency = data.RaceData.Frequency;
+                player.EngineRunning = data.EngineRunning;
+                player.Braking = data.Braking;
+                player.Horning = data.Horning;
+                player.Backfiring = data.Backfiring;
+                _owner.UpdateMediaState(player, room, data);
+                var nextState = data.State;
+
+                if (nextState == PlayerState.Undefined || nextState == PlayerState.NotReady)
+                {
+                    _owner._authorityDropsPlayerData++;
+                    nextState = player.State;
+                }
+
+                if (room.RaceState == RoomRaceState.Preparing)
+                {
+                    if (nextState != PlayerState.AwaitingStart)
+                    {
+                        _owner._authorityDropsPlayerData++;
+                        nextState = PlayerState.AwaitingStart;
+                    }
+                }
+                else if (nextState != PlayerState.AwaitingStart && nextState != PlayerState.Racing && nextState != PlayerState.Finished)
+                {
+                    _owner._authorityDropsPlayerData++;
+                    nextState = player.State;
+                }
+                if (previousState == PlayerState.Finished && nextState != PlayerState.Finished)
+                {
+                    _owner._authorityDropsPlayerData++;
+                    nextState = PlayerState.Finished;
+                }
+
+                player.State = nextState;
+                if (player.State == PlayerState.Finished && raceDistance > 0f && player.PositionY < raceDistance)
+                    player.PositionY = raceDistance;
+                if (room.RaceState == RoomRaceState.Racing && previousState != PlayerState.Finished && nextState == PlayerState.Finished)
+                    MarkFinished(room, player);
+                if (previousState != nextState)
+                    _owner._logger.Debug(LocalizationService.Format(
+                        LocalizationService.Mark("Player state transition from data: room={0}, player={1}, {2} -> {3}."),
+                        room.Id,
+                        player.Id,
+                        previousState,
+                        nextState));
+            }
+
+            public void HandlePlayerStarted(PlayerConnection player, PacketRacePlayer started)
+            {
+                if (!TryGetPlayerRoom(player, out var room))
+                {
+                    _owner._authorityDropsPlayerStarted++;
+                    return;
+                }
+                if (!ValidatePacket(room, player, started.RaceInstanceId, started.PlayerId, started.PlayerNumber, ref _owner._authorityDropsPlayerStarted, nameof(Command.PlayerStarted)))
+                    return;
+                if (!room.RaceStarted)
+                {
+                    _owner._authorityDropsPlayerStarted++;
+                    return;
+                }
+
+                if (player.State == PlayerState.AwaitingStart || player.State == PlayerState.Racing)
+                    player.State = PlayerState.Racing;
+                else
+                    _owner._authorityDropsPlayerStarted++;
+            }
+
+            public void HandlePlayerCrashed(PlayerConnection player, PacketRacePlayer crashed)
+            {
+                if (!TryGetPlayerRoom(player, out var room))
+                {
+                    _owner._authorityDropsPlayerCrashed++;
+                    return;
+                }
+                if (!ValidatePacket(room, player, crashed.RaceInstanceId, crashed.PlayerId, crashed.PlayerNumber, ref _owner._authorityDropsPlayerCrashed, nameof(Command.PlayerCrashed)))
+                    return;
+                if (!room.RaceStarted)
+                {
+                    _owner._authorityDropsPlayerCrashed++;
+                    return;
+                }
+
+                if (player.State != PlayerState.Racing && player.State != PlayerState.Finished)
+                {
+                    _owner._authorityDropsPlayerCrashed++;
+                    return;
+                }
+
+                _owner.SendToRoomExceptOnStream(room, player.Id, PacketSerializer.WritePlayer(Command.PlayerCrashed, player.Id, player.PlayerNumber), PacketStream.RaceEvent);
+            }
+
+            public void MarkFinished(RaceRoom room, PlayerConnection player)
+            {
+                var finishTimeMs = CaptureFinishTimeMs(room);
+                if (TryMarkParticipantFinished(room, player.Id, player.PlayerNumber, finishTimeMs, out var finishOrder))
+                {
+                    var finishedCount = 0;
+                    foreach (var result in room.RaceParticipantResults.Values)
+                    {
+                        if (result.Status == RoomRaceResultStatus.Finished)
+                            finishedCount++;
+                    }
+
+                    _owner._logger.Debug(LocalizationService.Format(
+                        LocalizationService.Mark("Finish recorded: room={0}, player={1}, number={2}, place={3}, timeMs={4}."),
+                        room.Id,
+                        player.Id,
+                        player.PlayerNumber,
+                        finishOrder,
+                        finishTimeMs));
+                    _owner._notify.RacePlayerFinished(room, player.Id, player.PlayerNumber, finishOrder, finishTimeMs);
+                    if (finishedCount < room.ActiveRaceParticipantIds.Count)
+                    {
+                        _owner._logger.Debug(LocalizationService.Format(
+                            LocalizationService.Mark("Race completion pending: room={0}, finished={1}/{2}."),
+                            room.Id,
+                            finishedCount,
+                            room.ActiveRaceParticipantIds.Count));
+                    }
+                }
+                else
+                {
+                    _owner._logger.Debug(LocalizationService.Format(
+                        LocalizationService.Mark("Finish ignored: room={0}, player={1}, number={2}, state={3}."),
+                        room.Id,
+                        player.Id,
+                        player.PlayerNumber,
+                        player.State));
+                }
+                UpdateStopState(room, 0f);
+            }
+
+            private bool TryGetPlayerRoom(PlayerConnection player, out RaceRoom room)
+            {
+                if (player.RoomId.HasValue && _owner._rooms.TryGetValue(player.RoomId.Value, out var resolvedRoom) && resolvedRoom != null)
+                {
+                    room = resolvedRoom;
+                    return true;
+                }
+
+                room = null!;
+                return false;
+            }
+
+            private bool ValidatePacket(RaceRoom room, PlayerConnection player, uint raceInstanceId, uint payloadPlayerId, byte payloadPlayerNumber, ref int dropCounter, string commandName)
+            {
+                if (room.RaceState != RoomRaceState.Preparing && room.RaceState != RoomRaceState.Racing)
+                {
+                    dropCounter++;
+                    return false;
+                }
+
+                if (payloadPlayerId != player.Id || payloadPlayerNumber != player.PlayerNumber)
+                {
+                    dropCounter++;
+                    _owner._logger.Debug(LocalizationService.Format(
+                        LocalizationService.Mark("{0} payload mismatch: room={1}, connectionPlayer={2}/{3}, payload={4}/{5}."),
+                        commandName,
+                        room.Id,
+                        player.Id,
+                        player.PlayerNumber,
+                        payloadPlayerId,
+                        payloadPlayerNumber));
+                    return false;
+                }
+
+                if (raceInstanceId == 0 || raceInstanceId != room.RaceInstanceId)
+                {
+                    dropCounter++;
+                    _owner._logger.Debug(LocalizationService.Format(
+                        LocalizationService.Mark("{0} race instance mismatch: room={1}, connectionPlayer={2}/{3}, payloadRaceInstance={4}, roomRaceInstance={5}."),
+                        commandName,
+                        room.Id,
+                        player.Id,
+                        player.PlayerNumber,
+                        raceInstanceId,
+                        room.RaceInstanceId));
+                    return false;
+                }
+
+                return true;
+            }
+        }
+    }
+}

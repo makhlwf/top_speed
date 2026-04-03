@@ -79,7 +79,11 @@ namespace TopSpeed.Vehicles
             if (_speed < 0f)
                 _speed = 0f;
 
-            if (_soundEngine.IsPlaying)
+            if (_engineLifecycleState == EngineLifecycleState.Stopping)
+            {
+                _engine.StepShutdown(_speed, elapsed);
+            }
+            else if (_soundEngine.IsPlaying)
             {
                 _engine.SyncFromSpeed(
                     _speed,
@@ -99,6 +103,14 @@ namespace TopSpeed.Vehicles
 
             UpdateEngineFreq();
 
+            if (_engineLifecycleState == EngineLifecycleState.Stopping
+                && _speed <= 0.05f
+                && _engine.Rpm <= 1f)
+            {
+                FinalizeEngineShutdown();
+                return;
+            }
+
             if (_frame % 4 != 0)
                 return;
 
@@ -107,3 +119,4 @@ namespace TopSpeed.Vehicles
         }
     }
 }
+

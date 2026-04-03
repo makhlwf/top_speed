@@ -32,13 +32,13 @@ namespace TopSpeed.Menu
         private string MainMenuTitle()
         {
             var keyboard = LocalizationService.Mark("Main Menu. Use your arrow keys to navigate the options. Press ENTER to select. Press ESCAPE to back out of any menu. Pressing HOME or END will move you to the top or bottom of a menu.");
-            var joystick = LocalizationService.Mark("Main Menu. Use the view finder to move through the options. Press up or down to navigate. Press right or button 1 to select. Press left to back out of any menu.");
+            var controller = LocalizationService.Mark("Main Menu. Use the view finder to move through the options. Press up or down to navigate. Press right or button 1 to select. Press left to back out of any menu.");
             var both = LocalizationService.Mark("Main Menu. Use your arrow keys or the view finder to move through the options. Press ENTER or right or button 1 to select. Press ESCAPE or left to back out of any menu. Pressing HOME or END will move you to the top or bottom of a menu.");
 
             return _settings.DeviceMode switch
             {
                 InputDeviceMode.Keyboard => keyboard,
-                InputDeviceMode.Joystick => joystick,
+                InputDeviceMode.Controller => controller,
                 _ => both
             };
         }
@@ -55,7 +55,7 @@ namespace TopSpeed.Menu
             return mode switch
             {
                 InputDeviceMode.Keyboard => LocalizationService.Translate(LocalizationService.Mark("keyboard")),
-                InputDeviceMode.Joystick => LocalizationService.Translate(LocalizationService.Mark("joystick")),
+                InputDeviceMode.Controller => LocalizationService.Translate(LocalizationService.Mark("controller")),
                 InputDeviceMode.Both => LocalizationService.Translate(LocalizationService.Mark("both")),
                 _ => LocalizationService.Translate(LocalizationService.Mark("keyboard"))
             };
@@ -63,3 +63,4 @@ namespace TopSpeed.Menu
 
     }
 }
+

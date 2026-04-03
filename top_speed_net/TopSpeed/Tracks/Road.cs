@@ -1,5 +1,4 @@
 using System;
-using TopSpeed.Audio;
 using TopSpeed.Data;
 
 namespace TopSpeed.Tracks
@@ -118,7 +117,7 @@ namespace TopSpeed.Tracks
             if (_lapDistance == 0)
                 Initialize();
 
-            var pos = WrapPosition(position);
+            var pos = GetPositionInLap(position);
             var dist = 0.0f;
             for (var i = 0; i < _segmentCount; i++)
             {
@@ -130,22 +129,34 @@ namespace TopSpeed.Tracks
             return -1;
         }
 
-        private float WrapPosition(float position)
+        private float GetLapStartDistance(float position)
+        {
+            if (_lapDistance <= 0f)
+                return 0f;
+            var safePosition = position < 0f ? 0f : position;
+            var lapIndex = (float)Math.Floor(safePosition / _lapDistance);
+            return lapIndex * _lapDistance;
+        }
+
+        private float GetPositionInLap(float position)
         {
             if (_lapDistance <= 0f)
                 return position;
-            var wrapped = position % _lapDistance;
-            if (wrapped < 0f)
-                wrapped += _lapDistance;
-            return wrapped;
+
+            var lapStart = GetLapStartDistance(position);
+            var inLap = position - lapStart;
+            if (inLap < 0f)
+                return 0f;
+            if (inLap >= _lapDistance)
+                return 0f;
+            return inLap;
         }
 
-        private float WrapWorldZ(float zInLap, float listenerLapPos, float listenerWorldPos)
+        private float AlignToReferenceLap(float zInLap, float referencePosition)
         {
             if (_lapDistance <= 0f)
                 return zInLap;
-            var delta = AudioWorld.WrapDelta(zInLap - listenerLapPos, _lapDistance);
-            return listenerWorldPos + delta;
+            return GetLapStartDistance(referencePosition) + zInLap;
         }
 
         private static float Lerp(float a, float b, float t)

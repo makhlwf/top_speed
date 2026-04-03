@@ -12,3 +12,4 @@ namespace TopSpeed.Input
         public string Label { get; }
     }
 }
+

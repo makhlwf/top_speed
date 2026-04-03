@@ -12,6 +12,7 @@ namespace TopSpeed.Vehicles
         {
             _soundEngine = CreateRequiredSound(definition.GetSoundPath(VehicleAction.Engine), looped: true, allowHrtf: true);
             _soundStart = CreateRequiredSound(definition.GetSoundPath(VehicleAction.Start));
+            _soundStop = TryCreateSound(definition.GetSoundPath(VehicleAction.Stop));
             _soundHorn = CreateRequiredSound(definition.GetSoundPath(VehicleAction.Horn), looped: true);
             _soundThrottle = TryCreateSound(definition.GetSoundPath(VehicleAction.Throttle), looped: true, allowHrtf: true);
             _soundCrashVariants = CreateRequiredSoundVariants(
@@ -44,20 +45,24 @@ namespace TopSpeed.Vehicles
                 !vibrationDevice.IsAvailable ||
                 !vibrationDevice.ForceFeedbackCapable ||
                 !_settings.ForceFeedback ||
-                !_settings.UseJoystick)
+                !_settings.UseController)
             {
                 return null;
             }
 
-            vibrationDevice.LoadEffect(VibrationEffectType.Start, Path.Combine(_effectsRoot, "carstart.ffe"));
-            vibrationDevice.LoadEffect(VibrationEffectType.Crash, Path.Combine(_effectsRoot, "crash.ffe"));
-            vibrationDevice.LoadEffect(VibrationEffectType.Spring, Path.Combine(_effectsRoot, "spring.ffe"));
-            vibrationDevice.LoadEffect(VibrationEffectType.Engine, Path.Combine(_effectsRoot, "engine.ffe"));
-            vibrationDevice.LoadEffect(VibrationEffectType.CurbLeft, Path.Combine(_effectsRoot, "curbleft.ffe"));
-            vibrationDevice.LoadEffect(VibrationEffectType.CurbRight, Path.Combine(_effectsRoot, "curbright.ffe"));
-            vibrationDevice.LoadEffect(VibrationEffectType.Gravel, Path.Combine(_effectsRoot, "gravel.ffe"));
-            vibrationDevice.LoadEffect(VibrationEffectType.BumpLeft, Path.Combine(_effectsRoot, "bumpleft.ffe"));
-            vibrationDevice.LoadEffect(VibrationEffectType.BumpRight, Path.Combine(_effectsRoot, "bumpright.ffe"));
+            if (vibrationDevice is IAdvancedVibrationDevice advancedVibration &&
+                advancedVibration.GetFeatureAvailability(VibrationFeature.EffectFilePlayback) == VibrationFeatureAvailability.Supported)
+            {
+                advancedVibration.LoadEffect(VibrationEffectType.Start, Path.Combine(_effectsRoot, "carstart.ffe"));
+                advancedVibration.LoadEffect(VibrationEffectType.Crash, Path.Combine(_effectsRoot, "crash.ffe"));
+                advancedVibration.LoadEffect(VibrationEffectType.Spring, Path.Combine(_effectsRoot, "spring.ffe"));
+                advancedVibration.LoadEffect(VibrationEffectType.Engine, Path.Combine(_effectsRoot, "engine.ffe"));
+                advancedVibration.LoadEffect(VibrationEffectType.CurbLeft, Path.Combine(_effectsRoot, "curbleft.ffe"));
+                advancedVibration.LoadEffect(VibrationEffectType.CurbRight, Path.Combine(_effectsRoot, "curbright.ffe"));
+                advancedVibration.LoadEffect(VibrationEffectType.Gravel, Path.Combine(_effectsRoot, "gravel.ffe"));
+                advancedVibration.LoadEffect(VibrationEffectType.BumpLeft, Path.Combine(_effectsRoot, "bumpleft.ffe"));
+                advancedVibration.LoadEffect(VibrationEffectType.BumpRight, Path.Combine(_effectsRoot, "bumpright.ffe"));
+            }
             vibrationDevice.Gain(VibrationEffectType.Gravel, 0);
 
             return vibrationDevice;
@@ -90,6 +95,7 @@ namespace TopSpeed.Vehicles
             _soundMiniCrash.SetDopplerFactor(0f);
             _soundBump.SetDopplerFactor(0f);
             _soundWipers?.SetDopplerFactor(0f);
+            _soundStop?.SetDopplerFactor(0f);
 
             _soundEngine.SetStereoWidening(enableStereoWidening);
             _soundThrottle?.SetStereoWidening(enableStereoWidening);
@@ -102,6 +108,7 @@ namespace TopSpeed.Vehicles
             _soundBump.SetStereoWidening(enableStereoWidening);
             _soundBadSwitch.SetStereoWidening(enableStereoWidening);
             _soundWipers?.SetStereoWidening(enableStereoWidening);
+            _soundStop?.SetStereoWidening(enableStereoWidening);
             _soundAsphalt.SetStereoWidening(enableStereoWidening);
             _soundGravel.SetStereoWidening(enableStereoWidening);
             _soundWater.SetStereoWidening(enableStereoWidening);
@@ -111,3 +118,4 @@ namespace TopSpeed.Vehicles
         }
     }
 }
+

@@ -66,3 +66,4 @@ namespace TopSpeed.Vehicles.Core
         }
     }
 }
+

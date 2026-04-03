@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using SharpDX.DirectInput;
+using Key = TopSpeed.Input.InputKey;
 using TopSpeed.Input;
-using TopSpeed.Input.Devices.Joystick;
+using TopSpeed.Input.Devices.Controller;
 using TopSpeed.Localization;
 
 namespace TopSpeed.Core.Settings
@@ -99,13 +99,13 @@ namespace TopSpeed.Core.Settings
             return fallback;
         }
 
-        private static JoystickAxisOrButton ReadJoystick(int? value, JoystickAxisOrButton fallback, string field, List<SettingsIssue> issues)
+        private static AxisOrButton ReadController(int? value, AxisOrButton fallback, string field, List<SettingsIssue> issues)
         {
             if (!value.HasValue)
                 return fallback;
 
-            if (Enum.IsDefined(typeof(JoystickAxisOrButton), value.Value) && value.Value >= 0)
-                return (JoystickAxisOrButton)value.Value;
+            if (Enum.IsDefined(typeof(AxisOrButton), value.Value) && value.Value >= 0)
+                return (AxisOrButton)value.Value;
 
             issues.Add(new SettingsIssue(SettingsIssueSeverity.Warning, field, BuildInvalidValueMessage(field, value.Value, (int)fallback)));
             return fallback;
@@ -151,3 +151,5 @@ namespace TopSpeed.Core.Settings
         }
     }
 }
+
+

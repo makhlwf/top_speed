@@ -4,6 +4,7 @@ using TopSpeed.Audio;
 using TopSpeed.Core.Settings;
 using TopSpeed.Input;
 using TopSpeed.Localization;
+using TopSpeed.Runtime;
 using TopSpeed.Vehicles;
 using TS.Audio;
 
@@ -18,6 +19,7 @@ namespace TopSpeed.Race.Panels
         private readonly AudioManager _audio;
         private readonly RaceSettings _settings;
         private readonly VehicleRadioController _radio;
+        private readonly IFileDialogs _fileDialogs;
         private readonly Func<uint> _nextMediaId;
         private readonly Action<string> _announce;
         private readonly Action<uint, string>? _mediaLoaded;
@@ -43,6 +45,7 @@ namespace TopSpeed.Race.Panels
             AudioManager audio,
             RaceSettings settings,
             VehicleRadioController radio,
+            IFileDialogs fileDialogs,
             Func<uint> nextMediaId,
             Action<string> announce,
             Action<uint, string>? mediaLoaded = null,
@@ -52,6 +55,7 @@ namespace TopSpeed.Race.Panels
             _audio = audio ?? throw new ArgumentNullException(nameof(audio));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _radio = radio ?? throw new ArgumentNullException(nameof(radio));
+            _fileDialogs = fileDialogs ?? throw new ArgumentNullException(nameof(fileDialogs));
             _nextMediaId = nextMediaId ?? throw new ArgumentNullException(nameof(nextMediaId));
             _announce = announce ?? throw new ArgumentNullException(nameof(announce));
             _mediaLoaded = mediaLoaded;
@@ -122,3 +126,5 @@ namespace TopSpeed.Race.Panels
         }
     }
 }
+
+

@@ -1,29 +1,29 @@
-using SharpDX.DirectInput;
-using TopSpeed.Input.Devices.Joystick;
+using Key = TopSpeed.Input.InputKey;
+using TopSpeed.Input.Devices.Controller;
 
 namespace TopSpeed.Input
 {
     internal sealed partial class RaceInput
     {
-        private int GetPedalAxis(JoystickAxisOrButton axis, PedalInvertMode mode)
+        private int GetPedalAxis(AxisOrButton axis, PedalInvertMode mode)
         {
-            if (!UseJoystick)
+            if (!UseController)
                 return 0;
 
             if (!TryGetAxisComponent(axis, out var component, out var mappedPositive))
                 return GetAxis(axis);
 
-            if (!_joystickIsRacingWheel)
+            if (!_controllerIsRacingWheel)
                 return GetAxis(axis);
 
             if (!_hasPedalBaseline)
             {
-                _pedalBaseline = _lastJoystick;
+                _pedalBaseline = _lastController;
                 _hasPedalBaseline = true;
             }
 
             var baseline = GetAxisComponentValue(_pedalBaseline, component);
-            var current = GetAxisComponentValue(_lastJoystick, component);
+            var current = GetAxisComponentValue(_lastController, component);
             var directionPositive = ResolvePedalDirectionPositive(mode, mappedPositive, baseline);
             var useEndpointScaling = IsEndpointBaseline(baseline);
             return ResolvePedalValue(component, current, baseline, directionPositive, useEndpointScaling);
@@ -90,3 +90,5 @@ namespace TopSpeed.Input
         }
     }
 }
+
+

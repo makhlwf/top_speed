@@ -61,3 +61,4 @@ namespace TopSpeed.Vehicles.Events
         }
     }
 }
+

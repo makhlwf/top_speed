@@ -113,21 +113,6 @@ namespace TopSpeed.Network
             return ClientPacketSerializer.WriteProtocolHello(packet);
         }
 
-        private static byte[] BuildPlayerStatePacket()
-        {
-            var buffer = new byte[2 + 4 + 1 + 1];
-            buffer[0] = ProtocolConstants.Version;
-            buffer[1] = (byte)Command.PlayerState;
-            var idBytes = BitConverter.GetBytes(0u);
-            buffer[2] = idBytes[0];
-            buffer[3] = idBytes[1];
-            buffer[4] = idBytes[2];
-            buffer[5] = idBytes[3];
-            buffer[6] = 0;
-            buffer[7] = (byte)PlayerState.NotReady;
-            return buffer;
-        }
-
         private static bool IsCompatibilityAccepted(ProtocolCompatStatus status)
         {
             return status == ProtocolCompatStatus.Exact || status == ProtocolCompatStatus.CompatibleDowngrade;
@@ -175,3 +160,4 @@ namespace TopSpeed.Network
         }
     }
 }
+

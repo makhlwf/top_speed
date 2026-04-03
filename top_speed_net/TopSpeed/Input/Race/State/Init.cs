@@ -1,6 +1,6 @@
 using System;
-using SharpDX.DirectInput;
-using TopSpeed.Input.Devices.Joystick;
+using Key = TopSpeed.Input.InputKey;
+using TopSpeed.Input.Devices.Controller;
 
 namespace TopSpeed.Input
 {
@@ -8,30 +8,30 @@ namespace TopSpeed.Input
     {
         public void Initialize()
         {
-            _left = JoystickAxisOrButton.AxisNone;
-            _right = JoystickAxisOrButton.AxisNone;
-            _throttle = JoystickAxisOrButton.AxisNone;
-            _brake = JoystickAxisOrButton.AxisNone;
-            _clutch = JoystickAxisOrButton.AxisNone;
-            _gearUp = JoystickAxisOrButton.AxisNone;
-            _gearDown = JoystickAxisOrButton.AxisNone;
-            _horn = JoystickAxisOrButton.AxisNone;
-            _requestInfo = JoystickAxisOrButton.AxisNone;
-            _currentGear = JoystickAxisOrButton.AxisNone;
-            _currentLapNr = JoystickAxisOrButton.AxisNone;
-            _currentRacePerc = JoystickAxisOrButton.AxisNone;
-            _currentLapPerc = JoystickAxisOrButton.AxisNone;
-            _currentRaceTime = JoystickAxisOrButton.AxisNone;
-            _startEngine = JoystickAxisOrButton.AxisNone;
-            _reportDistance = JoystickAxisOrButton.AxisNone;
-            _reportSpeed = JoystickAxisOrButton.AxisNone;
-            _trackName = JoystickAxisOrButton.AxisNone;
-            _pause = JoystickAxisOrButton.AxisNone;
+            _left = AxisOrButton.AxisNone;
+            _right = AxisOrButton.AxisNone;
+            _throttle = AxisOrButton.AxisNone;
+            _brake = AxisOrButton.AxisNone;
+            _clutch = AxisOrButton.AxisNone;
+            _gearUp = AxisOrButton.AxisNone;
+            _gearDown = AxisOrButton.AxisNone;
+            _horn = AxisOrButton.AxisNone;
+            _requestInfo = AxisOrButton.AxisNone;
+            _currentGear = AxisOrButton.AxisNone;
+            _currentLapNr = AxisOrButton.AxisNone;
+            _currentRacePerc = AxisOrButton.AxisNone;
+            _currentLapPerc = AxisOrButton.AxisNone;
+            _currentRaceTime = AxisOrButton.AxisNone;
+            _startEngine = AxisOrButton.AxisNone;
+            _reportDistance = AxisOrButton.AxisNone;
+            _reportSpeed = AxisOrButton.AxisNone;
+            _trackName = AxisOrButton.AxisNone;
+            _pause = AxisOrButton.AxisNone;
             ReadFromSettings();
             _allowDrivingInput = true;
             _allowAuxiliaryInput = true;
             _overlayInputBlocked = false;
-            _joystickIsRacingWheel = false;
+            _controllerIsRacingWheel = false;
             _hasPedalBaseline = false;
             _pedalBaseline = default;
 
@@ -57,26 +57,26 @@ namespace TopSpeed.Input
 
         private void ReadFromSettings()
         {
-            _left = _settings.JoystickLeft;
-            _right = _settings.JoystickRight;
-            _throttle = _settings.JoystickThrottle;
-            _brake = _settings.JoystickBrake;
-            _clutch = _settings.JoystickClutch;
-            _gearUp = _settings.JoystickGearUp;
-            _gearDown = _settings.JoystickGearDown;
-            _horn = _settings.JoystickHorn;
-            _requestInfo = _settings.JoystickRequestInfo;
-            _currentGear = _settings.JoystickCurrentGear;
-            _currentLapNr = _settings.JoystickCurrentLapNr;
-            _currentRacePerc = _settings.JoystickCurrentRacePerc;
-            _currentLapPerc = _settings.JoystickCurrentLapPerc;
-            _currentRaceTime = _settings.JoystickCurrentRaceTime;
-            _startEngine = _settings.JoystickStartEngine;
-            _reportDistance = _settings.JoystickReportDistance;
-            _reportSpeed = _settings.JoystickReportSpeed;
-            _trackName = _settings.JoystickTrackName;
-            _pause = _settings.JoystickPause;
-            _center = _settings.JoystickCenter;
+            _left = _settings.ControllerLeft;
+            _right = _settings.ControllerRight;
+            _throttle = _settings.ControllerThrottle;
+            _brake = _settings.ControllerBrake;
+            _clutch = _settings.ControllerClutch;
+            _gearUp = _settings.ControllerGearUp;
+            _gearDown = _settings.ControllerGearDown;
+            _horn = _settings.ControllerHorn;
+            _requestInfo = _settings.ControllerRequestInfo;
+            _currentGear = _settings.ControllerCurrentGear;
+            _currentLapNr = _settings.ControllerCurrentLapNr;
+            _currentRacePerc = _settings.ControllerCurrentRacePerc;
+            _currentLapPerc = _settings.ControllerCurrentLapPerc;
+            _currentRaceTime = _settings.ControllerCurrentRaceTime;
+            _startEngine = _settings.ControllerStartEngine;
+            _reportDistance = _settings.ControllerReportDistance;
+            _reportSpeed = _settings.ControllerReportSpeed;
+            _trackName = _settings.ControllerTrackName;
+            _pause = _settings.ControllerPause;
+            _center = _settings.ControllerCenter;
             _hasCenter = true;
             _kbLeft = _settings.KeyLeft;
             _kbRight = _settings.KeyRight;
@@ -101,3 +101,5 @@ namespace TopSpeed.Input
         }
     }
 }
+
+

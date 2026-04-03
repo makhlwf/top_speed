@@ -23,3 +23,4 @@ namespace TopSpeed.Input
         Pause
     }
 }
+

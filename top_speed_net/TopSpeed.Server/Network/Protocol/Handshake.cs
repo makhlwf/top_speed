@@ -132,7 +132,7 @@ namespace TopSpeed.Server.Network
             SendStream(player, PacketSerializer.WritePlayerNumber(player.Id, 0), PacketStream.Control);
             if (!string.IsNullOrWhiteSpace(_config.Motd))
                 SendStream(player, PacketSerializer.WriteServerInfo(new PacketServerInfo { Motd = _config.Motd }), PacketStream.Control);
-            SendRoomState(player, null);
+            _room.HandleStateRequest(player);
             _logger.Info(LocalizationService.Format(
                 LocalizationService.Mark("Connection established: playerId={0}, endpoint={1}, protocol={2}."),
                 player.Id,
@@ -176,3 +176,5 @@ namespace TopSpeed.Server.Network
         }
     }
 }
+
+

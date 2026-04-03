@@ -10,3 +10,4 @@ namespace TopSpeed.Audio
         void PlayTriangleTone(double frequencyHz, int durationMs, float volume = 0.35f);
     }
 }
+

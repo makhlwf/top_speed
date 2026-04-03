@@ -35,9 +35,20 @@ namespace TopSpeed.Vehicles.Loader
             public float FrontalAreaM2 { get; set; }
             public float RollingResistanceCoefficient { get; set; }
             public float LaunchRpm { get; set; }
+            public float CoastDragBaseMps2 { get; set; } = -1f;
+            public float CoastDragLinearPerMps { get; set; } = -1f;
             public float EngineInertiaKgm2 { get; set; }
             public float EngineFrictionTorqueNm { get; set; }
+            public float EngineFrictionLinearNmPerKrpm { get; set; } = -1f;
+            public float EngineFrictionQuadraticNmPerKrpm2 { get; set; } = -1f;
             public float DrivelineCouplingRate { get; set; }
+            public float IdleControlWindowRpm { get; set; } = -1f;
+            public float IdleControlGainNmPerRpm { get; set; } = -1f;
+            public float MinCoupledRiseIdleRpmPerSecond { get; set; } = -1f;
+            public float MinCoupledRiseFullRpmPerSecond { get; set; } = -1f;
+            public float EngineOverrunIdleLossFraction { get; set; } = -1f;
+            public float OverrunCurveExponent { get; set; } = -1f;
+            public float EngineBrakeTransferEfficiency { get; set; } = -1f;
             public float FinalDriveRatio { get; set; }
             public float ReverseMaxSpeedKph { get; set; }
             public float ReversePowerFactor { get; set; }
@@ -73,3 +84,4 @@ namespace TopSpeed.Vehicles.Loader
         }
     }
 }
+

@@ -80,7 +80,7 @@ namespace TopSpeed.Race
 
         private bool CanApplyRemoteLive(byte playerNumber)
         {
-            if (playerNumber == _playerNumber)
+            if (playerNumber == LocalPlayerNumber)
                 return false;
             if (playerNumber < _disconnectedPlayerSlots.Length && _disconnectedPlayerSlots[playerNumber])
                 return false;
@@ -103,4 +103,5 @@ namespace TopSpeed.Race
         }
     }
 }
+
 

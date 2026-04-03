@@ -1,16 +1,11 @@
 using System;
 using TopSpeed.Input.Devices.Vibration;
+using TopSpeed.Physics.Powertrain;
 
 namespace TopSpeed.Vehicles
 {
     internal partial class Car
     {
-        private const float StallSpeedThresholdKph = 8f;
-        private const float StallCouplingThreshold = 0.75f;
-        private const float StallDelaySeconds = 0.25f;
-        private const float StallDisengagedThrottleMax = 0.12f;
-        private const float StallRpmCaptureBand = 35f;
-
         private float UpdateDriveline(float elapsed, float speedMps, float throttle, bool inReverse, int clutchInput)
         {
             var type = EffectiveTransmissionType();
@@ -110,61 +105,25 @@ namespace TopSpeed.Vehicles
 
         private void UpdateStallState(float elapsed, float speedMps, float throttle, int clutchInput)
         {
-            if (_engineStalled)
-                return;
-
-            var type = EffectiveTransmissionType();
-            if (type != TransmissionType.Manual || _switchingGear != 0)
-            {
-                _stallTimer = 0f;
-                return;
-            }
-            if (IsNeutralGear())
-            {
-                _stallTimer = 0f;
-                return;
-            }
-
-            var stallThresholdRpm = _engine.StallRpm;
-            var engineNearStall = _engine.Rpm <= stallThresholdRpm + StallRpmCaptureBand;
-            var lowSpeed = _speed <= StallSpeedThresholdKph;
-            var engagedEnough = _drivelineCouplingFactor >= StallCouplingThreshold;
-            var clutchDown = clutchInput >= 90;
-            if (clutchDown)
-            {
-                if (engineNearStall && throttle <= StallDisengagedThrottleMax)
-                {
-                    _stallTimer += elapsed;
-                    if (_stallTimer >= StallDelaySeconds)
-                        StallEngine();
-                }
-                else
-                {
-                    _stallTimer = 0f;
-                }
-
-                return;
-            }
-
-            var insufficientThrottle = throttle < 0.20f;
-            var highLoadGear = _gear > FirstForwardGear;
-            var reverseLoad = _gear == ReverseGear && throttle < 0.15f;
-            if (!lowSpeed || !engagedEnough || (!insufficientThrottle && !highLoadGear && !reverseLoad))
-            {
-                _stallTimer = 0f;
-                return;
-            }
-
-            var coupledDemandRpm = ComputeRawCoupledRpm(speedMps, inReverse: _gear == ReverseGear);
-            var demandNearStall = coupledDemandRpm < stallThresholdRpm;
-            if (!demandNearStall && !engineNearStall)
-            {
-                _stallTimer = 0f;
-                return;
-            }
-
-            _stallTimer += elapsed;
-            if (_stallTimer >= StallDelaySeconds)
+            var stallResult = EngineStateRuntime.EvaluateManualStall(
+                new ManualStallRuntimeInput(
+                    EffectiveTransmissionType(),
+                    _switchingGear,
+                    IsNeutralGear(),
+                    _engineStalled,
+                    elapsed,
+                    _engine.Rpm,
+                    _engine.StallRpm,
+                    _speed,
+                    throttle,
+                    Math.Max(0f, Math.Min(100f, clutchInput)) / 100f,
+                    _drivelineCouplingFactor,
+                    ComputeRawCoupledRpm(speedMps, inReverse: _gear == ReverseGear),
+                    _gear > FirstForwardGear,
+                    _gear == ReverseGear,
+                    _stallTimer));
+            _stallTimer = stallResult.StallTimerSeconds;
+            if (stallResult.ShouldStall)
                 StallEngine();
         }
 
@@ -186,6 +145,7 @@ namespace TopSpeed.Vehicles
             _drivelineState = DrivelineState.Disengaged;
             _effectiveDriveRatioOverride = 0f;
             _automaticCreepAccelMps2 = 0f;
+            _engineLifecycleState = EngineLifecycleState.Stopped;
             _engine.StopEngine();
 
             if (_soundEngine.IsPlaying)
@@ -219,3 +179,4 @@ namespace TopSpeed.Vehicles
         }
     }
 }
+

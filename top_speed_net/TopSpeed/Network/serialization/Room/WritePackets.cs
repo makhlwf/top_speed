@@ -7,7 +7,7 @@ namespace TopSpeed.Network
     {
         public static byte[] WriteRoomEvent(PacketRoomEvent evt)
         {
-            var payload = 4 + 4 + 1 + 4 + 1 + 1 + 1 + 1 + 1 + 12 + 1 + 4 +
+            var payload = 4 + 4 + 4 + 1 + 4 + 1 + 1 + 1 + 1 + 12 + 1 + 4 +
                 ProtocolConstants.MaxRoomNameLength + 4 + 1 + 1 + ProtocolConstants.MaxPlayerNameLength;
             var buffer = WritePacketHeader(Command.RoomEvent, payload);
             var writer = new PacketWriter(buffer);
@@ -15,13 +15,13 @@ namespace TopSpeed.Network
             writer.WriteByte((byte)Command.RoomEvent);
             writer.WriteUInt32(evt.RoomId);
             writer.WriteUInt32(evt.RoomVersion);
+            writer.WriteUInt32(evt.RaceInstanceId);
             writer.WriteByte((byte)evt.Kind);
             writer.WriteUInt32(evt.HostPlayerId);
             writer.WriteByte((byte)evt.RoomType);
             writer.WriteByte(evt.PlayerCount);
             writer.WriteByte(evt.PlayersToStart);
-            writer.WriteBool(evt.RaceStarted);
-            writer.WriteBool(evt.PreparingRace);
+            writer.WriteByte((byte)evt.RaceState);
             writer.WriteFixedString(evt.TrackName ?? string.Empty, 12);
             writer.WriteByte(evt.Laps);
             writer.WriteUInt32(evt.GameRulesFlags);
@@ -36,7 +36,7 @@ namespace TopSpeed.Network
         public static byte[] WriteRoomGet(PacketRoomGet packet)
         {
             var count = Math.Min(packet.Players.Length, ProtocolConstants.MaxPlayers);
-            var payload = 1 + 4 + 4 + 4 + ProtocolConstants.MaxRoomNameLength + 1 + 1 + 1 + 1 + 12 + 1 + 4 + 1 +
+            var payload = 1 + 4 + 4 + 4 + 4 + ProtocolConstants.MaxRoomNameLength + 1 + 1 + 1 + 12 + 1 + 4 + 1 +
                 (count * (4 + 1 + 1 + ProtocolConstants.MaxPlayerNameLength));
             var buffer = WritePacketHeader(Command.RoomGet, payload);
             var writer = new PacketWriter(buffer);
@@ -45,12 +45,12 @@ namespace TopSpeed.Network
             writer.WriteBool(packet.Found);
             writer.WriteUInt32(packet.RoomVersion);
             writer.WriteUInt32(packet.RoomId);
+            writer.WriteUInt32(packet.RaceInstanceId);
             writer.WriteUInt32(packet.HostPlayerId);
             writer.WriteFixedString(packet.RoomName ?? string.Empty, ProtocolConstants.MaxRoomNameLength);
             writer.WriteByte((byte)packet.RoomType);
             writer.WriteByte(packet.PlayersToStart);
-            writer.WriteBool(packet.RaceStarted);
-            writer.WriteBool(packet.PreparingRace);
+            writer.WriteByte((byte)packet.RaceState);
             writer.WriteFixedString(packet.TrackName ?? string.Empty, 12);
             writer.WriteByte(packet.Laps);
             writer.WriteUInt32(packet.GameRulesFlags);
@@ -68,3 +68,4 @@ namespace TopSpeed.Network
         }
     }
 }
+

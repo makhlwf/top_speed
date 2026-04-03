@@ -18,6 +18,8 @@ namespace TopSpeed.Vehicles.Parsing
                 General = sections["general"],
                 Engine = sections["engine"],
                 Torque = sections["torque"],
+                EngineRot = sections["engine_rot"],
+                Resistance = sections["resistance"],
                 TorqueCurve = sections["torque_curve"],
                 Transmission = sections["transmission"],
                 TransmissionAtc = transmissionAtc,
@@ -44,6 +46,8 @@ namespace TopSpeed.Vehicles.Parsing
             ParseGearValues(sections.Gears, values, issues);
             ParseEngineValues(sections.Engine, values, issues);
             ParseTorqueValues(sections.Torque, values, issues);
+            ParseEngineRotValues(sections.EngineRot, values, issues);
+            ParseResistanceValues(sections.Resistance, values, issues);
             ParseDrivetrainValues(sections.Drivetrain, values, issues);
             ParseSteeringValues(sections.Steering, values, issues);
             ParseTireModelValues(sections.TireModel, values, issues);
@@ -56,3 +60,4 @@ namespace TopSpeed.Vehicles.Parsing
         }
     }
 }
+

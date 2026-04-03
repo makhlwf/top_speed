@@ -7,7 +7,7 @@ namespace TopSpeed.Data
 {
     internal sealed class VehicleParameters
     {
-        private readonly string?[] _sounds = new string?[7];
+        private readonly string?[] _sounds = new string?[8];
 
         public string? GetSoundPath(VehicleAction action) => _sounds[(int)action];
 
@@ -44,9 +44,20 @@ namespace TopSpeed.Data
         public float FrontalAreaM2 { get; }
         public float RollingResistanceCoefficient { get; }
         public float LaunchRpm { get; }
+        public float CoastDragBaseMps2 { get; }
+        public float CoastDragLinearPerMps { get; }
         public float EngineInertiaKgm2 { get; }
         public float EngineFrictionTorqueNm { get; }
+        public float EngineFrictionLinearNmPerKrpm { get; }
+        public float EngineFrictionQuadraticNmPerKrpm2 { get; }
         public float DrivelineCouplingRate { get; }
+        public float IdleControlWindowRpm { get; }
+        public float IdleControlGainNmPerRpm { get; }
+        public float MinCoupledRiseIdleRpmPerSecond { get; }
+        public float MinCoupledRiseFullRpmPerSecond { get; }
+        public float EngineOverrunIdleLossFraction { get; }
+        public float OverrunCurveExponent { get; }
+        public float EngineBrakeTransferEfficiency { get; }
         public float FinalDriveRatio { get; }
         public float ReverseMaxSpeedKph { get; }
         public float ReversePowerFactor { get; }
@@ -89,6 +100,7 @@ namespace TopSpeed.Data
             string? crashSound,
             string? brakeSound,
             string? backfireSound,
+            string? stopSound,
             int hasWipers,
             float surfaceTractionFactor,
             float deceleration,
@@ -119,9 +131,20 @@ namespace TopSpeed.Data
             float frontalAreaM2 = 2.2f,
             float rollingResistanceCoefficient = 0.015f,
             float launchRpm = 1800f,
+            float coastDragBaseMps2 = -1f,
+            float coastDragLinearPerMps = -1f,
             float engineInertiaKgm2 = 0.24f,
             float engineFrictionTorqueNm = 20f,
+            float engineFrictionLinearNmPerKrpm = -1f,
+            float engineFrictionQuadraticNmPerKrpm2 = -1f,
             float drivelineCouplingRate = 12f,
+            float idleControlWindowRpm = -1f,
+            float idleControlGainNmPerRpm = -1f,
+            float minCoupledRiseIdleRpmPerSecond = -1f,
+            float minCoupledRiseFullRpmPerSecond = -1f,
+            float engineOverrunIdleLossFraction = -1f,
+            float overrunCurveExponent = -1f,
+            float engineBrakeTransferEfficiency = -1f,
             float finalDriveRatio = 3.5f,
             float reverseMaxSpeedKph = 35f,
             float reversePowerFactor = 0.55f,
@@ -164,6 +187,7 @@ namespace TopSpeed.Data
             _sounds[(int)VehicleAction.Crash] = crashSound;
             _sounds[(int)VehicleAction.Brake] = brakeSound;
             _sounds[(int)VehicleAction.Backfire] = backfireSound;
+            _sounds[(int)VehicleAction.Stop] = stopSound;
 
             HasWipers = hasWipers;
             SurfaceTractionFactor = surfaceTractionFactor;
@@ -199,9 +223,20 @@ namespace TopSpeed.Data
             FrontalAreaM2 = frontalAreaM2;
             RollingResistanceCoefficient = rollingResistanceCoefficient;        
             LaunchRpm = launchRpm;
+            CoastDragBaseMps2 = coastDragBaseMps2;
+            CoastDragLinearPerMps = coastDragLinearPerMps;
             EngineInertiaKgm2 = engineInertiaKgm2;
             EngineFrictionTorqueNm = engineFrictionTorqueNm;
+            EngineFrictionLinearNmPerKrpm = engineFrictionLinearNmPerKrpm;
+            EngineFrictionQuadraticNmPerKrpm2 = engineFrictionQuadraticNmPerKrpm2;
             DrivelineCouplingRate = drivelineCouplingRate;
+            IdleControlWindowRpm = idleControlWindowRpm;
+            IdleControlGainNmPerRpm = idleControlGainNmPerRpm;
+            MinCoupledRiseIdleRpmPerSecond = minCoupledRiseIdleRpmPerSecond;
+            MinCoupledRiseFullRpmPerSecond = minCoupledRiseFullRpmPerSecond;
+            EngineOverrunIdleLossFraction = engineOverrunIdleLossFraction;
+            OverrunCurveExponent = overrunCurveExponent;
+            EngineBrakeTransferEfficiency = engineBrakeTransferEfficiency;
             FinalDriveRatio = finalDriveRatio;
             ReverseMaxSpeedKph = reverseMaxSpeedKph;
             ReversePowerFactor = reversePowerFactor;
@@ -255,7 +290,7 @@ namespace TopSpeed.Data
         private static VehicleParameters FromSpec(OfficialVehicleSpec spec)
         {
             return new VehicleParameters(
-                spec.Name, null, null, null, null, null, null, null,
+                spec.Name, null, null, null, null, null, null, null, null,
                 spec.HasWipers,
                 spec.SurfaceTractionFactor,
                 spec.Deceleration,
@@ -286,9 +321,20 @@ namespace TopSpeed.Data
                 spec.FrontalAreaM2,
                 spec.RollingResistanceCoefficient,
                 spec.LaunchRpm,
+                spec.CoastDragBaseMps2,
+                spec.CoastDragLinearPerMps,
                 spec.EngineInertiaKgm2,
                 spec.EngineFrictionTorqueNm,
+                spec.FrictionLinearNmPerKrpm,
+                spec.FrictionQuadraticNmPerKrpm2,
                 spec.DrivelineCouplingRate,
+                spec.IdleControlWindowRpm,
+                spec.IdleControlGainNmPerRpm,
+                spec.MinCoupledRiseIdleRpmPerSecond,
+                spec.MinCoupledRiseFullRpmPerSecond,
+                spec.EngineOverrunIdleLossFraction,
+                spec.OverrunCurveExponent,
+                spec.EngineBrakeTransferEfficiency,
                 spec.FinalDriveRatio,
                 spec.ReverseMaxSpeedKph,
                 spec.ReversePowerFactor,
@@ -325,5 +371,6 @@ namespace TopSpeed.Data
         }
     }
 }
+
 
 

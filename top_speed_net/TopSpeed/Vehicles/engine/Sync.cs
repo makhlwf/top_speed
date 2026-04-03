@@ -14,15 +14,15 @@ namespace TopSpeed.Vehicles
             float reverseGearRatio = 3.2f,
             EngineCouplingMode couplingMode = EngineCouplingMode.Blended,
             float couplingFactor = 1f,
-            float? driveRatioOverride = null)
+            float? driveRatioOverride = null,
+            float minimumCoupledRpm = 0f)
         {
-            const float IdleControlRpmWindow = 150f;
-            const float IdleGovernorTorqueGainNmPerRpm = 0.08f;
-
             var clampedGear = Math.Max(1, Math.Min(_gearCount, gear));
             var throttle = Math.Max(0, throttleInput) / 100f;
             var speedMps = speedGameUnits / 3.6f;
             var wheelCircumference = _tireCircumferenceM;
+            var lockToDriveline = couplingMode == EngineCouplingMode.Locked;
+            var disengaged = couplingMode == EngineCouplingMode.Disengaged;
             var gearRatio = inReverse
                 ? Math.Max(0.1f, reverseGearRatio)
                 : (driveRatioOverride.HasValue && driveRatioOverride.Value > 0f
@@ -31,10 +31,21 @@ namespace TopSpeed.Vehicles
             var coupledRpm = wheelCircumference > 0f
                 ? (speedMps / wheelCircumference) * 60f * gearRatio * _finalDriveRatio
                 : _idleRpm;
-            coupledRpm = Math.Max(_stallRpm, Math.Min(_revLimiter, coupledRpm));
 
-            var lockToDriveline = couplingMode == EngineCouplingMode.Locked;
-            var disengaged = couplingMode == EngineCouplingMode.Disengaged;
+            var clampedMinimumCoupledRpm = Math.Max(0f, Math.Min(_revLimiter, minimumCoupledRpm));
+            var effectiveMinimumCoupledRpm = clampedMinimumCoupledRpm;
+            if (!lockToDriveline && effectiveMinimumCoupledRpm > 0f)
+            {
+                var riseRate = _minCoupledRiseIdleRpmPerSecond + ((_minCoupledRiseFullRpmPerSecond - _minCoupledRiseIdleRpmPerSecond) * throttle);
+                var rampLimit = _rpm + (riseRate * Math.Max(0f, elapsed));
+                if (effectiveMinimumCoupledRpm > rampLimit)
+                    effectiveMinimumCoupledRpm = rampLimit;
+
+                if (coupledRpm < effectiveMinimumCoupledRpm)
+                    coupledRpm = effectiveMinimumCoupledRpm;
+            }
+
+            coupledRpm = Math.Max(_stallRpm, Math.Min(_revLimiter, coupledRpm));
             var clampedCouplingFactor = Math.Max(0f, Math.Min(1f, couplingFactor));
             var baseRpm = lockToDriveline ? coupledRpm : (_rpm > 0f ? _rpm : coupledRpm);
             var clampedBaseRpm = Math.Max(_stallRpm, Math.Min(_revLimiter, baseRpm));
@@ -43,22 +54,44 @@ namespace TopSpeed.Vehicles
             var requestedEngineTorque = maximumEngineTorque * throttle;
             var grossEngineTorque = requestedEngineTorque;
 
-            var parasiticFrictionTorque = _engineFrictionTorqueNm;
-            var idleControlActive = throttle <= 0.10f && clampedBaseRpm <= _idleRpm + IdleControlRpmWindow;
+            var parasiticFrictionTorque = Calculator.EngineLossTorqueNm(
+                clampedBaseRpm,
+                _idleRpm,
+                _revLimiter,
+                _engineFrictionTorqueNm,
+                _engineFrictionLinearNmPerKrpm,
+                _engineFrictionQuadraticNmPerKrpm2,
+                _engineBrakingTorqueNm,
+                _engineBraking,
+                _engineOverrunIdleLossFraction,
+                _overrunCurveExponent,
+                closedThrottle: false);
+            var idleControlActive = throttle <= 0.10f && clampedBaseRpm <= _idleRpm + _idleControlWindowRpm;
             if (idleControlActive)
             {
                 var idleRpmDeficit = Math.Max(0f, _idleRpm - clampedBaseRpm);
-                var idleTargetTorque = parasiticFrictionTorque + (idleRpmDeficit * IdleGovernorTorqueGainNmPerRpm);
+                var idleTargetTorque = parasiticFrictionTorque + (idleRpmDeficit * _idleControlGainNmPerRpm);
                 var idleCompensationTorque = Math.Min(maximumEngineTorque, idleTargetTorque);
                 if (grossEngineTorque < idleCompensationTorque)
                     grossEngineTorque = idleCompensationTorque;
             }
 
-            var rpmRange = Math.Max(1f, _revLimiter - _idleRpm);
-            var rpmFactor = Math.Max(0f, Math.Min(1f, (clampedBaseRpm - _idleRpm) / rpmRange));
-            var lossTorque = parasiticFrictionTorque;
-            if (throttle <= 0.1f)
-                lossTorque += _engineBrakingTorqueNm * _engineBraking * rpmFactor;
+            var freeRevRpmThreshold = _idleRpm + Math.Max(80f, _idleControlWindowRpm * 0.35f);
+            var freeRevOverrunActive = disengaged && clampedBaseRpm > freeRevRpmThreshold;
+            var drivelineOverrunActive = !disengaged && clampedCouplingFactor > 0.05f;
+            var applyClosedThrottleOverrun = throttle <= 0.1f && (drivelineOverrunActive || freeRevOverrunActive);
+            var lossTorque = Calculator.EngineLossTorqueNm(
+                clampedBaseRpm,
+                _idleRpm,
+                _revLimiter,
+                _engineFrictionTorqueNm,
+                _engineFrictionLinearNmPerKrpm,
+                _engineFrictionQuadraticNmPerKrpm2,
+                _engineBrakingTorqueNm,
+                _engineBraking,
+                _engineOverrunIdleLossFraction,
+                _overrunCurveExponent,
+                closedThrottle: applyClosedThrottleOverrun);
 
             var netEngineTorque = grossEngineTorque - lossTorque;
             var rpmPerSecond = (netEngineTorque / _engineInertiaKgm2) * (60f / (2f * (float)Math.PI));
@@ -80,6 +113,9 @@ namespace TopSpeed.Vehicles
                 _rpm = Math.Max(_stallRpm, Math.Min(_maxRpm, blendedRpm));
             }
 
+            if (!inReverse && !lockToDriveline && effectiveMinimumCoupledRpm > 0f && _rpm < effectiveMinimumCoupledRpm)
+                _rpm = effectiveMinimumCoupledRpm;
+
             if (_rpm > _revLimiter)
                 _rpm = _revLimiter;
 
@@ -91,5 +127,6 @@ namespace TopSpeed.Vehicles
         }
     }
 }
+
 
 

@@ -28,9 +28,11 @@ namespace TopSpeed.Core.Multiplayer
         void HandleRoomList(PacketRoomList roomList);
         void HandleRoomState(PacketRoomState roomState);
         void HandleRoomEvent(PacketRoomEvent roomEvent);
+        void HandleRoomRaceStateChanged(PacketRoomRaceStateChanged roomRaceStateChanged);
         void HandleOnlinePlayers(PacketOnlinePlayers onlinePlayers);
         void HandleProtocolMessage(PacketProtocolMessage message);
 
         string ResolvePlayerName(byte playerNumber);
     }
 }
+

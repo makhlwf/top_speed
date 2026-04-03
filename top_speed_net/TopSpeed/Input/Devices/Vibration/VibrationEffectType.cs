@@ -13,3 +13,4 @@ namespace TopSpeed.Input.Devices.Vibration
         Gravel
     }
 }
+

@@ -15,6 +15,7 @@ namespace TopSpeed.Vehicles.Parsing
         {
             values.EngineSound = RequireString(section, "engine", issues);
             values.StartSound = RequireString(section, "start", issues);
+            values.StopSound = OptionalString(section, "stop");
             values.HornSound = RequireString(section, "horn", issues);
             values.ThrottleSound = OptionalString(section, "throttle");
             values.CrashVariants = RequireCsvStrings(section, "crash", issues);
@@ -43,3 +44,4 @@ namespace TopSpeed.Vehicles.Parsing
         }
     }
 }
+

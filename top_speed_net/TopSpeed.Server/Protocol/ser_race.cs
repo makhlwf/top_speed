@@ -5,14 +5,15 @@ namespace TopSpeed.Server.Protocol
 {
     internal static partial class PacketSerializer
     {
-        public static bool TryReadPlayerData(byte[] data, out PacketPlayerData packet)
+        public static bool TryReadRacePlayerData(byte[] data, out PacketRacePlayerData packet)
         {
-            packet = new PacketPlayerData();
-            if (data.Length < 2 + 4 + 1 + 1 + 4 + 4 + 2 + 4 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 4)
+            packet = new PacketRacePlayerData();
+            if (data.Length < 2 + 4 + 4 + 1 + 1 + 4 + 4 + 2 + 4 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 4)
                 return false;
             var reader = new PacketReader(data);
             reader.ReadByte();
             reader.ReadByte();
+            packet.RaceInstanceId = reader.ReadUInt32();
             packet.PlayerId = reader.ReadUInt32();
             packet.PlayerNumber = reader.ReadByte();
             packet.Car = (CarType)reader.ReadByte();

@@ -1,4 +1,4 @@
-using SharpDX.DirectInput;
+using Key = TopSpeed.Input.InputKey;
 
 namespace TopSpeed.Input
 {
@@ -40,3 +40,5 @@ namespace TopSpeed.Input
         }
     }
 }
+
+

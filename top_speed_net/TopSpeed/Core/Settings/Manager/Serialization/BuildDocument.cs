@@ -60,40 +60,40 @@ namespace TopSpeed.Core.Settings
                         Pause = (int)settings.KeyPause
                     },
                     MenuShortcuts = BuildMenuShortcuts(settings.ShortcutKeyBindings),
-                    Joystick = new SettingsJoystickDocument
+                    Controller = new SettingsControllerDocument
                     {
-                        Left = (int)settings.JoystickLeft,
-                        Right = (int)settings.JoystickRight,
-                        Throttle = (int)settings.JoystickThrottle,
-                        Brake = (int)settings.JoystickBrake,
-                        Clutch = (int)settings.JoystickClutch,
-                        GearUp = (int)settings.JoystickGearUp,
-                        GearDown = (int)settings.JoystickGearDown,
-                        Horn = (int)settings.JoystickHorn,
-                        RequestInfo = (int)settings.JoystickRequestInfo,
-                        CurrentGear = (int)settings.JoystickCurrentGear,
-                        CurrentLapNr = (int)settings.JoystickCurrentLapNr,
-                        CurrentRacePerc = (int)settings.JoystickCurrentRacePerc,
-                        CurrentLapPerc = (int)settings.JoystickCurrentLapPerc,
-                        CurrentRaceTime = (int)settings.JoystickCurrentRaceTime,
-                        StartEngine = (int)settings.JoystickStartEngine,
-                        ReportDistance = (int)settings.JoystickReportDistance,
-                        ReportSpeed = (int)settings.JoystickReportSpeed,
-                        TrackName = (int)settings.JoystickTrackName,
-                        Pause = (int)settings.JoystickPause,
-                        ThrottleInvertMode = (int)settings.JoystickThrottleInvertMode,
-                        BrakeInvertMode = (int)settings.JoystickBrakeInvertMode,
-                        SteeringDeadZone = settings.JoystickSteeringDeadZone,
-                        Center = new SettingsJoystickCenterDocument
+                        Left = (int)settings.ControllerLeft,
+                        Right = (int)settings.ControllerRight,
+                        Throttle = (int)settings.ControllerThrottle,
+                        Brake = (int)settings.ControllerBrake,
+                        Clutch = (int)settings.ControllerClutch,
+                        GearUp = (int)settings.ControllerGearUp,
+                        GearDown = (int)settings.ControllerGearDown,
+                        Horn = (int)settings.ControllerHorn,
+                        RequestInfo = (int)settings.ControllerRequestInfo,
+                        CurrentGear = (int)settings.ControllerCurrentGear,
+                        CurrentLapNr = (int)settings.ControllerCurrentLapNr,
+                        CurrentRacePerc = (int)settings.ControllerCurrentRacePerc,
+                        CurrentLapPerc = (int)settings.ControllerCurrentLapPerc,
+                        CurrentRaceTime = (int)settings.ControllerCurrentRaceTime,
+                        StartEngine = (int)settings.ControllerStartEngine,
+                        ReportDistance = (int)settings.ControllerReportDistance,
+                        ReportSpeed = (int)settings.ControllerReportSpeed,
+                        TrackName = (int)settings.ControllerTrackName,
+                        Pause = (int)settings.ControllerPause,
+                        ThrottleInvertMode = (int)settings.ControllerThrottleInvertMode,
+                        BrakeInvertMode = (int)settings.ControllerBrakeInvertMode,
+                        SteeringDeadZone = settings.ControllerSteeringDeadZone,
+                        Center = new SettingsControllerCenterDocument
                         {
-                            X = settings.JoystickCenter.X,
-                            Y = settings.JoystickCenter.Y,
-                            Z = settings.JoystickCenter.Z,
-                            Rx = settings.JoystickCenter.Rx,
-                            Ry = settings.JoystickCenter.Ry,
-                            Rz = settings.JoystickCenter.Rz,
-                            Slider1 = settings.JoystickCenter.Slider1,
-                            Slider2 = settings.JoystickCenter.Slider2
+                            X = settings.ControllerCenter.X,
+                            Y = settings.ControllerCenter.Y,
+                            Z = settings.ControllerCenter.Z,
+                            Rx = settings.ControllerCenter.Rx,
+                            Ry = settings.ControllerCenter.Ry,
+                            Rz = settings.ControllerCenter.Rz,
+                            Slider1 = settings.ControllerCenter.Slider1,
+                            Slider2 = settings.ControllerCenter.Slider2
                         }
                     }
                 },
@@ -140,7 +140,7 @@ namespace TopSpeed.Core.Settings
             };
         }
 
-        private static SettingsMenuShortcutsDocument BuildMenuShortcuts(Dictionary<string, SharpDX.DirectInput.Key>? shortcuts)
+        private static SettingsMenuShortcutsDocument BuildMenuShortcuts(Dictionary<string, InputKey>? shortcuts)
         {
             var bindings = new List<SettingsMenuShortcutBindingDocument>();
             if (shortcuts != null)
@@ -196,3 +196,4 @@ namespace TopSpeed.Core.Settings
         }
     }
 }
+

@@ -32,3 +32,4 @@ namespace TopSpeed.Vehicles.Control
         public float Elapsed { get; }
     }
 }
+

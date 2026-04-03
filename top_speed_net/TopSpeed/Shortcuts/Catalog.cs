@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using SharpDX.DirectInput;
+using Key = TopSpeed.Input.InputKey;
 using TopSpeed.Input;
 using TopSpeed.Localization;
 
@@ -78,7 +78,7 @@ namespace TopSpeed.Shortcuts
             SetIdMap(_menuScopeIds, menuId, scopeIds);
         }
 
-        public bool TryResolveTriggeredAction(IGameInput input, in ShortcutContext context, out ShortcutAction action)
+        public bool TryResolveTriggeredAction(IInputService input, in ShortcutContext context, out ShortcutAction action)
         {
             action = null!;
             if (input == null)
@@ -343,20 +343,26 @@ namespace TopSpeed.Shortcuts
             }
 
             if (TryGetOwnerId(normalizedGroupId, ScopeGroupPrefix, out var scopeId) &&
-                _scopeActionIds.TryGetValue(scopeId, out actionIds))
+                _scopeActionIds.TryGetValue(scopeId, out var scopeActionIds) &&
+                scopeActionIds != null)
             {
+                actionIds = scopeActionIds;
                 return true;
             }
 
             if (TryGetOwnerId(normalizedGroupId, MenuGroupPrefix, out var menuId) &&
-                _menuActionIds.TryGetValue(menuId, out actionIds))
+                _menuActionIds.TryGetValue(menuId, out var menuActionIds) &&
+                menuActionIds != null)
             {
+                actionIds = menuActionIds;
                 return true;
             }
 
             if (TryGetOwnerId(normalizedGroupId, ViewGroupPrefix, out var viewId) &&
-                _viewActionIds.TryGetValue(viewId, out actionIds))
+                _viewActionIds.TryGetValue(viewId, out var viewActionIds) &&
+                viewActionIds != null)
             {
+                actionIds = viewActionIds;
                 return true;
             }
 
@@ -413,3 +419,6 @@ namespace TopSpeed.Shortcuts
         }
     }
 }
+
+
+

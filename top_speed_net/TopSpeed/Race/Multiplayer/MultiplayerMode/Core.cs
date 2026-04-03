@@ -7,6 +7,7 @@ using TopSpeed.Network;
 using TopSpeed.Network.Live;
 using TopSpeed.Protocol;
 using TopSpeed.Race.Multiplayer;
+using TopSpeed.Runtime;
 using TopSpeed.Speech;
 using TopSpeed.Tracks;
 using TopSpeed.Vehicles;
@@ -25,13 +26,14 @@ namespace TopSpeed.Race
         private const int SnapshotBufferMax = 8;
 
         private readonly MultiplayerSession _session;
+        private readonly uint _raceInstanceId;
         private readonly Func<byte, string> _resolvePlayerName;
         private readonly uint _playerId;
-        private readonly byte _playerNumber;
         private readonly Dictionary<byte, RemotePlayer> _remotePlayers;
         private readonly Dictionary<byte, MediaTransfer> _remoteMediaTransfers;
         private readonly Dictionary<byte, Multiplayer.LiveState> _remoteLiveStates;
         private readonly List<byte> _expiredLivePlayers;
+        private readonly List<byte> _missingSnapshotPlayers;
         private readonly List<SnapshotFrame> _snapshotFrames;
         private readonly AudioSourceHandle?[] _soundPosition;
         private readonly AudioSourceHandle?[] _soundPlayerNr;
@@ -60,6 +62,7 @@ namespace TopSpeed.Race
         private bool _hasSnapshotTickNow;
         private bool _sendFailureAnnounced;
         private bool _liveFailureAnnounced;
+        private byte LocalPlayerNumber => _session.PlayerNumber;
 
         public MultiplayerMode(
             AudioManager audio,
@@ -73,20 +76,23 @@ namespace TopSpeed.Race
             int vehicle,
             string? vehicleFile,
             IVibrationDevice? vibrationDevice,
+            IFileDialogs fileDialogs,
             MultiplayerSession session,
+            uint raceInstanceId,
             uint playerId,
             byte playerNumber,
             Func<byte, string> resolvePlayerName)
-            : base(audio, speech, settings, input, trackName, automaticTransmission, nrOfLaps, vehicle, vehicleFile, vibrationDevice, trackData, trackData.UserDefined)
+            : base(audio, speech, settings, input, trackName, automaticTransmission, nrOfLaps, vehicle, vehicleFile, vibrationDevice, fileDialogs, trackData, trackData.UserDefined)
         {
             _session = session ?? throw new ArgumentNullException(nameof(session));
+            _raceInstanceId = raceInstanceId;
             _resolvePlayerName = resolvePlayerName ?? throw new ArgumentNullException(nameof(resolvePlayerName));
             _playerId = playerId;
-            _playerNumber = playerNumber;
             _remotePlayers = new Dictionary<byte, RemotePlayer>();
             _remoteMediaTransfers = new Dictionary<byte, MediaTransfer>();
             _remoteLiveStates = new Dictionary<byte, Multiplayer.LiveState>();
             _expiredLivePlayers = new List<byte>();
+            _missingSnapshotPlayers = new List<byte>();
             _snapshotFrames = new List<SnapshotFrame>(SnapshotBufferMax);
             _soundPosition = new AudioSourceHandle?[MaxPlayers];
             _soundPlayerNr = new AudioSourceHandle?[MaxPlayers];
@@ -97,4 +103,6 @@ namespace TopSpeed.Race
         }
     }
 }
+
+
 

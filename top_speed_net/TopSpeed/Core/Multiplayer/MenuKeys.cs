@@ -53,3 +53,4 @@ namespace TopSpeed.Core.Multiplayer
         public static readonly MenuScreenId SharedLobbyChat = new MenuScreenId("shared_lobby_chat");
     }
 }
+

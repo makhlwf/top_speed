@@ -1,5 +1,5 @@
 using System;
-using SharpDX.DirectInput;
+using Key = TopSpeed.Input.InputKey;
 using TopSpeed.Input;
 using TopSpeed.Localization;
 using TopSpeed.Menu;
@@ -9,7 +9,7 @@ namespace TopSpeed.Shortcuts
 {
     internal sealed class ShortcutMappingHandler
     {
-        private readonly InputManager _input;
+        private readonly IInputService _input;
         private readonly MenuManager _menu;
         private readonly RaceSettings _settings;
         private readonly SpeechService _speech;
@@ -22,7 +22,7 @@ namespace TopSpeed.Shortcuts
         private string _displayName = string.Empty;
 
         public ShortcutMappingHandler(
-            InputManager input,
+            IInputService input,
             MenuManager menu,
             RaceSettings settings,
             SpeechService speech,
@@ -119,3 +119,6 @@ namespace TopSpeed.Shortcuts
         }
     }
 }
+
+
+

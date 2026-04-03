@@ -6,7 +6,7 @@ using TopSpeed.Core;
 using TopSpeed.Input;
 using TopSpeed.Speech;
 using TS.Audio;
-using TopSpeed.Input.Devices.Joystick;
+using TopSpeed.Input.Devices.Controller;
 
 namespace TopSpeed.Menu
 {
@@ -40,10 +40,10 @@ namespace TopSpeed.Menu
         private AudioSourceHandle? _wrapSound;
         private AudioSourceHandle? _activateSound;
         private AudioSourceHandle? _edgeSound;
-        private JoystickStateSnapshot _prevJoystick;
-        private JoystickStateSnapshot _joystickCenter;
-        private bool _hasPrevJoystick;
-        private bool _hasJoystickCenter;
+        private State _prevController;
+        private State _controllerCenter;
+        private bool _hasPrevController;
+        private bool _hasControllerCenter;
         private bool _justEntered = true;
         private bool _ignoreHeldInput;
         private bool _autoFocusPending;
@@ -244,3 +244,4 @@ namespace TopSpeed.Menu
         }
     }
 }
+

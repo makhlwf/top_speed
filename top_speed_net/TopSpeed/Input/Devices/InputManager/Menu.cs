@@ -1,11 +1,8 @@
-using System;
-using SharpDX;
-using SharpDX.DirectInput;
-using TopSpeed.Input.Devices.Joystick;
+using TopSpeed.Input.Devices.Controller;
 
 namespace TopSpeed.Input
 {
-    internal sealed partial class InputManager
+    internal sealed partial class InputService
     {
         public bool IsAnyInputHeld()
         {
@@ -17,7 +14,17 @@ namespace TopSpeed.Input
             if (IsAnyKeyboardKeyHeld())
                 return true;
 
-            return IsAnyJoystickButtonHeld();
+            return IsAnyControllerButtonHeld();
+        }
+
+        public void PrepareForInterruptableSpeech()
+        {
+            if (_suspended || _disposed)
+                return;
+
+            _keyboardBackend.ResetHeldState();
+            _menuBackLatched = false;
+            ResetState();
         }
 
         public bool IsAnyMenuInputHeld()
@@ -28,7 +35,7 @@ namespace TopSpeed.Input
             if (IsAnyKeyboardKeyHeld(ignoreModifiers: true))
                 return true;
 
-            return IsAnyJoystickButtonHeld();
+            return IsAnyControllerButtonHeld();
         }
 
         public bool IsMenuBackHeld()
@@ -36,16 +43,13 @@ namespace TopSpeed.Input
             if (_suspended)
                 return false;
 
-            if (IsDown(Key.Escape))
+            if (IsDown(InputKey.Escape))
                 return true;
 
-            if (!_joystickEnabled)
+            if (!_controllerBackend.TryGetState(out var state))
                 return false;
 
-            if (TryGetJoystickState(out var state))
-                return IsMenuBackHeld(state);
-
-            return false;
+            return IsMenuBackHeld(state);
         }
 
         public void LatchMenuBack()
@@ -57,155 +61,54 @@ namespace TopSpeed.Input
         {
             if (!_menuBackLatched)
                 return false;
+
             if (IsMenuBackHeld())
                 return true;
+
             _menuBackLatched = false;
             return false;
         }
 
         private bool IsAnyKeyboardKeyHeld(bool ignoreModifiers = false)
         {
-            if (_disposed)
-                return false;
-
-            try
-            {
-                _keyboard.Acquire();
-                var state = _keyboard.GetCurrentState();
-                if (!ignoreModifiers)
-                    return state.PressedKeys.Count > 0;
-
-                foreach (var key in state.PressedKeys)
-                {
-                    if (key == Key.LeftControl || key == Key.RightControl ||
-                        key == Key.LeftShift || key == Key.RightShift ||
-                        key == Key.LeftAlt || key == Key.RightAlt)
-                        continue;
-                    return true;
-                }
-
-                return false;
-            }
-            catch (SharpDXException)
-            {
-                return false;
-            }
-            catch (ObjectDisposedException)
-            {
-                return false;
-            }
-            catch (NullReferenceException)
-            {
-                return false;
-            }
+            return _keyboardBackend.IsAnyKeyHeld(ignoreModifiers);
         }
 
-        private bool TryGetKeyboardState(out KeyboardState state)
+        private bool IsAnyControllerButtonHeld()
         {
-            state = null!;
-            if (_disposed)
-                return false;
-
-            try
-            {
-                _keyboard.Acquire();
-                state = _keyboard.GetCurrentState();
-                return true;
-            }
-            catch (SharpDXException)
-            {
-                return false;
-            }
-            catch (ObjectDisposedException)
-            {
-                return false;
-            }
-            catch (NullReferenceException)
-            {
-                return false;
-            }
-        }
-
-        private bool IsAnyJoystickButtonHeld()
-        {
-            if (!_joystickEnabled)
-                return false;
-
-            if (_gamepad.IsAvailable)
-            {
-                _gamepad.Update();
-                return _gamepad.State.HasAnyButtonDown();
-            }
-
-            var joystick = GetJoystickDevice();
-            if (joystick == null || !joystick.IsAvailable)
-                return false;
-
-            if (!joystick.Update())
-                return false;
-
-            return joystick.State.HasAnyButtonDown();
+            return _controllerBackend.IsAnyButtonHeld();
         }
 
         private void UpdateMenuBackLatchImmediate()
         {
             if (!_menuBackLatched)
                 return;
+
             if (!IsMenuBackHeldImmediate())
                 _menuBackLatched = false;
         }
 
         private bool IsMenuBackHeldImmediate()
         {
-            if (_disposed)
+            if (_keyboardBackend.IsDown(InputKey.Escape))
+                return true;
+
+            if (!_controllerBackend.TryPollState(out var state))
                 return false;
 
-            try
-            {
-                _keyboard.Acquire();
-                var state = _keyboard.GetCurrentState();
-                foreach (var key in state.PressedKeys)
-                {
-                    if (key == Key.Escape)
-                        return true;
-                }
-            }
-            catch (SharpDXException)
-            {
-            }
-            catch (ObjectDisposedException)
-            {
-                return false;
-            }
-            catch (NullReferenceException)
-            {
-                return false;
-            }
-
-            if (_gamepad.IsAvailable)
-            {
-                _gamepad.Update();
-                var state = _gamepad.State;
-                return IsMenuBackHeld(state);
-            }
-
-            if (!_joystickEnabled)
-                return false;
-
-            var joystick = GetJoystickDevice();
-            if (joystick == null || !joystick.IsAvailable)
-                return false;
-
-            return joystick.Update() && IsMenuBackHeld(joystick.State);
+            return IsMenuBackHeld(state);
         }
 
-        private bool IsMenuBackHeld(JoystickStateSnapshot state)
+        private bool IsMenuBackHeld(State state)
         {
             if (state.Pov4)
                 return true;
-            if (IgnoreJoystickAxesForMenuNavigation)
+
+            if (IgnoreControllerAxesForMenuNavigation)
                 return false;
+
             return state.X < -MenuBackThreshold;
         }
     }
 }
+

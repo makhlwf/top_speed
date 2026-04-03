@@ -29,7 +29,9 @@ namespace TopSpeed.Vehicles
             get => _listener;
             set => _listener = value;
         }
-        public bool EngineRunning => _soundEngine.IsPlaying;
+        public bool EngineRunning =>
+            _engineLifecycleState == EngineLifecycleState.Running
+            || _engineLifecycleState == EngineLifecycleState.Stopping;
         public bool Braking => _soundBrake.IsPlaying;
         public bool Horning => _soundHorn.IsPlaying;
         public bool UserDefined => _userDefined;
@@ -135,3 +137,4 @@ namespace TopSpeed.Vehicles
         }
     }
 }
+

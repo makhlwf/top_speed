@@ -2,6 +2,7 @@ using TopSpeed.Network;
 using TopSpeed.Protocol;
 using TopSpeed.Race.Multiplayer;
 using TopSpeed.Vehicles;
+using System;
 
 namespace TopSpeed.Race
 {
@@ -28,14 +29,14 @@ namespace TopSpeed.Race
 
         public void ApplyBump(PacketPlayerBumped bump)
         {
-            if (bump.PlayerNumber != _playerNumber)
+            if (bump.PlayerNumber != LocalPlayerNumber)
                 return;
             _car.Bump(bump.BumpX, bump.BumpY, bump.SpeedDeltaKph);
         }
 
         public void ApplyRemoteCrash(PacketPlayer crashed)
         {
-            if (crashed.PlayerNumber == _playerNumber)
+            if (crashed.PlayerNumber == LocalPlayerNumber)
                 return;
             if (crashed.PlayerNumber < _disconnectedPlayerSlots.Length && _disconnectedPlayerSlots[crashed.PlayerNumber])
                 return;
@@ -43,26 +44,33 @@ namespace TopSpeed.Race
                 remote.Player.Crash(remote.Player.PositionX, scheduleRestart: false);
         }
 
-        public void ApplyRemoteFinish(PacketPlayer finished)
+        public void ApplyRemoteFinish(byte playerNumber, byte finishOrder)
         {
-            if (finished.PlayerNumber == _playerNumber)
+            if (playerNumber == LocalPlayerNumber)
                 return;
-            if (finished.PlayerNumber < _disconnectedPlayerSlots.Length && _disconnectedPlayerSlots[finished.PlayerNumber])
+            if (playerNumber < _disconnectedPlayerSlots.Length && _disconnectedPlayerSlots[playerNumber])
                 return;
-            if (!_remotePlayers.TryGetValue(finished.PlayerNumber, out var remote))
+            if (!_remotePlayers.TryGetValue(playerNumber, out var remote))
                 return;
             if (remote.Finished)
                 return;
 
             remote.Finished = true;
             remote.State = PlayerState.Finished;
-            remote.Player.Stop();
-            AnnounceFinishOrder(_soundPlayerNr, _soundFinished, finished.PlayerNumber, ref _positionFinish);
+
+            if (finishOrder > 0)
+            {
+                var expectedIndex = Math.Max(0, finishOrder - 1);
+                if (expectedIndex > _positionFinish)
+                    _positionFinish = expectedIndex;
+            }
+
+            AnnounceFinishOrder(_soundPlayerNr, _soundFinished, playerNumber, ref _positionFinish);
         }
 
-        public void RemoveRemotePlayer(byte playerNumber)
+        public void RemoveRemotePlayer(byte playerNumber, bool markDisconnected = true)
         {
-            if (playerNumber < _disconnectedPlayerSlots.Length)
+            if (markDisconnected && playerNumber < _disconnectedPlayerSlots.Length)
                 _disconnectedPlayerSlots[playerNumber] = true;
 
             _remoteMediaTransfers.Remove(playerNumber);
@@ -78,7 +86,17 @@ namespace TopSpeed.Race
             RemovePlayerFromSnapshotFrames(playerNumber);
         }
 
-        public void HandleServerRaceStopped(PacketRaceResults results)
+        public void HandleServerRaceCompleted(PacketRoomRaceCompleted packet)
+        {
+            FinalizeServerRace(BuildResultSummary(packet));
+        }
+
+        public void HandleServerRaceAborted()
+        {
+            FinalizeServerRace(null);
+        }
+
+        private void FinalizeServerRace(RaceResultSummary? summary)
         {
             if (_serverStopReceived)
                 return;
@@ -86,23 +104,47 @@ namespace TopSpeed.Race
             _serverStopReceived = true;
             _snapshotFrames.Clear();
             _hasSnapshotTickNow = false;
-            foreach (var remote in _remotePlayers.Values)
-            {
-                remote.Finished = true;
-                remote.State = PlayerState.Finished;
-                remote.Player.StopLiveStream();
-                remote.Player.Stop();
-            }
+            _missingSnapshotPlayers.Clear();
+            foreach (var number in _remotePlayers.Keys)
+                _missingSnapshotPlayers.Add(number);
+            for (var i = 0; i < _missingSnapshotPlayers.Count; i++)
+                RemoveRemotePlayer(_missingSnapshotPlayers[i]);
             _remoteLiveStates.Clear();
             if (!_sentFinish)
             {
                 _sentFinish = true;
                 _currentState = PlayerState.Finished;
-                TrySendRace(_session.SendPlayerState(_currentState));
+                TrySendRace(_session.SendPlayerState(_raceInstanceId, _currentState));
             }
 
-            SetResultSummary(BuildResultSummary(results));
+            if (summary != null)
+                SetResultSummary(summary);
             RequestExitWhenQueueIdle();
+        }
+
+        public void SyncParticipants(PacketRoomState roomState)
+        {
+            if (roomState == null)
+                return;
+
+            _missingSnapshotPlayers.Clear();
+            foreach (var number in _remotePlayers.Keys)
+                _missingSnapshotPlayers.Add(number);
+
+            var participants = roomState.Players ?? Array.Empty<PacketRoomPlayer>();
+            for (var i = 0; i < participants.Length; i++)
+            {
+                var number = participants[i].PlayerNumber;
+                if (number == LocalPlayerNumber)
+                    continue;
+                _missingSnapshotPlayers.Remove(number);
+            }
+
+            if (_missingSnapshotPlayers.Count == 0)
+                return;
+
+            for (var i = 0; i < _missingSnapshotPlayers.Count; i++)
+                RemoveRemotePlayer(_missingSnapshotPlayers[i]);
         }
 
         private RemotePlayer GetOrCreateRemotePlayer(byte playerNumber, CarType car, float positionX, float positionY)
@@ -147,7 +189,7 @@ namespace TopSpeed.Race
             bool mediaPlaying,
             uint mediaId)
         {
-            if (playerNumber == _playerNumber)
+            if (playerNumber == LocalPlayerNumber)
                 return;
             if (playerNumber < _disconnectedPlayerSlots.Length && _disconnectedPlayerSlots[playerNumber])
                 return;
@@ -157,7 +199,6 @@ namespace TopSpeed.Race
             if (state == PlayerState.Finished && !remote.Finished)
             {
                 remote.Finished = true;
-                remote.Player.Stop();
                 AnnounceFinishOrder(_soundPlayerNr, _soundFinished, playerNumber, ref _positionFinish);
             }
 

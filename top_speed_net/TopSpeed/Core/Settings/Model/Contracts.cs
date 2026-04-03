@@ -98,8 +98,8 @@ namespace TopSpeed.Core.Settings
         [DataMember(Name = "menuShortcuts")]
         public SettingsMenuShortcutsDocument? MenuShortcuts { get; set; }
 
-        [DataMember(Name = "joystick")]
-        public SettingsJoystickDocument? Joystick { get; set; }
+        [DataMember(Name = "controller")]
+        public SettingsControllerDocument? Controller { get; set; }
     }
 
     [DataContract]
@@ -144,7 +144,7 @@ namespace TopSpeed.Core.Settings
     }
 
     [DataContract]
-    internal sealed class SettingsJoystickDocument
+    internal sealed class SettingsControllerDocument
     {
         [DataMember(Name = "left")] public int? Left { get; set; }
         [DataMember(Name = "right")] public int? Right { get; set; }
@@ -168,11 +168,11 @@ namespace TopSpeed.Core.Settings
         [DataMember(Name = "throttleInvertMode")] public int? ThrottleInvertMode { get; set; }
         [DataMember(Name = "brakeInvertMode")] public int? BrakeInvertMode { get; set; }
         [DataMember(Name = "steeringDeadZone")] public int? SteeringDeadZone { get; set; }
-        [DataMember(Name = "center")] public SettingsJoystickCenterDocument? Center { get; set; }
+        [DataMember(Name = "center")] public SettingsControllerCenterDocument? Center { get; set; }
     }
 
     [DataContract]
-    internal sealed class SettingsJoystickCenterDocument
+    internal sealed class SettingsControllerCenterDocument
     {
         [DataMember(Name = "x")] public int? X { get; set; }
         [DataMember(Name = "y")] public int? Y { get; set; }
@@ -249,3 +249,4 @@ namespace TopSpeed.Core.Settings
         public bool? ShuffleEnabled { get; set; }
     }
 }
+

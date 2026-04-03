@@ -1,7 +1,5 @@
 using System;
 using System.IO;
-using System.Threading;
-using System.Windows.Forms;
 using TopSpeed.Localization;
 
 namespace TopSpeed.Race.Panels
@@ -14,7 +12,7 @@ namespace TopSpeed.Race.Panels
                 return;
 
             _pickerInProgress = true;
-            BeginShowMediaPickerDialog(selectedPath =>
+            _fileDialogs.PickAudioFile(selectedPath =>
             {
                 lock (_pendingPathLock)
                     _pendingSelectedPath = selectedPath;
@@ -29,7 +27,7 @@ namespace TopSpeed.Race.Panels
                 return;
 
             _folderPickerInProgress = true;
-            BeginShowFolderPickerDialog(_playlistFolder, selectedFolder =>
+            _fileDialogs.PickFolder(_playlistFolder, selectedFolder =>
             {
                 lock (_pendingPathLock)
                     _pendingSelectedFolder = selectedFolder;
@@ -104,90 +102,6 @@ namespace TopSpeed.Race.Panels
 
             _lastObservedPlaying = isPlaying;
         }
-
-        private static void BeginShowMediaPickerDialog(Action<string?> onCompleted)
-        {
-            void ShowDialog()
-            {
-                string? selectedPath = null;
-                using (var dialog = new OpenFileDialog())
-                {
-                    dialog.CheckFileExists = true;
-                    dialog.CheckPathExists = true;
-                    dialog.Multiselect = false;
-                    dialog.Title = LocalizationService.Translate(LocalizationService.Mark("Select radio media file"));
-                    dialog.Filter = "Audio files|*.wav;*.ogg;*.mp3;*.flac;*.aac;*.m4a|All files|*.*";
-
-                    var owner = GetDialogOwner();
-                    var result = owner != null ? dialog.ShowDialog(owner) : dialog.ShowDialog();
-                    if (result == DialogResult.OK)
-                        selectedPath = dialog.FileName;
-                }
-
-                onCompleted(selectedPath);
-            }
-
-            var ownerWindow = GetDialogOwnerForm();
-            if (ownerWindow != null && ownerWindow.IsHandleCreated && !ownerWindow.IsDisposed)
-            {
-                ownerWindow.BeginInvoke((Action)ShowDialog);
-                return;
-            }
-
-            var thread = new Thread(() => ShowDialog())
-            {
-                IsBackground = true,
-                Name = "RadioMediaPicker"
-            };
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
-        }
-
-        private static void BeginShowFolderPickerDialog(string currentFolder, Action<string?> onCompleted)
-        {
-            void ShowDialog()
-            {
-                string? selectedFolder = null;
-                using (var dialog = new FolderBrowserDialog())
-                {
-                    dialog.Description = LocalizationService.Translate(LocalizationService.Mark("Select radio media folder"));
-                    dialog.ShowNewFolderButton = false;
-                    if (!string.IsNullOrWhiteSpace(currentFolder) && Directory.Exists(currentFolder))
-                        dialog.SelectedPath = currentFolder;
-
-                    var owner = GetDialogOwner();
-                    var result = owner != null ? dialog.ShowDialog(owner) : dialog.ShowDialog();
-                    if (result == DialogResult.OK)
-                        selectedFolder = dialog.SelectedPath;
-                }
-
-                onCompleted(selectedFolder);
-            }
-
-            var ownerWindow = GetDialogOwnerForm();
-            if (ownerWindow != null && ownerWindow.IsHandleCreated && !ownerWindow.IsDisposed)
-            {
-                ownerWindow.BeginInvoke((Action)ShowDialog);
-                return;
-            }
-
-            var thread = new Thread(() => ShowDialog())
-            {
-                IsBackground = true,
-                Name = "RadioFolderPicker"
-            };
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
-        }
-
-        private static Form? GetDialogOwnerForm()
-        {
-            if (Application.OpenForms.Count == 0)
-                return null;
-
-            return Application.OpenForms[0];
-        }
-
-        private static IWin32Window? GetDialogOwner() => GetDialogOwnerForm();
     }
 }
+

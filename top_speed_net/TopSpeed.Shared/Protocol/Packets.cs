@@ -35,6 +35,38 @@ namespace TopSpeed.Protocol
         public PlayerState State;
     }
 
+    public sealed class PacketRacePlayer
+    {
+        public uint RaceInstanceId;
+        public uint PlayerId;
+        public byte PlayerNumber;
+    }
+
+    public sealed class PacketRacePlayerState
+    {
+        public uint RaceInstanceId;
+        public uint PlayerId;
+        public byte PlayerNumber;
+        public PlayerState State;
+    }
+
+    public sealed class PacketRacePlayerData
+    {
+        public uint RaceInstanceId;
+        public uint PlayerId;
+        public byte PlayerNumber;
+        public CarType Car;
+        public PlayerRaceData RaceData;
+        public PlayerState State;
+        public bool EngineRunning;
+        public bool Braking;
+        public bool Horning;
+        public bool Backfiring;
+        public bool MediaLoaded;
+        public bool MediaPlaying;
+        public uint MediaId;
+    }
+
     public sealed class PacketPlayerData
     {
         public uint PlayerId;
@@ -114,6 +146,15 @@ namespace TopSpeed.Protocol
         public int TimeMs;
     }
 
+    public sealed class PacketRoomRaceResultEntry
+    {
+        public uint PlayerId;
+        public byte PlayerNumber;
+        public byte FinishOrder;
+        public int TimeMs;
+        public RoomRaceResultStatus Status;
+    }
+
     public sealed class PacketServerInfo
     {
         public string Motd = string.Empty;
@@ -133,7 +174,7 @@ namespace TopSpeed.Protocol
         public GameRoomType RoomType;
         public byte PlayerCount;
         public byte PlayersToStart;
-        public bool RaceStarted;
+        public RoomRaceState RaceState;
         public string TrackName = string.Empty;
     }
 
@@ -197,14 +238,14 @@ namespace TopSpeed.Protocol
     {
         public uint RoomVersion;
         public uint RoomId;
+        public uint RaceInstanceId;
         public uint HostPlayerId;
         public string RoomName = string.Empty;
         public GameRoomType RoomType;
         public byte PlayersToStart;
+        public RoomRaceState RaceState;
         public bool InRoom;
         public bool IsHost;
-        public bool RaceStarted;
-        public bool PreparingRace;
         public string TrackName = string.Empty;
         public byte Laps;
         public uint GameRulesFlags;
@@ -216,12 +257,12 @@ namespace TopSpeed.Protocol
         public bool Found;
         public uint RoomVersion;
         public uint RoomId;
+        public uint RaceInstanceId;
         public uint HostPlayerId;
         public string RoomName = string.Empty;
         public GameRoomType RoomType;
         public byte PlayersToStart;
-        public bool RaceStarted;
-        public bool PreparingRace;
+        public RoomRaceState RaceState;
         public string TrackName = string.Empty;
         public byte Laps;
         public uint GameRulesFlags;
@@ -232,13 +273,13 @@ namespace TopSpeed.Protocol
     {
         public uint RoomId;
         public uint RoomVersion;
+        public uint RaceInstanceId;
         public RoomEventKind Kind;
         public uint HostPlayerId;
         public GameRoomType RoomType;
         public byte PlayerCount;
         public byte PlayersToStart;
-        public bool RaceStarted;
-        public bool PreparingRace;
+        public RoomRaceState RaceState;
         public string TrackName = string.Empty;
         public byte Laps;
         public uint GameRulesFlags;
@@ -247,6 +288,40 @@ namespace TopSpeed.Protocol
         public byte SubjectPlayerNumber;
         public PlayerState SubjectPlayerState;
         public string SubjectPlayerName = string.Empty;
+    }
+
+    public sealed class PacketRoomRaceStateChanged
+    {
+        public uint RoomId;
+        public uint RoomVersion;
+        public uint RaceInstanceId;
+        public RoomRaceState State;
+    }
+
+    public sealed class PacketRoomRacePlayerFinished
+    {
+        public uint RoomId;
+        public uint RaceInstanceId;
+        public uint PlayerId;
+        public byte PlayerNumber;
+        public byte FinishOrder;
+        public int TimeMs;
+    }
+
+    public sealed class PacketRoomRaceCompleted
+    {
+        public uint RoomId;
+        public uint RoomVersion;
+        public uint RaceInstanceId;
+        public PacketRoomRaceResultEntry[] Results = Array.Empty<PacketRoomRaceResultEntry>();
+    }
+
+    public sealed class PacketRoomRaceAborted
+    {
+        public uint RoomId;
+        public uint RoomVersion;
+        public uint RaceInstanceId;
+        public RoomRaceAbortReason Reason;
     }
 
     public sealed class PacketOnlinePlayer

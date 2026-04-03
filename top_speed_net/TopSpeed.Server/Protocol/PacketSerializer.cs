@@ -32,6 +32,21 @@ namespace TopSpeed.Server.Protocol
             return true;
         }
 
+        public static bool TryReadRacePlayerState(byte[] data, out PacketRacePlayerState packet)
+        {
+            packet = new PacketRacePlayerState();
+            if (data.Length < 2 + 4 + 4 + 1 + 1)
+                return false;
+            var reader = new PacketReader(data);
+            reader.ReadByte();
+            reader.ReadByte();
+            packet.RaceInstanceId = reader.ReadUInt32();
+            packet.PlayerId = reader.ReadUInt32();
+            packet.PlayerNumber = reader.ReadByte();
+            packet.State = (PlayerState)reader.ReadByte();
+            return true;
+        }
+
         public static bool TryReadPlayer(byte[] data, out PacketPlayer packet)
         {
             packet = new PacketPlayer();
@@ -40,6 +55,20 @@ namespace TopSpeed.Server.Protocol
             var reader = new PacketReader(data);
             reader.ReadByte();
             reader.ReadByte();
+            packet.PlayerId = reader.ReadUInt32();
+            packet.PlayerNumber = reader.ReadByte();
+            return true;
+        }
+
+        public static bool TryReadRacePlayer(byte[] data, out PacketRacePlayer packet)
+        {
+            packet = new PacketRacePlayer();
+            if (data.Length < 2 + 4 + 4 + 1)
+                return false;
+            var reader = new PacketReader(data);
+            reader.ReadByte();
+            reader.ReadByte();
+            packet.RaceInstanceId = reader.ReadUInt32();
             packet.PlayerId = reader.ReadUInt32();
             packet.PlayerNumber = reader.ReadByte();
             return true;

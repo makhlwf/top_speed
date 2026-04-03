@@ -1,39 +1,47 @@
 using System;
-using System.Diagnostics;
-using System.Threading;
-using System.Windows.Forms;
-using TopSpeed.Windowing;
+using TopSpeed.Runtime;
 
 namespace TopSpeed.Game
 {
     internal sealed partial class GameApp : IDisposable
     {
         private const int GameLoopIntervalMs = 8;
-        private readonly GameWindow _window;
+        private readonly IWindowHost _window;
+        private readonly ITextInputService _textInput;
+        private readonly ILoopHost _loop;
+        private readonly IFileDialogs _fileDialogs;
         private Game? _game;
-        private readonly Stopwatch _stopwatch;
-        private long _lastTicks;
-        private Thread? _gameThread;
-        private volatile bool _running;
 
-        public GameApp()
+        public GameApp(
+            IWindowHost window,
+            ITextInputService textInput,
+            ILoopHost loop,
+            IFileDialogs fileDialogs)
         {
-            _window = new GameWindow();
-            _window.FormClosed += OnFormClosed;
-            _window.Load += OnLoad;
-            _stopwatch = new Stopwatch();
+            _window = window ?? throw new ArgumentNullException(nameof(window));
+            _textInput = textInput ?? throw new ArgumentNullException(nameof(textInput));
+            _loop = loop ?? throw new ArgumentNullException(nameof(loop));
+            _fileDialogs = fileDialogs ?? throw new ArgumentNullException(nameof(fileDialogs));
+            _window.Closed += OnClosed;
+            _window.Loaded += OnLoaded;
         }
 
         public void Run()
         {
-            Application.Run(_window);
+            _window.Run();
         }
 
         public void Dispose()
         {
+            _window.Closed -= OnClosed;
+            _window.Loaded -= OnLoaded;
+            _loop.Stop();
+            _loop.Dispose();
             _window.Dispose();
-            StopGameThread();
             _game?.Dispose();
+            _game = null;
         }
     }
 }
+
+

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using SharpDX.DirectInput;
-using TopSpeed.Input.Devices.Joystick;
+using Key = TopSpeed.Input.InputKey;
+using TopSpeed.Input.Devices.Controller;
 using TopSpeed.Localization;
 
 namespace TopSpeed.Input
@@ -26,11 +26,11 @@ namespace TopSpeed.Input
                 : Key.Unknown;
         }
 
-        internal JoystickAxisOrButton GetAxisMapping(InputAction action)
+        internal AxisOrButton GetAxisMapping(InputAction action)
         {
             return _actionBindings.TryGetValue(action, out var binding)
                 ? binding.GetAxis()
-                : JoystickAxisOrButton.AxisNone;
+                : AxisOrButton.AxisNone;
         }
 
         internal void ApplyKeyMapping(InputAction action, Key key)
@@ -39,10 +39,12 @@ namespace TopSpeed.Input
                 binding.SetKey(key);
         }
 
-        internal void ApplyAxisMapping(InputAction action, JoystickAxisOrButton axis)
+        internal void ApplyAxisMapping(InputAction action, AxisOrButton axis)
         {
             if (_actionBindings.TryGetValue(action, out var binding))
                 binding.SetAxis(axis);
         }
     }
 }
+
+

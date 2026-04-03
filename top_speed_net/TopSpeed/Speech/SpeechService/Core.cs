@@ -1,7 +1,10 @@
 using System;
 using System.Diagnostics;
+#if NETFRAMEWORK
 using System.Speech.Synthesis;
+#endif
 using System.Threading;
+using CrossSpeak;
 using TopSpeed.Localization;
 
 namespace TopSpeed.Speech
@@ -18,31 +21,36 @@ namespace TopSpeed.Speech
         }
 
         private readonly Stopwatch _watch = new Stopwatch();
-        private readonly JawsClient _jaws;
-        private readonly NvdaClient _nvda;
-        private readonly ZdsrClient _zdsr;
-        private readonly BoyCtrlClient _boyCtrl;
+        private readonly IScreenReader _screenReader;
+#if NETFRAMEWORK
         private SpeechSynthesizer? _sapi;
+#endif
         private long _timeRequiredMs;
         private string _lastSpoken = string.Empty;
         private Func<bool>? _isInputHeld;
+        private Action? _prepareForInterruptableSpeech;
+        private bool _screenReaderReady;
 
-        public SpeechService(Func<bool>? isInputHeld = null)
+        public SpeechService(Func<bool>? isInputHeld = null, Action? prepareForInterruptableSpeech = null)
         {
             _isInputHeld = isInputHeld;
-            _jaws = new JawsClient();
-            _nvda = new NvdaClient();
-            _zdsr = new ZdsrClient();
-            _boyCtrl = new BoyCtrlClient();
+            _prepareForInterruptableSpeech = prepareForInterruptableSpeech;
+            _screenReader = CrossSpeakManager.Instance;
+            _screenReaderReady = InitializeScreenReader();
         }
 
-        public bool IsAvailable => _jaws.IsAvailable || _nvda.IsAvailable || _zdsr.IsAvailable || _boyCtrl.IsAvailable || _sapi != null;
+        public bool IsAvailable => _screenReaderReady || IsSapiInitialized();
 
         public float ScreenReaderRateMs { get; set; }
 
         public void BindInputProbe(Func<bool> isInputHeld)
         {
             _isInputHeld = isInputHeld;
+        }
+
+        public void BindInterruptPreparation(Action prepareForInterruptableSpeech)
+        {
+            _prepareForInterruptableSpeech = prepareForInterruptableSpeech;
         }
 
         public void Speak(string text)
@@ -55,7 +63,8 @@ namespace TopSpeed.Speech
             if (string.IsNullOrWhiteSpace(text))
                 return;
 
-            if (flag == SpeakFlag.NoInterruptButStop || flag == SpeakFlag.InterruptableButStop)
+            var shouldInterruptCurrent = flag == SpeakFlag.NoInterruptButStop || flag == SpeakFlag.InterruptableButStop;
+            if (shouldInterruptCurrent)
                 Purge();
 
             text = text.Trim();
@@ -63,61 +72,40 @@ namespace TopSpeed.Speech
             _lastSpoken = text;
 
             var spoke = false;
-            if (_jaws.IsAvailable)
+            if (_screenReaderReady)
             {
-                spoke = _jaws.Speak(text, flag == SpeakFlag.NoInterruptButStop || flag == SpeakFlag.InterruptableButStop);
-                if (spoke)
-                    StartSpeakTimer(text);
-            }
-
-            if (!spoke && _nvda.IsAvailable)
-            {
-                spoke = _nvda.Speak(text);
-                if (spoke)
-                    StartSpeakTimer(text);
-            }
-
-            if (!spoke && _zdsr.IsAvailable)
-            {
-                spoke = _zdsr.Speak(text, flag == SpeakFlag.NoInterruptButStop || flag == SpeakFlag.InterruptableButStop);
-                if (spoke)
-                    StartSpeakTimer(text);
-            }
-
-            if (!spoke && _boyCtrl.IsAvailable)
-            {
-                spoke = _boyCtrl.Speak(text, flag == SpeakFlag.NoInterruptButStop || flag == SpeakFlag.InterruptableButStop);
+                spoke = TrySpeakWithScreenReader(text, shouldInterruptCurrent);
                 if (spoke)
                     StartSpeakTimer(text);
             }
 
             if (!spoke)
             {
+#if NETFRAMEWORK
                 EnsureSapi();
                 _sapi!.SpeakAsync(text);
                 while (!IsSpeaking())
                 {
                     Thread.Sleep(0);
                 }
+#endif
             }
 
             if (flag == SpeakFlag.None)
                 return;
 
-            if (flag == SpeakFlag.Interruptable || flag == SpeakFlag.InterruptableButStop)
-            {
-                while (IsInputHeld())
-                {
-                    if (!IsSpeaking())
-                        break;
-                    Thread.Sleep(0);
-                }
-            }
+            var interruptable = flag == SpeakFlag.Interruptable || flag == SpeakFlag.InterruptableButStop;
+            if (interruptable)
+                PrepareForInterruptableSpeech();
 
             while (IsSpeaking())
             {
-                if ((flag == SpeakFlag.Interruptable || flag == SpeakFlag.InterruptableButStop) && IsInputHeld())
-                    break;
+                if (interruptable)
+                {
+                    if (IsInputHeld())
+                        break;
+                }
+
                 Thread.Sleep(10);
             }
         }
@@ -126,13 +114,31 @@ namespace TopSpeed.Speech
         {
             if (_watch.IsRunning)
                 return _watch.ElapsedMilliseconds < _timeRequiredMs;
+
+            if (_screenReaderReady)
+            {
+                try
+                {
+                    if (_screenReader.IsSpeaking())
+                        return true;
+                }
+                catch
+                {
+                }
+            }
+
+#if NETFRAMEWORK
             return _sapi != null && _sapi.State == SynthesizerState.Speaking;
+#else
+            return false;
+#endif
         }
 
         public void Purge()
         {
             _watch.Reset();
             _timeRequiredMs = 0;
+#if NETFRAMEWORK
             if (_sapi != null)
             {
                 try
@@ -142,31 +148,87 @@ namespace TopSpeed.Speech
                 catch (OperationCanceledException)
                 {
                 }
+
                 while (IsSpeaking())
                 {
                     Thread.Sleep(0);
                 }
             }
-            _jaws.Stop();
-            _nvda.Cancel();
-            _zdsr.Stop();
-            _boyCtrl.Stop();
+#endif
+
+            if (_screenReaderReady)
+            {
+                try
+                {
+                    _screenReader.Silence();
+                }
+                catch
+                {
+                }
+            }
         }
 
         public void Dispose()
         {
             Purge();
+#if NETFRAMEWORK
             _sapi?.Dispose();
-            _nvda.Dispose();
-            _zdsr.Dispose();
-            _boyCtrl.Dispose();
+#endif
+
+            try
+            {
+                _screenReader.Close();
+            }
+            catch
+            {
+            }
         }
 
+        private bool InitializeScreenReader()
+        {
+            try
+            {
+                _screenReader.TrySAPI(false);
+                _screenReader.PreferSAPI(false);
+                return _screenReader.Initialize();
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool TrySpeakWithScreenReader(string text, bool interrupt)
+        {
+            try
+            {
+                if (_screenReader.Output(text, interrupt))
+                    return true;
+
+                return _screenReader.Speak(text, interrupt);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool IsSapiInitialized()
+        {
+#if NETFRAMEWORK
+            return _sapi != null;
+#else
+            return false;
+#endif
+        }
+
+#if NETFRAMEWORK
         private void EnsureSapi()
         {
             if (_sapi == null)
                 _sapi = new SpeechSynthesizer();
         }
+#endif
 
         private void StartSpeakTimer(string text)
         {
@@ -199,6 +261,17 @@ namespace TopSpeed.Speech
             catch
             {
                 return false;
+            }
+        }
+
+        private void PrepareForInterruptableSpeech()
+        {
+            try
+            {
+                _prepareForInterruptableSpeech?.Invoke();
+            }
+            catch
+            {
             }
         }
     }

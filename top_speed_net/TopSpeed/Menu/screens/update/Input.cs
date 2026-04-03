@@ -1,11 +1,11 @@
-using SharpDX.DirectInput;
+using Key = TopSpeed.Input.InputKey;
 using TopSpeed.Input;
 
 namespace TopSpeed.Menu
 {
     internal sealed partial class MenuScreen
     {
-        private bool TryHandlePendingTitle(IGameInput input)
+        private bool TryHandlePendingTitle(IInputService input)
         {
             if (!_titlePending)
                 return true;
@@ -18,7 +18,7 @@ namespace TopSpeed.Menu
             return true;
         }
 
-        private UpdateInputState CaptureInputState(IGameInput input)
+        private UpdateInputState CaptureInputState(IInputService input)
         {
             var tabPressed = input.WasPressed(Key.Tab);
             var shiftHeld = input.IsDown(Key.LeftShift) || input.IsDown(Key.RightShift);
@@ -37,32 +37,32 @@ namespace TopSpeed.Menu
                 input.WasPressed(Key.Return) || input.WasPressed(Key.NumberPadEnter),
                 input.WasPressed(Key.Escape));
 
-            if (input.TryGetJoystickState(out var joystick))
+            if (input.TryGetControllerState(out var controller))
             {
-                var useAxes = !input.IgnoreJoystickAxesForMenuNavigation;
-                if (!_hasJoystickCenter && MenuInputUtil.IsNearCenter(joystick, useAxes))
+                var useAxes = !input.IgnoreControllerAxesForMenuNavigation;
+                if (!_hasControllerCenter && MenuInputUtil.IsNearCenter(controller, useAxes))
                 {
-                    _joystickCenter = joystick;
-                    _hasJoystickCenter = true;
+                    _controllerCenter = controller;
+                    _hasControllerCenter = true;
                 }
 
-                var previous = _hasPrevJoystick ? _prevJoystick : _joystickCenter;
-                state.MoveUp |= MenuInputUtil.WasJoystickUpPressed(joystick, previous, useAxes);
-                state.MoveDown |= MenuInputUtil.WasJoystickDownPressed(joystick, previous, useAxes);
-                state.Activate |= MenuInputUtil.WasJoystickActivatePressed(joystick, previous, useAxes);
-                state.Back |= MenuInputUtil.WasJoystickBackPressed(joystick, previous, useAxes);
-                _prevJoystick = joystick;
-                _hasPrevJoystick = true;
+                var previous = _hasPrevController ? _prevController : _controllerCenter;
+                state.MoveUp |= MenuInputUtil.WasControllerUpPressed(controller, previous, useAxes);
+                state.MoveDown |= MenuInputUtil.WasControllerDownPressed(controller, previous, useAxes);
+                state.Activate |= MenuInputUtil.WasControllerActivatePressed(controller, previous, useAxes);
+                state.Back |= MenuInputUtil.WasControllerBackPressed(controller, previous, useAxes);
+                _prevController = controller;
+                _hasPrevController = true;
             }
             else
             {
-                _hasPrevJoystick = false;
+                _hasPrevController = false;
             }
 
             return state;
         }
 
-        private bool TryHandleHeldInputGate(IGameInput input, UpdateInputState state, out MenuUpdateResult result)
+        private bool TryHandleHeldInputGate(IInputService input, UpdateInputState state, out MenuUpdateResult result)
         {
             result = MenuUpdateResult.None;
             if (!_ignoreHeldInput)
@@ -168,4 +168,7 @@ namespace TopSpeed.Menu
         }
     }
 }
+
+
+
 

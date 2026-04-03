@@ -30,3 +30,4 @@ namespace TopSpeed.Core.Multiplayer
         public static PacketEffect CancelRoomOptions() => new PacketEffect(PacketEffectKind.CancelRoomOptions, string.Empty, default);
     }
 }
+

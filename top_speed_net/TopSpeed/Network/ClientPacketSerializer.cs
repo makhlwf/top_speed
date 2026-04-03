@@ -104,12 +104,37 @@ namespace TopSpeed.Network
             return buffer;
         }
 
+        public static byte[] WriteRacePlayerState(Command command, uint raceInstanceId, uint playerId, byte playerNumber, PlayerState state)
+        {
+            var buffer = WritePacketHeader(command, 4 + 4 + 1 + 1);
+            var writer = new PacketWriter(buffer);
+            writer.WriteByte(ProtocolConstants.Version);
+            writer.WriteByte((byte)command);
+            writer.WriteUInt32(raceInstanceId);
+            writer.WriteUInt32(playerId);
+            writer.WriteByte(playerNumber);
+            writer.WriteByte((byte)state);
+            return buffer;
+        }
+
         public static byte[] WritePlayer(Command command, uint playerId, byte playerNumber)
         {
             var buffer = WritePacketHeader(command, 4 + 1);
             var writer = new PacketWriter(buffer);
             writer.WriteByte(ProtocolConstants.Version);
             writer.WriteByte((byte)command);
+            writer.WriteUInt32(playerId);
+            writer.WriteByte(playerNumber);
+            return buffer;
+        }
+
+        public static byte[] WriteRacePlayer(Command command, uint raceInstanceId, uint playerId, byte playerNumber)
+        {
+            var buffer = WritePacketHeader(command, 4 + 4 + 1);
+            var writer = new PacketWriter(buffer);
+            writer.WriteByte(ProtocolConstants.Version);
+            writer.WriteByte((byte)command);
+            writer.WriteUInt32(raceInstanceId);
             writer.WriteUInt32(playerId);
             writer.WriteByte(playerNumber);
             return buffer;
@@ -148,3 +173,4 @@ namespace TopSpeed.Network
         }
     }
 }
+

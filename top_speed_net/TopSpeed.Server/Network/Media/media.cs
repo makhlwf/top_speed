@@ -7,7 +7,7 @@ namespace TopSpeed.Server.Network
 {
     internal sealed partial class RaceServer
     {
-        private void UpdateMediaState(PlayerConnection player, RaceRoom room, PacketPlayerData data)
+        private void UpdateMediaState(PlayerConnection player, RaceRoom room, PacketRacePlayerData data)
         {
             player.MediaLoaded = data.MediaLoaded && data.MediaId != 0;
             player.MediaPlaying = player.MediaLoaded && data.MediaPlaying;
@@ -15,7 +15,6 @@ namespace TopSpeed.Server.Network
             if (!player.MediaLoaded)
             {
                 room.MediaMap.Remove(player.Id);
-                player.IncomingMedia = null;
             }
         }
 

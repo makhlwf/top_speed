@@ -34,3 +34,4 @@ namespace TopSpeed.Core.Updates
         public long TotalBytes { get; set; }
     }
 }
+

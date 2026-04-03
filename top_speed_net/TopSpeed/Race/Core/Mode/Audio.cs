@@ -53,10 +53,7 @@ namespace TopSpeed.Race
 
         protected float GetRelativeTrackDelta(float otherPositionY)
         {
-            var length = _track.Length;
-            if (length <= 0f)
-                return otherPositionY - _car.PositionY;
-            return AudioWorld.WrapDelta(otherPositionY - _car.PositionY, length);
+            return otherPositionY - _car.PositionY;
         }
 
         protected void FlushPendingSounds()

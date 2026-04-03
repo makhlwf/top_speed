@@ -1,19 +1,19 @@
 using System;
-using SharpDX.DirectInput;
-using TopSpeed.Input.Devices.Joystick;
+using Key = TopSpeed.Input.InputKey;
+using TopSpeed.Input.Devices.Controller;
 
 namespace TopSpeed.Input
 {
     internal sealed partial class RaceInput
     {
-        private int GetAxis(JoystickAxisOrButton axis)
+        private int GetAxis(AxisOrButton axis)
         {
-            return GetAxis(axis, _lastJoystick);
+            return GetAxis(axis, _lastController);
         }
 
-        private int GetAxis(JoystickAxisOrButton axis, JoystickStateSnapshot state)
+        private int GetAxis(AxisOrButton axis, State state)
         {
-            if (axis == JoystickAxisOrButton.AxisNone)
+            if (axis == AxisOrButton.AxisNone)
                 return 0;
 
             if (TryGetAxisComponent(axis, out var component, out var mappedPositive))
@@ -30,80 +30,80 @@ namespace TopSpeed.Input
             return 0;
         }
 
-        private static bool TryGetDigitalAxisValue(JoystickAxisOrButton axis, JoystickStateSnapshot state, out int value)
+        private static bool TryGetDigitalAxisValue(AxisOrButton axis, State state, out int value)
         {
             switch (axis)
             {
-                case JoystickAxisOrButton.Button1:
+                case AxisOrButton.Button1:
                     value = state.B1 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Button2:
+                case AxisOrButton.Button2:
                     value = state.B2 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Button3:
+                case AxisOrButton.Button3:
                     value = state.B3 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Button4:
+                case AxisOrButton.Button4:
                     value = state.B4 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Button5:
+                case AxisOrButton.Button5:
                     value = state.B5 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Button6:
+                case AxisOrButton.Button6:
                     value = state.B6 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Button7:
+                case AxisOrButton.Button7:
                     value = state.B7 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Button8:
+                case AxisOrButton.Button8:
                     value = state.B8 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Button9:
+                case AxisOrButton.Button9:
                     value = state.B9 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Button10:
+                case AxisOrButton.Button10:
                     value = state.B10 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Button11:
+                case AxisOrButton.Button11:
                     value = state.B11 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Button12:
+                case AxisOrButton.Button12:
                     value = state.B12 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Button13:
+                case AxisOrButton.Button13:
                     value = state.B13 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Button14:
+                case AxisOrButton.Button14:
                     value = state.B14 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Button15:
+                case AxisOrButton.Button15:
                     value = state.B15 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Button16:
+                case AxisOrButton.Button16:
                     value = state.B16 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Pov1:
+                case AxisOrButton.Pov1:
                     value = state.Pov1 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Pov2:
+                case AxisOrButton.Pov2:
                     value = state.Pov2 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Pov3:
+                case AxisOrButton.Pov3:
                     value = state.Pov3 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Pov4:
+                case AxisOrButton.Pov4:
                     value = state.Pov4 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Pov5:
+                case AxisOrButton.Pov5:
                     value = state.Pov5 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Pov6:
+                case AxisOrButton.Pov6:
                     value = state.Pov6 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Pov7:
+                case AxisOrButton.Pov7:
                     value = state.Pov7 ? 100 : 0;
                     return true;
-                case JoystickAxisOrButton.Pov8:
+                case AxisOrButton.Pov8:
                     value = state.Pov8 ? 100 : 0;
                     return true;
                 default:
@@ -113,3 +113,5 @@ namespace TopSpeed.Input
         }
     }
 }
+
+

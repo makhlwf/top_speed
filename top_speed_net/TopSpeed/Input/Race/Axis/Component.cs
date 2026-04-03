@@ -1,5 +1,5 @@
-using SharpDX.DirectInput;
-using TopSpeed.Input.Devices.Joystick;
+using Key = TopSpeed.Input.InputKey;
+using TopSpeed.Input.Devices.Controller;
 
 namespace TopSpeed.Input
 {
@@ -17,71 +17,71 @@ namespace TopSpeed.Input
             Slider2
         }
 
-        private static bool TryGetAxisComponent(JoystickAxisOrButton axis, out AxisComponent component, out bool mappedPositive)
+        private static bool TryGetAxisComponent(AxisOrButton axis, out AxisComponent component, out bool mappedPositive)
         {
             switch (axis)
             {
-                case JoystickAxisOrButton.AxisXNeg:
+                case AxisOrButton.AxisXNeg:
                     component = AxisComponent.X;
                     mappedPositive = false;
                     return true;
-                case JoystickAxisOrButton.AxisXPos:
+                case AxisOrButton.AxisXPos:
                     component = AxisComponent.X;
                     mappedPositive = true;
                     return true;
-                case JoystickAxisOrButton.AxisYNeg:
+                case AxisOrButton.AxisYNeg:
                     component = AxisComponent.Y;
                     mappedPositive = false;
                     return true;
-                case JoystickAxisOrButton.AxisYPos:
+                case AxisOrButton.AxisYPos:
                     component = AxisComponent.Y;
                     mappedPositive = true;
                     return true;
-                case JoystickAxisOrButton.AxisZNeg:
+                case AxisOrButton.AxisZNeg:
                     component = AxisComponent.Z;
                     mappedPositive = false;
                     return true;
-                case JoystickAxisOrButton.AxisZPos:
+                case AxisOrButton.AxisZPos:
                     component = AxisComponent.Z;
                     mappedPositive = true;
                     return true;
-                case JoystickAxisOrButton.AxisRxNeg:
+                case AxisOrButton.AxisRxNeg:
                     component = AxisComponent.Rx;
                     mappedPositive = false;
                     return true;
-                case JoystickAxisOrButton.AxisRxPos:
+                case AxisOrButton.AxisRxPos:
                     component = AxisComponent.Rx;
                     mappedPositive = true;
                     return true;
-                case JoystickAxisOrButton.AxisRyNeg:
+                case AxisOrButton.AxisRyNeg:
                     component = AxisComponent.Ry;
                     mappedPositive = false;
                     return true;
-                case JoystickAxisOrButton.AxisRyPos:
+                case AxisOrButton.AxisRyPos:
                     component = AxisComponent.Ry;
                     mappedPositive = true;
                     return true;
-                case JoystickAxisOrButton.AxisRzNeg:
+                case AxisOrButton.AxisRzNeg:
                     component = AxisComponent.Rz;
                     mappedPositive = false;
                     return true;
-                case JoystickAxisOrButton.AxisRzPos:
+                case AxisOrButton.AxisRzPos:
                     component = AxisComponent.Rz;
                     mappedPositive = true;
                     return true;
-                case JoystickAxisOrButton.AxisSlider1Neg:
+                case AxisOrButton.AxisSlider1Neg:
                     component = AxisComponent.Slider1;
                     mappedPositive = false;
                     return true;
-                case JoystickAxisOrButton.AxisSlider1Pos:
+                case AxisOrButton.AxisSlider1Pos:
                     component = AxisComponent.Slider1;
                     mappedPositive = true;
                     return true;
-                case JoystickAxisOrButton.AxisSlider2Neg:
+                case AxisOrButton.AxisSlider2Neg:
                     component = AxisComponent.Slider2;
                     mappedPositive = false;
                     return true;
-                case JoystickAxisOrButton.AxisSlider2Pos:
+                case AxisOrButton.AxisSlider2Pos:
                     component = AxisComponent.Slider2;
                     mappedPositive = true;
                     return true;
@@ -92,7 +92,7 @@ namespace TopSpeed.Input
             }
         }
 
-        private static int GetAxisComponentValue(JoystickStateSnapshot state, AxisComponent component)
+        private static int GetAxisComponentValue(State state, AxisComponent component)
         {
             switch (component)
             {
@@ -118,3 +118,5 @@ namespace TopSpeed.Input
         }
     }
 }
+
+

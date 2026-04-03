@@ -39,7 +39,7 @@ namespace TopSpeed.Menu
                     value => _settingsActions.UpdateSetting(() => _settings.KeyboardProgressiveRate = (KeyboardProgressiveRate)value),
                     hint: LocalizationService.Mark("When enabled, throttle, brake, and steering ramp in over time instead of jumping instantly to full value. Press LEFT or RIGHT to change.")),
                 new MenuItem(LocalizationService.Mark("Map keyboard keys"), MenuAction.None, nextMenuId: "options_controls_keyboard"),
-                new MenuItem(LocalizationService.Mark("Map joystick keys"), MenuAction.None, nextMenuId: "options_controls_joystick"),
+                new MenuItem(LocalizationService.Mark("Map controller keys"), MenuAction.None, nextMenuId: "options_controls_controller"),
                 new MenuItem(LocalizationService.Mark("Map menu shortcuts"),
                     MenuAction.None,
                     nextMenuId: ShortcutGroupsMenuId,
@@ -54,7 +54,7 @@ namespace TopSpeed.Menu
             var items = new List<MenuItem>
             {
                 new MenuItem(LocalizationService.Mark("Keyboard"), MenuAction.Back, onActivate: () => _settingsActions.SetDevice(InputDeviceMode.Keyboard)),
-                new MenuItem(LocalizationService.Mark("Joystick"), MenuAction.Back, onActivate: () => _settingsActions.SetDevice(InputDeviceMode.Joystick)),
+                new MenuItem(LocalizationService.Mark("Controller"), MenuAction.Back, onActivate: () => _settingsActions.SetDevice(InputDeviceMode.Controller)),
                 new MenuItem(LocalizationService.Mark("Both"), MenuAction.Back, onActivate: () => _settingsActions.SetDevice(InputDeviceMode.Both)),
                 BackItem()
             };
@@ -66,7 +66,7 @@ namespace TopSpeed.Menu
             return _menu.CreateMenu("options_controls_keyboard", BuildMappingItems(InputMappingMode.Keyboard));
         }
 
-        private MenuScreen BuildOptionsControlsJoystickMenu()
+        private MenuScreen BuildOptionsControlsControllerMenu()
         {
             var items = new List<MenuItem>
             {
@@ -77,8 +77,8 @@ namespace TopSpeed.Menu
                         LocalizationService.Mark("Normal"),
                         LocalizationService.Mark("Inverted")
                     },
-                    () => (int)_settings.JoystickThrottleInvertMode,
-                    value => _settingsActions.UpdateSetting(() => _settings.JoystickThrottleInvertMode = (PedalInvertMode)value),
+                    () => (int)_settings.ControllerThrottleInvertMode,
+                    value => _settingsActions.UpdateSetting(() => _settings.ControllerThrottleInvertMode = (PedalInvertMode)value),
                     hint: LocalizationService.Mark("Auto detects wheel pedal direction from resting position. Use LEFT or RIGHT to change.")),
                 new RadioButton(LocalizationService.Mark("Brake pedal direction"),
                     new[]
@@ -87,8 +87,8 @@ namespace TopSpeed.Menu
                         LocalizationService.Mark("Normal"),
                         LocalizationService.Mark("Inverted")
                     },
-                    () => (int)_settings.JoystickBrakeInvertMode,
-                    value => _settingsActions.UpdateSetting(() => _settings.JoystickBrakeInvertMode = (PedalInvertMode)value),
+                    () => (int)_settings.ControllerBrakeInvertMode,
+                    value => _settingsActions.UpdateSetting(() => _settings.ControllerBrakeInvertMode = (PedalInvertMode)value),
                     hint: LocalizationService.Mark("Auto detects wheel pedal direction from resting position. Use LEFT or RIGHT to change.")),
                 new RadioButton(LocalizationService.Mark("Steering dead zone"),
                     new[]
@@ -101,7 +101,7 @@ namespace TopSpeed.Menu
                     },
                     () =>
                     {
-                        var deadZone = _settings.JoystickSteeringDeadZone;
+                        var deadZone = _settings.ControllerSteeringDeadZone;
                         if (deadZone < 1 || deadZone > 5)
                             deadZone = 1;
                         return deadZone - 1;
@@ -111,14 +111,14 @@ namespace TopSpeed.Menu
                         var deadZone = value + 1;
                         if (deadZone < 1 || deadZone > 5)
                             deadZone = 1;
-                        _settingsActions.UpdateSetting(() => _settings.JoystickSteeringDeadZone = deadZone);
+                        _settingsActions.UpdateSetting(() => _settings.ControllerSteeringDeadZone = deadZone);
                     },
                     hint: LocalizationService.Mark("Sets how much small steering movement is ignored around center. Default is 1 degree. Use LEFT or RIGHT to change."))
             };
 
-            items.AddRange(BuildMappingItems(InputMappingMode.Joystick, includeBack: false));
+            items.AddRange(BuildMappingItems(InputMappingMode.Controller, includeBack: false));
             items.Add(BackItem());
-            return _menu.CreateMenu("options_controls_joystick", items);
+            return _menu.CreateMenu("options_controls_controller", items);
         }
 
         private MenuScreen BuildOptionsControlsShortcutGroupsMenu()
@@ -220,14 +220,14 @@ namespace TopSpeed.Menu
             return true;
         }
 
-        private string GetShortcutKeyText(string actionId, SharpDX.DirectInput.Key fallbackKey)
+        private string GetShortcutKeyText(string actionId, InputKey fallbackKey)
         {
             if (_menu.TryGetShortcutBinding(actionId, out var binding))
                 return FormatShortcutKey(binding.Key);
             return FormatShortcutKey(fallbackKey);
         }
 
-        private static string FormatShortcutKey(SharpDX.DirectInput.Key key)
+        private static string FormatShortcutKey(InputKey key)
         {
             return (int)key <= 0
                 ? "none"
@@ -235,3 +235,4 @@ namespace TopSpeed.Menu
         }
     }
 }
+

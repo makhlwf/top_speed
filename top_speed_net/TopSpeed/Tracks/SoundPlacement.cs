@@ -28,21 +28,20 @@ namespace TopSpeed.Tracks
         private Vector3 ComputeTrackSoundPosition(RuntimeTrackSound runtime, float playerPosition, int segmentIndex)
         {
             var definition = runtime.ActiveDefinition;
-            var lapPos = _lapDistance > 0f ? WrapPosition(playerPosition) : playerPosition;
+            var lapStart = GetLapStartDistance(playerPosition);
             var segmentStart = GetSegmentStartDistance(segmentIndex);
             var segmentLength = segmentIndex >= 0 && segmentIndex < _definition.Length
                 ? _definition[segmentIndex].Length
                 : MinPartLengthMeters;
-            var segmentCenter = segmentStart + (segmentLength * 0.5f);
+            var segmentCenter = lapStart + segmentStart + (segmentLength * 0.5f);
 
             if (definition.Type == TrackSoundSourceType.Moving &&
                 TryComputeMovingSoundPosition(definition, playerPosition, segmentIndex, out var movingPosition))
             {
-                var wrappedZ = WrapWorldZ(movingPosition.Z, lapPos, playerPosition);
                 return new Vector3(
                     AudioWorld.ToMeters(movingPosition.X),
                     AudioWorld.ToMeters(movingPosition.Y),
-                    AudioWorld.ToMeters(wrappedZ));
+                    AudioWorld.ToMeters(movingPosition.Z));
             }
 
             if (definition.StartPosition.HasValue && definition.EndPosition.HasValue)
@@ -55,7 +54,7 @@ namespace TopSpeed.Tracks
                     definition.StartAreaId == null &&
                     definition.EndAreaId == null)
                 {
-                    var phase = (WrapPosition(playerPosition) * definition.SpeedMetersPerSecond.Value) / _lapDistance;
+                    var phase = (playerPosition * definition.SpeedMetersPerSecond.Value) / _lapDistance;
                     t = phase - (float)Math.Floor(phase);
                 }
 
@@ -64,19 +63,20 @@ namespace TopSpeed.Tracks
                 var x = Lerp(start.X, end.X, t);
                 var y = Lerp(start.Y, end.Y, t);
                 var z = Lerp(start.Z, end.Z, t);
-                var wrappedZ = WrapWorldZ(z, lapPos, playerPosition);
-                return new Vector3(AudioWorld.ToMeters(x), AudioWorld.ToMeters(y), AudioWorld.ToMeters(wrappedZ));
+                if (_lapDistance > 0f)
+                    z = lapStart + z;
+                return new Vector3(AudioWorld.ToMeters(x), AudioWorld.ToMeters(y), AudioWorld.ToMeters(z));
             }
 
             if (definition.Position.HasValue)
             {
                 var pos = definition.Position.Value;
-                var wrappedZ = WrapWorldZ(pos.Z, lapPos, playerPosition);
-                return new Vector3(AudioWorld.ToMeters(pos.X), AudioWorld.ToMeters(pos.Y), AudioWorld.ToMeters(wrappedZ));
+                var z = _lapDistance > 0f ? lapStart + pos.Z : pos.Z;
+                return new Vector3(AudioWorld.ToMeters(pos.X), AudioWorld.ToMeters(pos.Y), AudioWorld.ToMeters(z));
             }
 
             var xDefault = 0f;
-            var zDefault = WrapWorldZ(segmentCenter, lapPos, playerPosition);
+            var zDefault = segmentCenter;
             return new Vector3(AudioWorld.ToMeters(xDefault), 0f, AudioWorld.ToMeters(zDefault));
         }
 
@@ -92,13 +92,13 @@ namespace TopSpeed.Tracks
                 return false;
 
             var pathLength = _lapDistance > 0f ? _lapDistance : 0f;
-            var hasAreaSpan = TryResolveAreaSpan(definition, out var areaStartZ, out _, out var areaLength);
+            var hasAreaSpan = TryResolveAreaSpan(definition, playerPosition, out var areaStartZ, out _, out var areaLength);
             if (hasAreaSpan)
                 pathLength = areaLength;
             if (pathLength <= 0f)
                 return false;
 
-            var phase = (WrapPosition(playerPosition) * speed) / pathLength;
+            var phase = (playerPosition * speed) / pathLength;
             phase -= (float)Math.Floor(phase);
             if (phase < 0f)
                 phase += 1f;
@@ -107,33 +107,37 @@ namespace TopSpeed.Tracks
             {
                 var start = definition.StartPosition.Value;
                 var end = definition.EndPosition.Value;
+                var lapStart = GetLapStartDistance(playerPosition);
+                var startZ = _lapDistance > 0f ? lapStart + start.Z : start.Z;
+                var endZ = _lapDistance > 0f ? lapStart + end.Z : end.Z;
                 position = new Vector3(
                     Lerp(start.X, end.X, phase),
                     Lerp(start.Y, end.Y, phase),
-                    Lerp(start.Z, end.Z, phase));
+                    Lerp(startZ, endZ, phase));
                 return true;
             }
 
             if (definition.Position.HasValue)
             {
                 var anchor = definition.Position.Value;
+                var lapStart = GetLapStartDistance(playerPosition);
+                var anchorZ = _lapDistance > 0f ? lapStart + anchor.Z : anchor.Z;
                 var travel = pathLength * phase;
-                var z = hasAreaSpan ? (areaStartZ + travel) : (anchor.Z + travel);
-                if (_lapDistance > 0f)
-                    z = WrapPosition(z);
+                var z = hasAreaSpan ? (areaStartZ + travel) : (anchorZ + travel);
 
                 position = new Vector3(anchor.X, anchor.Y, z);
                 return true;
             }
 
-            var fallbackZ = GetSegmentCenterDistance(segmentIndex) + (pathLength * phase);
-            if (_lapDistance > 0f)
-                fallbackZ = WrapPosition(fallbackZ);
+            var fallbackBase = hasAreaSpan
+                ? areaStartZ
+                : AlignToReferenceLap(GetSegmentCenterDistance(segmentIndex), playerPosition);
+            var fallbackZ = fallbackBase + (pathLength * phase);
             position = new Vector3(0f, 0f, fallbackZ);
             return true;
         }
 
-        private bool TryResolveAreaSpan(TrackSoundSourceDefinition definition, out float startZ, out float endZ, out float pathLength)
+        private bool TryResolveAreaSpan(TrackSoundSourceDefinition definition, float referencePosition, out float startZ, out float endZ, out float pathLength)
         {
             startZ = 0f;
             endZ = 0f;
@@ -151,9 +155,9 @@ namespace TopSpeed.Tracks
 
             if (_lapDistance > 0f)
             {
+                startZ = AlignToReferenceLap(startZ, referencePosition);
+                endZ = AlignToReferenceLap(endZ, referencePosition);
                 pathLength = endZ - startZ;
-                if (pathLength < 0f)
-                    pathLength += _lapDistance;
                 if (pathLength <= 0f)
                     pathLength = _definition[endIndex].Length;
             }

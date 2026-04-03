@@ -14,7 +14,7 @@ namespace TopSpeed.Vehicles
             var roadCenterX = (road.Left + road.Right) * 0.5f;
 
             var lateralFromCenter = _positionX - roadCenterX;
-            var dz = AudioWorld.WrapDelta(_positionY - listenerY, trackLength);
+            var dz = _positionY - listenerY;
             var normalizedLateral = (lateralFromCenter / laneHalfWidth) * AudioLateralBoost;
             if (normalizedLateral < -1f)
                 normalizedLateral = -1f;

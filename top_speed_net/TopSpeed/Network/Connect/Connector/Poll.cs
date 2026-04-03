@@ -14,7 +14,6 @@ namespace TopSpeed.Network
             NetManager manager,
             NetPeer? connectedPeer,
             byte[] hello,
-            byte[] initialState,
             bool protocolNegotiated,
             uint? playerId,
             byte? playerNumber,
@@ -116,14 +115,6 @@ namespace TopSpeed.Network
                             return state;
                         }
 
-                        var stateResult = TrySendHandshakePacket(connectedPeer, initialState);
-                        if (!stateResult.Success)
-                        {
-                            manager.Stop();
-                            state.Result = ConnectResult.CreateFail(stateResult.Error);
-                            return state;
-                        }
-
                         state.ProtocolNegotiated = true;
                     }
                 }
@@ -198,3 +189,4 @@ namespace TopSpeed.Network
         }
     }
 }
+

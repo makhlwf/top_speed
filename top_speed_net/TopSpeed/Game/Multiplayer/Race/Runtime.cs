@@ -1,0 +1,240 @@
+using System;
+using TopSpeed.Data;
+using TopSpeed.Localization;
+using TopSpeed.Menu;
+using TopSpeed.Race;
+
+namespace TopSpeed.Game
+{
+    internal sealed partial class Game
+    {
+        private sealed class MultiplayerRaceRuntime
+        {
+            private readonly Game _owner;
+            private readonly MultiplayerRaceBinding _binding;
+            private MultiplayerMode? _mode;
+            private bool _quitConfirmActive;
+
+            public MultiplayerRaceRuntime(Game owner)
+            {
+                _owner = owner ?? throw new ArgumentNullException(nameof(owner));
+                _binding = new MultiplayerRaceBinding();
+            }
+
+            public MultiplayerMode? Mode => _mode;
+            public bool PendingStart => _binding.PendingStart;
+
+            public void ResetSession()
+            {
+                _binding.ResetSession();
+            }
+
+            public void ResetPending()
+            {
+                _binding.ResetPending();
+            }
+
+            public void SetLoadout(int vehicleIndex, bool automaticTransmission)
+            {
+                _binding.SetLoadout(VehicleCatalog.VehicleCount, vehicleIndex, automaticTransmission);
+            }
+
+            public void SetTrack(TrackData track, string trackName, int laps)
+            {
+                _binding.SetTrack(track, trackName, laps);
+            }
+
+            public void ApplyRoomState(TopSpeed.Protocol.PacketRoomState roomState)
+            {
+                _binding.ApplyRoomState(roomState);
+            }
+
+            public void ApplyRaceState(TopSpeed.Protocol.PacketRoomRaceStateChanged changed)
+            {
+                _binding.ApplyRaceState(changed);
+            }
+
+            public bool MatchesRoom(uint roomId)
+            {
+                return _binding.MatchesRoom(roomId);
+            }
+
+            public bool MatchesContext(uint roomId, uint raceInstanceId, bool allowBindRaceInstance)
+            {
+                return _binding.MatchesContext(roomId, raceInstanceId, allowBindRaceInstance);
+            }
+
+            public void Run(float elapsed)
+            {
+                if (_mode == null)
+                {
+                    End();
+                    return;
+                }
+
+                _owner.ProcessMultiplayerPackets();
+                if (_mode == null)
+                    return;
+
+                _mode.Run(elapsed);
+                if (_mode.WantsExit)
+                {
+                    End(_mode.ConsumeResultSummary());
+                    return;
+                }
+
+                if (_quitConfirmActive)
+                {
+                    var action = _owner._menu.Update(_owner._input);
+                    _owner.HandleMenuAction(action);
+                    return;
+                }
+
+                if (!_owner._textInputPromptActive && !_owner._dialogs.HasActiveOverlayDialog && !_owner._choices.HasActiveChoiceDialog)
+                {
+                    if (_owner._input.WasPressed(TopSpeed.Input.InputKey.Slash))
+                    {
+                        _owner._multiplayerCoordinator.OpenGlobalChatHotkey();
+                        return;
+                    }
+
+                    if (_owner._input.WasPressed(TopSpeed.Input.InputKey.Backslash))
+                    {
+                        _owner._multiplayerCoordinator.OpenRoomChatHotkey();
+                        return;
+                    }
+                }
+
+                if (_owner._input.WasPressed(TopSpeed.Input.InputKey.Escape))
+                    OpenQuitConfirmation();
+            }
+
+            public void Start()
+            {
+                if (_owner._session == null)
+                    return;
+                if (_mode != null)
+                    return;
+                if (_binding.WaitForTrack())
+                    return;
+
+                _binding.ClearPendingStart();
+                _owner.FadeOutMenuMusic();
+                var trackName = string.IsNullOrWhiteSpace(_binding.PendingTrackName) ? "custom" : _binding.PendingTrackName;
+                var laps = _binding.PendingLaps > 0 ? _binding.PendingLaps : _owner._settings.NrOfLaps;
+                var vehicleIndex = Math.Max(0, Math.Min(VehicleCatalog.VehicleCount - 1, _binding.VehicleIndex));
+
+                DisposeMode();
+                _mode = _owner._raceModeFactory.CreateMultiplayer(
+                    _binding.PendingTrack!,
+                    trackName,
+                    _binding.AutomaticTransmission,
+                    laps,
+                    vehicleIndex,
+                    null,
+                    _owner._input.VibrationDevice,
+                    _owner._session,
+                    _binding.RaceInstanceId,
+                    _owner._session.PlayerId,
+                    _owner._session.PlayerNumber,
+                    number => _owner._multiplayerCoordinator.ResolvePlayerName(number));
+                _mode.Initialize();
+                _binding.BindStartedRace();
+                _owner._state = AppState.MultiplayerRace;
+            }
+
+            public void End(RaceResultSummary? resultSummary = null)
+            {
+                DisposeMode();
+                _quitConfirmActive = false;
+                _binding.ClearRaceBinding();
+
+                if (_owner._session != null)
+                {
+                    _owner._state = AppState.Menu;
+                    _owner._multiplayerCoordinator.ShowMultiplayerMenuAfterRace();
+                    if (resultSummary != null)
+                        _owner.ShowRaceResultDialog(resultSummary);
+                }
+                else
+                {
+                    _owner._state = AppState.Menu;
+                    _owner._menu.ShowRoot("main");
+                    _owner._menu.FadeInMenuMusic();
+                    if (resultSummary != null)
+                        _owner.ShowRaceResultDialog(resultSummary);
+                }
+            }
+
+            public void Disconnect()
+            {
+                DisposeMode();
+                _quitConfirmActive = false;
+                _binding.ClearRaceBinding();
+                _binding.ResetPending();
+            }
+
+            public void OpenQuitConfirmation()
+            {
+                if (_mode == null)
+                    return;
+                if (_quitConfirmActive)
+                    return;
+                if (_owner._multiplayerCoordinator.Questions.IsQuestionMenu(_owner._menu.CurrentId))
+                    return;
+
+                _quitConfirmActive = true;
+
+                var question = new Question(LocalizationService.Mark("Quit race?"),
+                    LocalizationService.Mark("Are you sure you want to quit this multiplayer race?"),
+                    QuestionId.No,
+                    HandleQuitQuestionResult,
+                    new QuestionButton(QuestionId.Yes, LocalizationService.Mark("Yes, quit the race")),
+                    new QuestionButton(QuestionId.No, LocalizationService.Mark("No, continue racing"), flags: QuestionButtonFlags.Default))
+                {
+                    OpenAsOverlay = true
+                };
+                _owner._multiplayerCoordinator.Questions.Show(question);
+            }
+
+            public void HandleQuitQuestionResult(int resultId)
+            {
+                if (resultId == QuestionId.Yes)
+                    ConfirmQuit();
+                else if (resultId == QuestionId.No || resultId == QuestionId.Cancel || resultId == QuestionId.Close)
+                    CancelQuitConfirmation();
+            }
+
+            public void CancelQuitConfirmation()
+            {
+                if (!_quitConfirmActive)
+                    return;
+
+                _quitConfirmActive = false;
+            }
+
+            public void ConfirmQuit()
+            {
+                if (!_quitConfirmActive)
+                    return;
+
+                _quitConfirmActive = false;
+                if (_owner._session != null)
+                    _owner.TrySendSession(_owner._session.SendRoomLeave(), "room leave request");
+
+                DisposeMode();
+                _binding.ClearRaceBinding();
+                _binding.ResetPending();
+                _owner._state = AppState.Menu;
+                _owner._menu.ShowRoot("multiplayer_lobby");
+            }
+
+            private void DisposeMode()
+            {
+                _mode?.FinalizeMultiplayerMode();
+                _mode?.Dispose();
+                _mode = null;
+            }
+        }
+    }
+}

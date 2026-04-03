@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using SharpDX.DirectInput;
+using Key = TopSpeed.Input.InputKey;
 using TopSpeed.Core;
 using TopSpeed.Input;
 
@@ -107,7 +107,7 @@ namespace TopSpeed.Menu
             _menu.Register(BuildOptionsControlsMenu());
             _menu.Register(BuildOptionsControlsDeviceMenu());
             _menu.Register(BuildOptionsControlsKeyboardMenu());
-            _menu.Register(BuildOptionsControlsJoystickMenu());
+            _menu.Register(BuildOptionsControlsControllerMenu());
             _menu.Register(BuildOptionsControlsShortcutGroupsMenu());
             _menu.Register(BuildOptionsControlsShortcutBindingsMenu());
             _menu.Register(BuildOptionsRaceSettingsMenu());
@@ -155,6 +155,8 @@ namespace TopSpeed.Menu
         }
     }
 }
+
+
 
 
 

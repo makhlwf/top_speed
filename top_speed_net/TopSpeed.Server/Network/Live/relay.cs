@@ -65,7 +65,10 @@ namespace TopSpeed.Server.Network
                 return;
 
             if (live.HasSequence && frame.Sequence != live.NextSequence)
-                return;
+            {
+                if (!IsNewerSequence(frame.Sequence, live.NextSequence))
+                    return;
+            }
 
             live.HasSequence = true;
             live.NextSequence = unchecked((ushort)(frame.Sequence + 1));
@@ -115,6 +118,12 @@ namespace TopSpeed.Server.Network
             if (start.Channels < ProtocolConstants.LiveChannelsMin || start.Channels > ProtocolConstants.LiveChannelsMax)
                 return false;
             return true;
+        }
+
+        private static bool IsNewerSequence(ushort sequence, ushort expected)
+        {
+            var delta = (ushort)(sequence - expected);
+            return delta != 0 && delta < 32768;
         }
     }
 }

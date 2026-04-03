@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -16,9 +15,9 @@ using TopSpeed.Menu;
 using TopSpeed.Network;
 using TopSpeed.Protocol;
 using TopSpeed.Race;
+using TopSpeed.Runtime;
 using TopSpeed.Shortcuts;
 using TopSpeed.Speech;
-using TopSpeed.Windowing;
 using CoreRaceMode = TopSpeed.Core.RaceMode;
 using TS.Audio;
 
@@ -37,10 +36,12 @@ namespace TopSpeed.Game
             Calibration
         }
 
-        private readonly GameWindow _window;
+        private readonly IWindowHost _window;
+        private readonly ITextInputService _textInput;
+        private readonly IFileDialogs _fileDialogs;
         private readonly IGameAudio _audio;
         private readonly IGameSpeech _speech;
-        private readonly IGameInput _input;
+        private readonly IInputService _input;
         private readonly MenuManager _menu;
         private readonly DialogManager _dialogs;
         private readonly ChoiceDialogManager _choices;
@@ -59,8 +60,7 @@ namespace TopSpeed.Game
         private readonly IMultiplayerRuntime _multiplayerCoordinator;
         private readonly UpdateConfig _updateConfig;
         private readonly UpdateService _updateService;
-        private readonly ClientPktReg _mpPktReg;
-        private readonly ConcurrentQueue<QueuedIncomingPacket> _queuedMultiplayerPackets;
+        private readonly MultiplayerDispatch _multiplayerDispatch;
         private MultiplayerSession? _session;
         private readonly InputMappingHandler _inputMapping;
         private readonly ShortcutMappingHandler _shortcutMapping;
@@ -78,14 +78,7 @@ namespace TopSpeed.Game
         private bool _pauseKeyReleased = true;
         private TimeTrialMode? _timeTrial;
         private SingleRaceMode? _singleRace;
-        private MultiplayerMode? _multiplayerRace;
-        private bool _multiplayerRaceQuitConfirmActive;
-        private TrackData? _pendingMultiplayerTrack;
-        private string _pendingMultiplayerTrackName = string.Empty;
-        private int _pendingMultiplayerLaps;
-        private bool _pendingMultiplayerStart;
-        private int _multiplayerVehicleIndex;
-        private bool _multiplayerAutomaticTransmission = true;
+        private readonly MultiplayerRaceRuntime _multiplayerRaceRuntime;
         private bool _updateCheckQueued;
         private bool _updatePromptShown;
         private Task<UpdateCheckResult>? _updateCheckTask;
@@ -116,18 +109,6 @@ namespace TopSpeed.Game
             "I really have nothing interesting to put here not even the secret to life except this really long run on sentence that is probably the most boring thing you have ever read but that will help me get an idea of how fast your screen reader is speaking.");
 
         public event Action? ExitRequested;
-
-        private readonly struct QueuedIncomingPacket
-        {
-            public QueuedIncomingPacket(MultiplayerSession session, IncomingPacket packet)
-            {
-                Session = session;
-                Packet = packet;
-            }
-
-            public MultiplayerSession Session { get; }
-            public IncomingPacket Packet { get; }
-        }
     }
 }
 

@@ -38,17 +38,8 @@ namespace TopSpeed.Core.Multiplayer.Chat
 
         public static string FromRoomEvent(RoomEventInfo roomEvent)
         {
-            var roomName = NormalizeRoomName(roomEvent.RoomName);
             switch (roomEvent.Kind)
             {
-                case RoomEventKind.RaceStarted:
-                    return LocalizationService.Format(
-                        LocalizationService.Mark("Race started in {0}."),
-                        roomName);
-                case RoomEventKind.RaceStopped:
-                    return LocalizationService.Format(
-                        LocalizationService.Mark("Race stopped in {0}."),
-                        roomName);
                 default:
                     return string.Empty;
             }
@@ -71,3 +62,4 @@ namespace TopSpeed.Core.Multiplayer.Chat
         }
     }
 }
+

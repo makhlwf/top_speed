@@ -9,8 +9,8 @@ using TopSpeed.Localization;
 using TopSpeed.Menu;
 using TopSpeed.Network;
 using TopSpeed.Protocol;
+using TopSpeed.Runtime;
 using TopSpeed.Speech;
-using TopSpeed.Windowing;
 using TS.Audio;
 
 namespace TopSpeed.Core.Multiplayer
@@ -97,8 +97,10 @@ namespace TopSpeed.Core.Multiplayer
             _roomsFlow = new RoomsFlow(this);
             _savedServersFlow = new SavedServersFlow(this);
             _chatFlow = new ChatFlow(this);
+            _roomUi = new RoomUi(this);
         }
     }
 }
+
 
 

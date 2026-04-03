@@ -67,3 +67,4 @@ namespace TopSpeed.Vehicles
         bool ToggleShiftOnDemand();
     }
 }
+

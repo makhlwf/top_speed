@@ -41,7 +41,8 @@ namespace TopSpeed.Protocol
         Throttle = 3,
         Crash = 4,
         Brake = 5,
-        Backfire = 6
+        Backfire = 6,
+        Stop = 7
     }
 
     public enum LiveCodec : byte
@@ -60,7 +61,6 @@ namespace TopSpeed.Protocol
         StopRace = 5,
         RaceAborted = 6,
         PlayerDataToServer = 7,
-        PlayerFinished = 8,
         PlayerFinalize = 9,
         PlayerStarted = 10,
         PlayerCrashed = 11,
@@ -104,7 +104,11 @@ namespace TopSpeed.Protocol
         RoomPlayerWithdraw = 49,
         OnlinePlayersRequest = 50,
         OnlinePlayers = 51,
-        RoomSetGameRules = 52
+        RoomSetGameRules = 52,
+        RoomRaceStateChanged = 53,
+        RoomRacePlayerFinished = 54,
+        RoomRaceCompleted = 55,
+        RoomRaceAborted = 56
     }
 
     public enum ProtocolMessageCode : byte
@@ -152,6 +156,30 @@ namespace TopSpeed.Protocol
         RaceStarted = 15,
         RaceStopped = 16,
         GameRulesChanged = 17
+    }
+
+    public enum RoomRaceState : byte
+    {
+        Lobby = 0,
+        Preparing = 1,
+        Racing = 2,
+        Completed = 3,
+        Aborted = 4
+    }
+
+    public enum RoomRaceResultStatus : byte
+    {
+        None = 0,
+        Pending = 1,
+        Finished = 2,
+        Dnf = 3
+    }
+
+    public enum RoomRaceAbortReason : byte
+    {
+        None = 0,
+        InvalidTrack = 1,
+        InternalError = 2
     }
 
     public enum ProtocolCompatStatus : byte

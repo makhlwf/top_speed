@@ -3,20 +3,22 @@ using System.Collections.Generic;
 using System.IO;
 using SharpDX;
 using SharpDX.DirectInput;
-using TopSpeed.Input.Devices.Joystick;
+using TopSpeed.Input.Devices.Controller;
 using TopSpeed.Input.Devices.Vibration;
+using ControllerDevice = TopSpeed.Input.Devices.Controller.Device;
 
 namespace TopSpeed.Input.Devices.Vibration
 {
     internal sealed class ForceFeedbackEffect : IDisposable
     {
         private readonly List<Effect> _effects = new List<Effect>();
+        public bool HasLoadedEffects => _effects.Count > 0;
 
-        public ForceFeedbackEffect(JoystickDevice joystick, string effectPath)
+        public ForceFeedbackEffect(ControllerDevice controller, string effectPath)
         {
-            if (joystick == null)
+            if (controller == null)
                 return;
-            var device = joystick.Device;
+            var device = controller.Native;
             if (device == null)
                 return;
             if (!File.Exists(effectPath))
@@ -101,3 +103,4 @@ namespace TopSpeed.Input.Devices.Vibration
         }
     }
 }
+

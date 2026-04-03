@@ -109,7 +109,8 @@ namespace TopSpeed.Network
             return true;
         }
 
-        public static byte[] WritePlayerDataToServer(
+        public static byte[] WriteRacePlayerDataToServer(
+            uint raceInstanceId,
             uint playerId,
             byte playerNumber,
             CarType car,
@@ -123,10 +124,11 @@ namespace TopSpeed.Network
             bool mediaPlaying,
             uint mediaId)
         {
-            var buffer = WritePacketHeader(Command.PlayerDataToServer, 4 + 1 + 1 + 4 + 4 + 2 + 4 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 4);
+            var buffer = WritePacketHeader(Command.PlayerDataToServer, 4 + 4 + 1 + 1 + 4 + 4 + 2 + 4 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 4);
             var writer = new PacketWriter(buffer);
             writer.WriteByte(ProtocolConstants.Version);
             writer.WriteByte((byte)Command.PlayerDataToServer);
+            writer.WriteUInt32(raceInstanceId);
             writer.WriteUInt32(playerId);
             writer.WriteByte(playerNumber);
             writer.WriteByte((byte)car);
@@ -146,3 +148,4 @@ namespace TopSpeed.Network
         }
     }
 }
+

@@ -1,4 +1,3 @@
-using System;
 using TopSpeed.Data;
 using TopSpeed.Network;
 
@@ -9,8 +8,9 @@ namespace TopSpeed.Game
         private void SetSession(MultiplayerSession session)
         {
             _session = session;
+            _multiplayerRaceRuntime.ResetSession();
             ClearQueuedMultiplayerPackets();
-            session.SetPacketSink(packet => EnqueueMultiplayerPacket(session, packet));
+            session.SetPacketSink(packet => _multiplayerDispatch.Enqueue(session, packet));
         }
 
         private MultiplayerSession? GetSession()
@@ -25,34 +25,24 @@ namespace TopSpeed.Game
                 session.SetPacketSink(null);
             session?.Dispose();
             _session = null;
+            _multiplayerRaceRuntime.ResetSession();
             ClearQueuedMultiplayerPackets();
             _multiplayerCoordinator.OnSessionCleared();
         }
 
         private void ResetPendingMultiplayerState()
         {
-            _pendingMultiplayerTrack = null;
-            _pendingMultiplayerTrackName = string.Empty;
-            _pendingMultiplayerLaps = 0;
-            _pendingMultiplayerStart = false;
-            _multiplayerVehicleIndex = 0;
-            _multiplayerAutomaticTransmission = true;
+            _multiplayerRaceRuntime.ResetPending();
         }
 
         private void SetMultiplayerLoadout(int vehicleIndex, bool automaticTransmission)
         {
-            _multiplayerVehicleIndex = Math.Max(0, Math.Min(VehicleCatalog.VehicleCount - 1, vehicleIndex));
-            _multiplayerAutomaticTransmission = automaticTransmission;
+            _multiplayerRaceRuntime.SetLoadout(vehicleIndex, automaticTransmission);
         }
 
         private void DisconnectFromServer()
         {
-            _multiplayerRace?.FinalizeMultiplayerMode();
-            _multiplayerRace?.Dispose();
-            _multiplayerRace = null;
-            _multiplayerRaceQuitConfirmActive = false;
-
-            ResetPendingMultiplayerState();
+            _multiplayerRaceRuntime.Disconnect();
             ClearSession();
             _state = AppState.Menu;
             _menu.ShowRoot("main");

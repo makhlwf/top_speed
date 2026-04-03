@@ -173,3 +173,4 @@ namespace TopSpeed.Localization
         private static string NormalizeCode(string? languageCode) => LanguageCode.Normalize(languageCode);
     }
 }
+

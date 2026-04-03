@@ -60,9 +60,6 @@ namespace TopSpeed.Vehicles
 
             _diffX = _positionX - playerX;
             _diffY = _positionY - playerY;
-            _diffY = ((_diffY % _trackLength) + _trackLength) % _trackLength;
-            if (_diffY > _trackLength / 2)
-                _diffY = (_diffY - _trackLength) % _trackLength;
 
             var elapsed = 0f;
             var now = _currentTime();

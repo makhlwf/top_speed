@@ -9,6 +9,9 @@ namespace TopSpeed.Vehicles
     {
         private void HandleEventCarStart()
         {
+            if (_engineLifecycleState != EngineLifecycleState.Starting)
+                return;
+
             _soundEngine.SetFrequency(_idleFreq);
             _soundThrottle?.SetFrequency(_idleFreq);
             _vibration?.StopEffect(VibrationEffectType.Start);
@@ -16,6 +19,7 @@ namespace TopSpeed.Vehicles
             _soundWipers?.Play(loop: true);
             ClearStallState();
             _engine.StartEngine();
+            _engineLifecycleState = EngineLifecycleState.Running;
             SetState(CarState.Running);
         }
 
@@ -53,3 +57,4 @@ namespace TopSpeed.Vehicles
         }
     }
 }
+

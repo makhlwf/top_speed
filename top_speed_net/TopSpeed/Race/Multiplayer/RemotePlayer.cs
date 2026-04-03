@@ -18,3 +18,4 @@ namespace TopSpeed.Race.Multiplayer
         public bool Finished { get; set; }
     }
 }
+

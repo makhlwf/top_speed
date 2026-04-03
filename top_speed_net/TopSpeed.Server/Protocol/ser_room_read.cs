@@ -107,20 +107,20 @@ namespace TopSpeed.Server.Protocol
         public static bool TryReadRoomEvent(byte[] data, out PacketRoomEvent packet)
         {
             packet = new PacketRoomEvent();
-            if (data.Length < 2 + 4 + 4 + 1 + 4 + 1 + 1 + 1 + 1 + 1 + 12 + 1 + 4 + ProtocolConstants.MaxRoomNameLength + 4 + 1 + 1 + ProtocolConstants.MaxPlayerNameLength)
+            if (data.Length < 2 + 4 + 4 + 4 + 1 + 4 + 1 + 1 + 1 + 1 + 12 + 1 + 4 + ProtocolConstants.MaxRoomNameLength + 4 + 1 + 1 + ProtocolConstants.MaxPlayerNameLength)
                 return false;
             var reader = new PacketReader(data);
             reader.ReadByte();
             reader.ReadByte();
             packet.RoomId = reader.ReadUInt32();
             packet.RoomVersion = reader.ReadUInt32();
+            packet.RaceInstanceId = reader.ReadUInt32();
             packet.Kind = (RoomEventKind)reader.ReadByte();
             packet.HostPlayerId = reader.ReadUInt32();
             packet.RoomType = (GameRoomType)reader.ReadByte();
             packet.PlayerCount = reader.ReadByte();
             packet.PlayersToStart = reader.ReadByte();
-            packet.RaceStarted = reader.ReadBool();
-            packet.PreparingRace = reader.ReadBool();
+            packet.RaceState = (RoomRaceState)reader.ReadByte();
             packet.TrackName = reader.ReadFixedString(12);
             packet.Laps = reader.ReadByte();
             packet.GameRulesFlags = reader.ReadUInt32();

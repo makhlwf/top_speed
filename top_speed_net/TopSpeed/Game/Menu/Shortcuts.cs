@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using SharpDX.DirectInput;
+using Key = TopSpeed.Input.InputKey;
 
 namespace TopSpeed.Game
 {
@@ -36,3 +36,5 @@ namespace TopSpeed.Game
         }
     }
 }
+
+

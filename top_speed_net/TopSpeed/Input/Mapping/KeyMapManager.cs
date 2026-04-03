@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using SharpDX.DirectInput;
-using TopSpeed.Input.Devices.Joystick;
+using Key = TopSpeed.Input.InputKey;
+using TopSpeed.Input.Devices.Controller;
 using TopSpeed.Localization;
 
 namespace TopSpeed.Input
@@ -26,7 +26,7 @@ namespace TopSpeed.Input
             return _input.GetKeyMapping(action);
         }
 
-        public JoystickAxisOrButton GetAxis(InputAction action)
+        public AxisOrButton GetAxis(InputAction action)
         {
             return _input.GetAxisMapping(action);
         }
@@ -36,7 +36,7 @@ namespace TopSpeed.Input
             _input.ApplyKeyMapping(action, key);
         }
 
-        public void ApplyAxisMapping(InputAction action, JoystickAxisOrButton axis)
+        public void ApplyAxisMapping(InputAction action, AxisOrButton axis)
         {
             _input.ApplyAxisMapping(action, axis);
         }
@@ -53,7 +53,7 @@ namespace TopSpeed.Input
             return false;
         }
 
-        public bool IsAxisInUse(JoystickAxisOrButton axis, InputAction ignore)
+        public bool IsAxisInUse(AxisOrButton axis, InputAction ignore)
         {
             foreach (var action in Actions)
             {
@@ -83,51 +83,51 @@ namespace TopSpeed.Input
             return key.ToString();
         }
 
-        public static string FormatAxis(JoystickAxisOrButton axis)
+        public static string FormatAxis(AxisOrButton axis)
         {
             return axis switch
             {
-                JoystickAxisOrButton.AxisNone => "none",
-                JoystickAxisOrButton.AxisXNeg => "X-",
-                JoystickAxisOrButton.AxisXPos => "X+",
-                JoystickAxisOrButton.AxisYNeg => "Y-",
-                JoystickAxisOrButton.AxisYPos => "Y+",
-                JoystickAxisOrButton.AxisZNeg => "Z-",
-                JoystickAxisOrButton.AxisZPos => "Z+",
-                JoystickAxisOrButton.AxisRxNeg => "Rx-",
-                JoystickAxisOrButton.AxisRxPos => "Rx+",
-                JoystickAxisOrButton.AxisRyNeg => "Ry-",
-                JoystickAxisOrButton.AxisRyPos => "Ry+",
-                JoystickAxisOrButton.AxisRzNeg => "Rz-",
-                JoystickAxisOrButton.AxisRzPos => "Rz+",
-                JoystickAxisOrButton.AxisSlider1Neg => "Slider1-",
-                JoystickAxisOrButton.AxisSlider1Pos => "Slider1+",
-                JoystickAxisOrButton.AxisSlider2Neg => "Slider2-",
-                JoystickAxisOrButton.AxisSlider2Pos => "Slider2+",
-                JoystickAxisOrButton.Button1 => "Button 1",
-                JoystickAxisOrButton.Button2 => "Button 2",
-                JoystickAxisOrButton.Button3 => "Button 3",
-                JoystickAxisOrButton.Button4 => "Button 4",
-                JoystickAxisOrButton.Button5 => "Button 5",
-                JoystickAxisOrButton.Button6 => "Button 6",
-                JoystickAxisOrButton.Button7 => "Button 7",
-                JoystickAxisOrButton.Button8 => "Button 8",
-                JoystickAxisOrButton.Button9 => "Button 9",
-                JoystickAxisOrButton.Button10 => "Button 10",
-                JoystickAxisOrButton.Button11 => "Button 11",
-                JoystickAxisOrButton.Button12 => "Button 12",
-                JoystickAxisOrButton.Button13 => "Button 13",
-                JoystickAxisOrButton.Button14 => "Button 14",
-                JoystickAxisOrButton.Button15 => "Button 15",
-                JoystickAxisOrButton.Button16 => "Button 16",
-                JoystickAxisOrButton.Pov1 => "POV 1 up",
-                JoystickAxisOrButton.Pov2 => "POV 1 right",
-                JoystickAxisOrButton.Pov3 => "POV 1 down",
-                JoystickAxisOrButton.Pov4 => "POV 1 left",
-                JoystickAxisOrButton.Pov5 => "POV 2 up",
-                JoystickAxisOrButton.Pov6 => "POV 2 right",
-                JoystickAxisOrButton.Pov7 => "POV 2 down",
-                JoystickAxisOrButton.Pov8 => "POV 2 left",
+                AxisOrButton.AxisNone => "none",
+                AxisOrButton.AxisXNeg => "X-",
+                AxisOrButton.AxisXPos => "X+",
+                AxisOrButton.AxisYNeg => "Y-",
+                AxisOrButton.AxisYPos => "Y+",
+                AxisOrButton.AxisZNeg => "Z-",
+                AxisOrButton.AxisZPos => "Z+",
+                AxisOrButton.AxisRxNeg => "Rx-",
+                AxisOrButton.AxisRxPos => "Rx+",
+                AxisOrButton.AxisRyNeg => "Ry-",
+                AxisOrButton.AxisRyPos => "Ry+",
+                AxisOrButton.AxisRzNeg => "Rz-",
+                AxisOrButton.AxisRzPos => "Rz+",
+                AxisOrButton.AxisSlider1Neg => "Slider1-",
+                AxisOrButton.AxisSlider1Pos => "Slider1+",
+                AxisOrButton.AxisSlider2Neg => "Slider2-",
+                AxisOrButton.AxisSlider2Pos => "Slider2+",
+                AxisOrButton.Button1 => "Button 1",
+                AxisOrButton.Button2 => "Button 2",
+                AxisOrButton.Button3 => "Button 3",
+                AxisOrButton.Button4 => "Button 4",
+                AxisOrButton.Button5 => "Button 5",
+                AxisOrButton.Button6 => "Button 6",
+                AxisOrButton.Button7 => "Button 7",
+                AxisOrButton.Button8 => "Button 8",
+                AxisOrButton.Button9 => "Button 9",
+                AxisOrButton.Button10 => "Button 10",
+                AxisOrButton.Button11 => "Button 11",
+                AxisOrButton.Button12 => "Button 12",
+                AxisOrButton.Button13 => "Button 13",
+                AxisOrButton.Button14 => "Button 14",
+                AxisOrButton.Button15 => "Button 15",
+                AxisOrButton.Button16 => "Button 16",
+                AxisOrButton.Pov1 => "POV 1 up",
+                AxisOrButton.Pov2 => "POV 1 right",
+                AxisOrButton.Pov3 => "POV 1 down",
+                AxisOrButton.Pov4 => "POV 1 left",
+                AxisOrButton.Pov5 => "POV 2 up",
+                AxisOrButton.Pov6 => "POV 2 right",
+                AxisOrButton.Pov7 => "POV 2 down",
+                AxisOrButton.Pov8 => "POV 2 left",
                 _ => axis.ToString()
             };
         }
@@ -137,7 +137,9 @@ namespace TopSpeed.Input
             var label = GetLabel(action).ToLowerInvariant();
             return keyboard
                 ? LocalizationService.Format(LocalizationService.Mark("Press the new key for {0}."), label)
-                : LocalizationService.Format(LocalizationService.Mark("Move or press the joystick control for {0}."), label);
+                : LocalizationService.Format(LocalizationService.Mark("Move or press the controller control for {0}."), label);
         }
     }
 }
+
+

@@ -40,9 +40,20 @@ namespace TopSpeed.Vehicles.Loader
                 FrontalAreaM2 = parameters.FrontalAreaM2,
                 RollingResistanceCoefficient = parameters.RollingResistanceCoefficient,
                 LaunchRpm = parameters.LaunchRpm,
+                CoastDragBaseMps2 = parameters.CoastDragBaseMps2,
+                CoastDragLinearPerMps = parameters.CoastDragLinearPerMps,
                 EngineInertiaKgm2 = parameters.EngineInertiaKgm2,
                 EngineFrictionTorqueNm = parameters.EngineFrictionTorqueNm,
+                EngineFrictionLinearNmPerKrpm = parameters.EngineFrictionLinearNmPerKrpm,
+                EngineFrictionQuadraticNmPerKrpm2 = parameters.EngineFrictionQuadraticNmPerKrpm2,
                 DrivelineCouplingRate = parameters.DrivelineCouplingRate,
+                IdleControlWindowRpm = parameters.IdleControlWindowRpm,
+                IdleControlGainNmPerRpm = parameters.IdleControlGainNmPerRpm,
+                MinCoupledRiseIdleRpmPerSecond = parameters.MinCoupledRiseIdleRpmPerSecond,
+                MinCoupledRiseFullRpmPerSecond = parameters.MinCoupledRiseFullRpmPerSecond,
+                EngineOverrunIdleLossFraction = parameters.EngineOverrunIdleLossFraction,
+                OverrunCurveExponent = parameters.OverrunCurveExponent,
+                EngineBrakeTransferEfficiency = parameters.EngineBrakeTransferEfficiency,
                 FinalDriveRatio = parameters.FinalDriveRatio,
                 ReverseMaxSpeedKph = parameters.ReverseMaxSpeedKph,
                 ReversePowerFactor = parameters.ReversePowerFactor,
@@ -79,3 +90,4 @@ namespace TopSpeed.Vehicles.Loader
         }
     }
 }
+

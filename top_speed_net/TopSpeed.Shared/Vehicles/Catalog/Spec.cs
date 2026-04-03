@@ -72,7 +72,18 @@ namespace TopSpeed.Vehicles
             TransmissionType[]? supportedTransmissionTypes = null,
             bool shiftOnDemand = false,
             AutomaticDrivelineTuning? automaticTuning = null,
-            TransmissionPolicy? transmissionPolicy = null)
+            TransmissionPolicy? transmissionPolicy = null,
+            float coastDragBaseMps2 = -1f,
+            float coastDragLinearPerMps = -1f,
+            float engineOverrunIdleLossFraction = -1f,
+            float engineBrakeTransferEfficiency = -1f,
+            float frictionLinearNmPerKrpm = -1f,
+            float frictionQuadraticNmPerKrpm2 = -1f,
+            float idleControlWindowRpm = -1f,
+            float idleControlGainNmPerRpm = -1f,
+            float minCoupledRiseIdleRpmPerSecond = -1f,
+            float minCoupledRiseFullRpmPerSecond = -1f,
+            float overrunCurveExponent = -1f)
         {
             CarType = carType;
             Name = name;
@@ -144,6 +155,17 @@ namespace TopSpeed.Vehicles
             ShiftOnDemand = shiftOnDemand;
             AutomaticTuning = automaticTuning ?? AutomaticDrivelineTuning.Default;
             TransmissionPolicy = transmissionPolicy ?? TransmissionPolicy.Default;
+            CoastDragBaseMps2 = coastDragBaseMps2;
+            CoastDragLinearPerMps = coastDragLinearPerMps;
+            EngineOverrunIdleLossFraction = engineOverrunIdleLossFraction;
+            EngineBrakeTransferEfficiency = engineBrakeTransferEfficiency;
+            FrictionLinearNmPerKrpm = frictionLinearNmPerKrpm;
+            FrictionQuadraticNmPerKrpm2 = frictionQuadraticNmPerKrpm2;
+            IdleControlWindowRpm = idleControlWindowRpm;
+            IdleControlGainNmPerRpm = idleControlGainNmPerRpm;
+            MinCoupledRiseIdleRpmPerSecond = minCoupledRiseIdleRpmPerSecond;
+            MinCoupledRiseFullRpmPerSecond = minCoupledRiseFullRpmPerSecond;
+            OverrunCurveExponent = overrunCurveExponent;
         }
 
         public CarType CarType { get; }
@@ -174,9 +196,20 @@ namespace TopSpeed.Vehicles
         public float FrontalAreaM2 { get; }
         public float RollingResistanceCoefficient { get; }
         public float LaunchRpm { get; }
+        public float CoastDragBaseMps2 { get; }
+        public float CoastDragLinearPerMps { get; }
         public float EngineInertiaKgm2 { get; }
         public float EngineFrictionTorqueNm { get; }
         public float DrivelineCouplingRate { get; }
+        public float EngineOverrunIdleLossFraction { get; }
+        public float EngineBrakeTransferEfficiency { get; }
+        public float FrictionLinearNmPerKrpm { get; }
+        public float FrictionQuadraticNmPerKrpm2 { get; }
+        public float IdleControlWindowRpm { get; }
+        public float IdleControlGainNmPerRpm { get; }
+        public float MinCoupledRiseIdleRpmPerSecond { get; }
+        public float MinCoupledRiseFullRpmPerSecond { get; }
+        public float OverrunCurveExponent { get; }
         public float FinalDriveRatio { get; }
         public float ReverseMaxSpeedKph { get; }
         public float ReversePowerFactor { get; }

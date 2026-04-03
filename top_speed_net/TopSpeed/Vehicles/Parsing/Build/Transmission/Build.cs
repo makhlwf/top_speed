@@ -21,3 +21,4 @@ namespace TopSpeed.Vehicles.Parsing
         }
     }
 }
+

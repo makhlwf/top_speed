@@ -64,7 +64,6 @@ namespace TopSpeed.Network
 
             var protocolHello = BuildProtocolHelloPacket();
             var hello = BuildPlayerHelloPacket(sanitizedCallSign);
-            var initialState = BuildPlayerStatePacket();
             var keepAlive = new[] { ProtocolConstants.Version, (byte)Command.KeepAlive };
             var protocolHelloSent = false;
             var protocolNegotiated = false;
@@ -112,7 +111,6 @@ namespace TopSpeed.Network
                     manager,
                     connectedPeer,
                     hello,
-                    initialState,
                     protocolNegotiated,
                     playerId,
                     playerNumber,
@@ -143,3 +141,4 @@ namespace TopSpeed.Network
         }
     }
 }
+

@@ -7,3 +7,4 @@ namespace TopSpeed.Vehicles.Core
         CarControlIntent ApplyIntent(in CarControlContext context, in CarControlIntent intent);
     }
 }
+

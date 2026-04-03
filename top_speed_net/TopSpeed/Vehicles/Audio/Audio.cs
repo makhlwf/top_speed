@@ -130,6 +130,7 @@ namespace TopSpeed.Vehicles
                 ref _lastPlayerEngineVolumePercent,
                 ref _lastPlayerEventsVolumePercent,
                 ref _lastSurfaceLoopVolumePercent);
+            SetPlayerEventVolumePercent(_soundStop, 100);
         }
 
         private void SetPlayerEngineVolumePercent(AudioSourceHandle? sound, int percent)
@@ -148,3 +149,4 @@ namespace TopSpeed.Vehicles
         }
     }
 }
+

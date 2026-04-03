@@ -2,6 +2,7 @@ using TopSpeed.Audio;
 using TopSpeed.Bots;
 using TopSpeed.Common;
 using TopSpeed.Data;
+using TopSpeed.Physics.Powertrain;
 using TopSpeed.Tracks;
 
 namespace TopSpeed.Vehicles
@@ -16,9 +17,6 @@ namespace TopSpeed.Vehicles
 
             _diffX = _positionX - playerX;
             _diffY = _positionY - playerY;
-            _diffY = ((_diffY % _trackLength) + _trackLength) % _trackLength;
-            if (_diffY > _trackLength / 2)
-                _diffY = (_diffY - _trackLength) % _trackLength;
 
             if (!_horning && _diffY < -100.0f)
             {
@@ -72,18 +70,36 @@ namespace TopSpeed.Vehicles
                 _effectiveDriveRatio = physicsState.EffectiveDriveRatio;
                 _speedDiff = _speed - beforeSpeed;
 
-                var couplingMode = _automaticCouplingFactor <= 0.05f
-                    ? EngineCouplingMode.Disengaged
-                    : (_automaticCouplingFactor >= 0.98f ? EngineCouplingMode.Locked : EngineCouplingMode.Blended);
+                var driveRatioOverride = _effectiveDriveRatio > 0f ? _effectiveDriveRatio : (float?)null;
+                var syncState = EngineStateRuntime.Resolve(
+                    new EngineStateRuntimeInput(
+                        _physicsConfig.Powertrain,
+                        _activeTransmissionType,
+                        isNeutralGear: false,
+                        engineStalled: false,
+                        drivelineLocked: _automaticCouplingFactor >= 0.98f,
+                        drivelineDisengaged: _automaticCouplingFactor <= 0.05f,
+                        _speed / 3.6f,
+                        System.Math.Max(0f, System.Math.Min(100f, _currentThrottle)) / 100f,
+                        _automaticCouplingFactor,
+                        switchingGear: 0,
+                        _engine.Rpm,
+                        Calculator.RpmAtSpeed(
+                            _physicsConfig.Powertrain,
+                            _speed / 3.6f,
+                            _gear,
+                            driveRatioOverride)));
+
                 _engine.SyncFromSpeed(
                     _speed,
                     _gear,
                     elapsed,
                     _currentThrottle,
                     inReverse: false,
-                    couplingMode: couplingMode,
+                    couplingMode: (EngineCouplingMode)syncState.CouplingMode,
                     couplingFactor: _automaticCouplingFactor,
-                    driveRatioOverride: _effectiveDriveRatio > 0f ? _effectiveDriveRatio : (float?)null);
+                    driveRatioOverride: driveRatioOverride,
+                    minimumCoupledRpm: syncState.MinimumCoupledRpm);
                 UpdateEngineFreq();
 
                 if (_frame % 4 == 0)

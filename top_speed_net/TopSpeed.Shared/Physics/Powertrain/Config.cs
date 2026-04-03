@@ -34,7 +34,18 @@ namespace TopSpeed.Physics.Powertrain
             float drivelineCouplingRate,
             int gears,
             float[] gearRatios,
-            CurveProfile torqueCurve)
+            CurveProfile torqueCurve,
+            float coastDragBaseMps2 = 0f,
+            float coastDragLinearPerMps = 0f,
+            float engineFrictionLinearNmPerKrpm = 0f,
+            float engineFrictionQuadraticNmPerKrpm2 = 0f,
+            float idleControlWindowRpm = 150f,
+            float idleControlGainNmPerRpm = 0.08f,
+            float minCoupledRiseIdleRpmPerSecond = 2200f,
+            float minCoupledRiseFullRpmPerSecond = 6200f,
+            float engineOverrunIdleLossFraction = 0.35f,
+            float overrunCurveExponent = 1f,
+            float engineBrakeTransferEfficiency = 0.68f)
         {
             MassKg = Math.Max(1f, massKg);
             DrivetrainEfficiency = Clamp(drivetrainEfficiency, 0.1f, 1.0f);
@@ -60,6 +71,17 @@ namespace TopSpeed.Physics.Powertrain
             EngineInertiaKgm2 = Math.Max(0.01f, engineInertiaKgm2);
             EngineFrictionTorqueNm = Math.Max(0f, engineFrictionTorqueNm);
             DrivelineCouplingRate = Math.Max(0.1f, drivelineCouplingRate);
+            CoastDragBaseMps2 = Math.Max(0f, coastDragBaseMps2);
+            CoastDragLinearPerMps = Math.Max(0f, coastDragLinearPerMps);
+            EngineFrictionLinearNmPerKrpm = Math.Max(0f, engineFrictionLinearNmPerKrpm);
+            EngineFrictionQuadraticNmPerKrpm2 = Math.Max(0f, engineFrictionQuadraticNmPerKrpm2);
+            IdleControlWindowRpm = Math.Max(0f, idleControlWindowRpm);
+            IdleControlGainNmPerRpm = Math.Max(0f, idleControlGainNmPerRpm);
+            MinCoupledRiseIdleRpmPerSecond = Math.Max(0f, minCoupledRiseIdleRpmPerSecond);
+            MinCoupledRiseFullRpmPerSecond = Math.Max(MinCoupledRiseIdleRpmPerSecond, minCoupledRiseFullRpmPerSecond);
+            EngineOverrunIdleLossFraction = Clamp(engineOverrunIdleLossFraction, 0f, 1f);
+            OverrunCurveExponent = Clamp(overrunCurveExponent, 0.2f, 5f);
+            EngineBrakeTransferEfficiency = Clamp(engineBrakeTransferEfficiency, 0.1f, 1f);
             Gears = Math.Max(1, gears);
             _gearRatios = (gearRatios != null && gearRatios.Length == Gears)
                 ? gearRatios
@@ -90,7 +112,18 @@ namespace TopSpeed.Physics.Powertrain
         public float ReverseGearRatio { get; }
         public float EngineInertiaKgm2 { get; }
         public float EngineFrictionTorqueNm { get; }
+        public float EngineFrictionLinearNmPerKrpm { get; }
+        public float EngineFrictionQuadraticNmPerKrpm2 { get; }
         public float DrivelineCouplingRate { get; }
+        public float CoastDragBaseMps2 { get; }
+        public float CoastDragLinearPerMps { get; }
+        public float IdleControlWindowRpm { get; }
+        public float IdleControlGainNmPerRpm { get; }
+        public float MinCoupledRiseIdleRpmPerSecond { get; }
+        public float MinCoupledRiseFullRpmPerSecond { get; }
+        public float EngineOverrunIdleLossFraction { get; }
+        public float OverrunCurveExponent { get; }
+        public float EngineBrakeTransferEfficiency { get; }
         public int Gears { get; }
         public CurveProfile TorqueCurve { get; }
 

@@ -33,64 +33,17 @@ namespace TopSpeed.Server.Network
 
         public void Update(float deltaSeconds)
         {
-            lock (_lock)
-            {
-                if (deltaSeconds <= 0f)
-                    return;
-
-                _simulationAccumulator += deltaSeconds;
-                while (_simulationAccumulator >= ServerSimulationStepSeconds)
-                {
-                    _simulationAccumulator -= ServerSimulationStepSeconds;
-                    _simulationTick++;
-                    _cleanupAccumulator += ServerSimulationStepSeconds;
-                    _snapshotAccumulator += ServerSimulationStepSeconds;
-
-                    if (_cleanupAccumulator >= CleanupIntervalSeconds)
-                    {
-                        _cleanupAccumulator -= CleanupIntervalSeconds;
-                        CleanupConnections();
-                    }
-
-                    UpdateBots(ServerSimulationStepSeconds);
-                    CheckForBumps();
-                    UpdateRaceCompletions(ServerSimulationStepSeconds);
-
-                    if (_snapshotAccumulator >= ServerSnapshotIntervalSeconds)
-                    {
-                        _snapshotAccumulator -= ServerSnapshotIntervalSeconds;
-                        BroadcastPlayerData();
-                    }
-                }
-            }
+            _runtime.Update(deltaSeconds);
         }
 
         private void CleanupConnections()
         {
-            var expired = _players.Values.Where(p => DateTime.UtcNow - p.LastSeenUtc > ConnectionTimeout).Select(p => p.Id).ToList();
-            foreach (var id in expired)
-            {
-                if (!_players.TryGetValue(id, out var player))
-                    continue;
-
-                RemoveConnection(player, notifyRoom: true, sendDisconnectPacket: true, reason: "timeout");
-            }
-
-            CleanupLiveStreams();
+            _session.CleanupExpiredConnections();
         }
 
         private void OnPeerDisconnected(IPEndPoint endpoint)
         {
-            lock (_lock)
-            {
-                var key = endpoint.ToString();
-                if (!_endpointIndex.TryGetValue(key, out var id))
-                    return;
-                if (!_players.TryGetValue(id, out var player))
-                    return;
-
-                RemoveConnection(player, notifyRoom: true, sendDisconnectPacket: false, reason: "peer_disconnect");
-            }
+            _session.HandlePeerDisconnected(endpoint);
         }
 
         private void RemoveConnection(
@@ -101,50 +54,12 @@ namespace TopSpeed.Server.Network
             string? disconnectMessage = null,
             bool announcePresenceDisconnect = true)
         {
-            var roomId = player.RoomId;
-            if (player.RoomId.HasValue)
-                HandleLeaveRoom(player, notifyRoom);
-            if (announcePresenceDisconnect && player.ServerPresenceAnnounced)
-                BroadcastServerDisconnectAnnouncement(player, reason);
-            if (sendDisconnectPacket)
-            {
-                var message = string.IsNullOrWhiteSpace(disconnectMessage)
-                    ? BuildDisconnectMessage(reason)
-                    : disconnectMessage;
-                SendStream(player, TopSpeed.Server.Protocol.PacketSerializer.WriteDisconnect(message), TopSpeed.Protocol.PacketStream.Control);
-            }
-            _endpointIndex.Remove(player.EndPoint.ToString());
-            _players.Remove(player.Id);
-            _logger.Info(LocalizationService.Format(
-                LocalizationService.Mark("Connection removed: player={0}, endpoint={1}, room={2}, reason={3}."),
-                player.Id,
-                player.EndPoint,
-                roomId?.ToString() ?? LocalizationService.Translate(LocalizationService.Mark("none")),
-                reason));
+            _session.RemoveConnection(player, notifyRoom, sendDisconnectPacket, reason, disconnectMessage, announcePresenceDisconnect);
         }
 
         private static string BuildDisconnectMessage(string reason)
         {
-            if (string.IsNullOrWhiteSpace(reason))
-                return LocalizationService.Mark("The server closed the connection.");
-
-            switch (reason)
-            {
-                case "timeout":
-                    return LocalizationService.Mark("Connection timed out.");
-                case "protocol_mismatch":
-                    return LocalizationService.Mark("Connection refused due to protocol mismatch.");
-                case "protocol_rejected":
-                    return LocalizationService.Mark("Connection refused due to invalid protocol negotiation.");
-                case "server_full":
-                    return LocalizationService.Mark("This server is full.");
-                case "host_shutdown":
-                    return LocalizationService.Mark("The server will be shut down immediately by the host.");
-                case "peer_disconnect":
-                    return LocalizationService.Mark("Connection closed.");
-                default:
-                    return LocalizationService.Format(LocalizationService.Mark("Connection closed by server. Reason: {0}."), reason);
-            }
+            return Session.BuildDisconnectMessage(reason);
         }
 
         public ServerSnapshot GetSnapshot()
@@ -166,3 +81,4 @@ namespace TopSpeed.Server.Network
         }
     }
 }
+

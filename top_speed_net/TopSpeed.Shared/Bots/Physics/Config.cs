@@ -61,35 +61,100 @@ namespace TopSpeed.Bots
             float[]? gearRatios = null,
             TransmissionPolicy? transmissionPolicy = null,
             TransmissionType activeTransmissionType = TransmissionType.Atc,
-            AutomaticDrivelineTuning? automaticTuning = null)
+            AutomaticDrivelineTuning? automaticTuning = null,
+            float coastDragBaseMps2 = -1f,
+            float coastDragLinearPerMps = -1f,
+            float frictionLinearNmPerKrpm = -1f,
+            float frictionQuadraticNmPerKrpm2 = -1f,
+            float idleControlWindowRpm = -1f,
+            float idleControlGainNmPerRpm = -1f,
+            float minCoupledRiseIdleRpmPerSecond = -1f,
+            float minCoupledRiseFullRpmPerSecond = -1f,
+            float engineOverrunIdleLossFraction = -1f,
+            float overrunCurveExponent = -1f,
+            float engineBrakeTransferEfficiency = -1f)
         {
+            var build = PowertrainBuild.Create(
+                new BuildInput(
+                    deceleration,
+                    massKg,
+                    drivetrainEfficiency,
+                    engineBrakingTorqueNm,
+                    tireGripCoefficient,
+                    brakeStrength,
+                    wheelRadiusM,
+                    engineBraking,
+                    idleRpm,
+                    revLimiter,
+                    finalDriveRatio,
+                    powerFactor,
+                    peakTorqueNm,
+                    peakTorqueRpm,
+                    idleTorqueNm,
+                    redlineTorqueNm,
+                    dragCoefficient,
+                    frontalAreaM2,
+                    rollingResistanceCoefficient,
+                    launchRpm,
+                    reversePowerFactor,
+                    reverseGearRatio,
+                    reverseMaxSpeedKph: 35f,
+                    engineInertiaKgm2,
+                    engineFrictionTorqueNm,
+                    drivelineCouplingRate,
+                    gears,
+                    torqueCurve,
+                    gearRatios,
+                    coastDragBaseMps2,
+                    coastDragLinearPerMps,
+                    frictionLinearNmPerKrpm,
+                    frictionQuadraticNmPerKrpm2,
+                    idleControlWindowRpm,
+                    idleControlGainNmPerRpm,
+                    minCoupledRiseIdleRpmPerSecond,
+                    minCoupledRiseFullRpmPerSecond,
+                    engineOverrunIdleLossFraction,
+                    overrunCurveExponent,
+                    engineBrakeTransferEfficiency));
+
             SurfaceTractionFactor = Math.Max(0.01f, surfaceTractionFactor);
             Deceleration = Math.Max(0.01f, deceleration);
             TopSpeedKph = Math.Max(1f, topSpeedKph);
-            MassKg = Math.Max(1f, massKg);
-            DrivetrainEfficiency = Math.Max(0.1f, Math.Min(1.0f, drivetrainEfficiency));
-            EngineBrakingTorqueNm = Math.Max(0f, engineBrakingTorqueNm);
-            TireGripCoefficient = Math.Max(0.1f, tireGripCoefficient);
-            BrakeStrength = Math.Max(0.1f, brakeStrength);
-            WheelRadiusM = Math.Max(0.01f, wheelRadiusM);
-            EngineBraking = Math.Max(0.05f, Math.Min(1.0f, engineBraking));
-            IdleRpm = Math.Max(500f, idleRpm);
-            RevLimiter = Math.Max(IdleRpm, revLimiter);
-            FinalDriveRatio = Math.Max(0.1f, finalDriveRatio);
-            PowerFactor = Math.Max(0.1f, powerFactor);
-            PeakTorqueNm = Math.Max(0f, peakTorqueNm);
-            PeakTorqueRpm = Math.Max(IdleRpm + 100f, peakTorqueRpm);
-            IdleTorqueNm = Math.Max(0f, idleTorqueNm);
-            RedlineTorqueNm = Math.Max(0f, redlineTorqueNm);
-            DragCoefficient = Math.Max(0.01f, dragCoefficient);
-            FrontalAreaM2 = Math.Max(0.1f, frontalAreaM2);
-            RollingResistanceCoefficient = Math.Max(0.001f, rollingResistanceCoefficient);
-            LaunchRpm = Math.Max(IdleRpm, Math.Min(RevLimiter, launchRpm));
-            ReversePowerFactor = Math.Max(0.1f, reversePowerFactor);
-            ReverseGearRatio = Math.Max(0.1f, reverseGearRatio);
-            EngineInertiaKgm2 = Math.Max(0.01f, engineInertiaKgm2);
-            EngineFrictionTorqueNm = Math.Max(0f, engineFrictionTorqueNm);
-            DrivelineCouplingRate = Math.Max(0.1f, drivelineCouplingRate);
+            MassKg = build.Powertrain.MassKg;
+            DrivetrainEfficiency = build.Powertrain.DrivetrainEfficiency;
+            EngineBrakingTorqueNm = build.Powertrain.EngineBrakingTorqueNm;
+            TireGripCoefficient = build.Powertrain.TireGripCoefficient;
+            BrakeStrength = build.Powertrain.BrakeStrength;
+            WheelRadiusM = build.Powertrain.WheelRadiusM;
+            EngineBraking = build.Powertrain.EngineBraking;
+            IdleRpm = build.Powertrain.IdleRpm;
+            RevLimiter = build.Powertrain.RevLimiter;
+            FinalDriveRatio = build.Powertrain.FinalDriveRatio;
+            PowerFactor = build.Powertrain.PowerFactor;
+            PeakTorqueNm = build.Powertrain.PeakTorqueNm;
+            PeakTorqueRpm = build.Powertrain.PeakTorqueRpm;
+            IdleTorqueNm = build.Powertrain.IdleTorqueNm;
+            RedlineTorqueNm = build.Powertrain.RedlineTorqueNm;
+            DragCoefficient = build.Powertrain.DragCoefficient;
+            FrontalAreaM2 = build.Powertrain.FrontalAreaM2;
+            RollingResistanceCoefficient = build.Powertrain.RollingResistanceCoefficient;
+            LaunchRpm = build.Powertrain.LaunchRpm;
+            ReversePowerFactor = build.Powertrain.ReversePowerFactor;
+            ReverseGearRatio = build.Powertrain.ReverseGearRatio;
+            EngineInertiaKgm2 = build.Powertrain.EngineInertiaKgm2;
+            EngineFrictionTorqueNm = build.Powertrain.EngineFrictionTorqueNm;
+            DrivelineCouplingRate = build.Powertrain.DrivelineCouplingRate;
+            CoastDragBaseMps2 = build.CoastDragBaseMps2;
+            CoastDragLinearPerMps = build.CoastDragLinearPerMps;
+            EngineFrictionLinearNmPerKrpm = build.FrictionLinearNmPerKrpm;
+            EngineFrictionQuadraticNmPerKrpm2 = build.FrictionQuadraticNmPerKrpm2;
+            IdleControlWindowRpm = build.IdleControlWindowRpm;
+            IdleControlGainNmPerRpm = build.IdleControlGainNmPerRpm;
+            MinCoupledRiseIdleRpmPerSecond = build.MinCoupledRiseIdleRpmPerSecond;
+            MinCoupledRiseFullRpmPerSecond = build.MinCoupledRiseFullRpmPerSecond;
+            EngineOverrunIdleLossFraction = build.EngineOverrunIdleLossFraction;
+            OverrunCurveExponent = build.OverrunCurveExponent;
+            EngineBrakeTransferEfficiency = build.EngineBrakeTransferEfficiency;
             LateralGripCoefficient = Math.Max(0.1f, lateralGripCoefficient);
             HighSpeedStability = Math.Max(0f, Math.Min(1.0f, highSpeedStability));
             WheelbaseM = Math.Max(0.5f, wheelbaseM);
@@ -113,41 +178,13 @@ namespace TopSpeed.Bots
             YawInertiaScale = Math.Max(0.5f, Math.Min(2f, yawInertiaScale));
             SteeringCurve = Math.Max(0.5f, Math.Min(2f, steeringCurve));
             TransientDamping = Math.Max(0f, Math.Min(6f, transientDamping));
-            Gears = Math.Max(1, gears);
-            GearRatios = BuildRatios(Gears, gearRatios);
+            Gears = build.Powertrain.Gears;
+            GearRatios = build.GearRatios;
             TransmissionPolicy = transmissionPolicy ?? TransmissionPolicy.Default;
             ActiveTransmissionType = activeTransmissionType;
             AutomaticTuning = automaticTuning ?? AutomaticDrivelineTuning.Default;
             TorqueCurve = torqueCurve ?? throw new ArgumentNullException(nameof(torqueCurve));
-
-            Powertrain = new Config(
-                MassKg,
-                DrivetrainEfficiency,
-                EngineBrakingTorqueNm,
-                TireGripCoefficient,
-                BrakeStrength,
-                WheelRadiusM,
-                EngineBraking,
-                IdleRpm,
-                RevLimiter,
-                FinalDriveRatio,
-                PowerFactor,
-                PeakTorqueNm,
-                PeakTorqueRpm,
-                IdleTorqueNm,
-                RedlineTorqueNm,
-                DragCoefficient,
-                FrontalAreaM2,
-                RollingResistanceCoefficient,
-                LaunchRpm,
-                ReversePowerFactor,
-                ReverseGearRatio,
-                EngineInertiaKgm2,
-                EngineFrictionTorqueNm,
-                DrivelineCouplingRate,
-                Gears,
-                GearRatios,
-                TorqueCurve);
+            Powertrain = build.Powertrain;
         }
 
         public float SurfaceTractionFactor { get; }
@@ -177,6 +214,17 @@ namespace TopSpeed.Bots
         public float EngineInertiaKgm2 { get; }
         public float EngineFrictionTorqueNm { get; }
         public float DrivelineCouplingRate { get; }
+        public float CoastDragBaseMps2 { get; }
+        public float CoastDragLinearPerMps { get; }
+        public float EngineFrictionLinearNmPerKrpm { get; }
+        public float EngineFrictionQuadraticNmPerKrpm2 { get; }
+        public float IdleControlWindowRpm { get; }
+        public float IdleControlGainNmPerRpm { get; }
+        public float MinCoupledRiseIdleRpmPerSecond { get; }
+        public float MinCoupledRiseFullRpmPerSecond { get; }
+        public float EngineOverrunIdleLossFraction { get; }
+        public float OverrunCurveExponent { get; }
+        public float EngineBrakeTransferEfficiency { get; }
         public float LateralGripCoefficient { get; }
         public float HighSpeedStability { get; }
         public float WheelbaseM { get; }
@@ -210,25 +258,6 @@ namespace TopSpeed.Bots
         {
             var clamped = Math.Max(1, Math.Min(Gears, gear));
             return GearRatios[clamped - 1];
-        }
-
-        private static float[] BuildRatios(int gears, float[]? provided)
-        {
-            if (provided != null && provided.Length == gears)
-                return provided;
-
-            var ratios = new float[gears];
-            const float first = 3.5f;
-            const float last = 0.85f;
-            var logFirst = Math.Log(first);
-            var logLast = Math.Log(last);
-            for (var i = 0; i < gears; i++)
-            {
-                var t = gears > 1 ? i / (float)(gears - 1) : 0f;
-                ratios[i] = (float)Math.Exp(logFirst + ((logLast - logFirst) * t));
-            }
-
-            return ratios;
         }
     }
 }

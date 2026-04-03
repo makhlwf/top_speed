@@ -32,20 +32,19 @@ namespace TopSpeed.Race
                 && _lastCarState != CarState.Crashed
                 && (_car.State == CarState.Crashing || _car.State == CarState.Crashed))
             {
-                TrySendRace(_session.SendPlayerCrashed());
+                TrySendRace(_session.SendPlayerCrashed(_raceInstanceId));
             }
             _lastCarState = _car.State;
 
             HandlePlayerLapProgress(
                 onPlayerFinished: () =>
                 {
-                    AnnounceFinishOrder(_soundPlayerNr, _soundFinished, _playerNumber, ref _positionFinish);
+                    AnnounceFinishOrder(_soundPlayerNr, _soundFinished, LocalPlayerNumber, ref _positionFinish);
                     if (!_sentFinish)
                     {
                         _sentFinish = true;
                         _currentState = PlayerState.Finished;
-                        TrySendRace(_session.SendPlayerFinished());
-                        TrySendRace(_session.SendPlayerState(_currentState));
+                        TrySendRace(_session.SendPlayerState(_raceInstanceId, _currentState));
                     }
                 });
 
@@ -58,7 +57,7 @@ namespace TopSpeed.Race
                 GetVehicleNameForPlayer,
                 CalculatePlayerPerc);
 
-            HandlePlayerNumberRequest(_playerNumber);
+            HandlePlayerNumberRequest(LocalPlayerNumber);
             HandleGeneralInfoRequests(ref _pauseKeyReleased);
             if (!_liveTx.Update(elapsed, out var liveError))
             {
@@ -87,6 +86,7 @@ namespace TopSpeed.Race
                     Frequency = _car.Frequency
                 };
                 TrySendRace(_session.SendPlayerData(
+                    _raceInstanceId,
                     raceData,
                     _car.CarType,
                     state,
@@ -111,8 +111,8 @@ namespace TopSpeed.Race
 
             _sentStart = true;
             _currentState = PlayerState.Racing;
-            TrySendRace(_session.SendPlayerStarted());
-            TrySendRace(_session.SendPlayerState(_currentState));
+            TrySendRace(_session.SendPlayerStarted(_raceInstanceId));
+            TrySendRace(_session.SendPlayerState(_raceInstanceId, _currentState));
         }
 
         private bool TrySendRace(bool sent)
@@ -129,4 +129,5 @@ namespace TopSpeed.Race
         }
     }
 }
+
 

@@ -5,8 +5,8 @@ namespace TopSpeed.Game
         public void Update(float deltaSeconds)
         {
             _input.Update();
-            if (_input.TryGetJoystickState(out var joystick))
-                _raceInput.Run(_input.Current, joystick, deltaSeconds, _input.ActiveJoystickIsRacingWheel);
+            if (_input.TryGetControllerState(out var controller))
+                _raceInput.Run(_input.Current, controller, deltaSeconds, _input.ActiveControllerIsRacingWheel);
             else
                 _raceInput.Run(_input.Current, deltaSeconds);
 
@@ -29,3 +29,4 @@ namespace TopSpeed.Game
         }
     }
 }
+

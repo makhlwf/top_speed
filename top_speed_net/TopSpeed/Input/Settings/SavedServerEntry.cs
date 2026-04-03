@@ -7,3 +7,4 @@ namespace TopSpeed.Input
         public int Port { get; set; }
     }
 }
+

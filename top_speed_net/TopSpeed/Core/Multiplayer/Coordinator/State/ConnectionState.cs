@@ -20,3 +20,4 @@ namespace TopSpeed.Core.Multiplayer
         public ConnectResult PendingCompatibilityResult;
     }
 }
+

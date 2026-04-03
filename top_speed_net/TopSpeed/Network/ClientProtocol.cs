@@ -1,4 +1,4 @@
-﻿namespace TopSpeed.Network
+namespace TopSpeed.Network
 {
     internal static class ClientProtocol
     {
@@ -6,3 +6,4 @@
         public const int DefaultDiscoveryPort = 28631;
     }
 }
+

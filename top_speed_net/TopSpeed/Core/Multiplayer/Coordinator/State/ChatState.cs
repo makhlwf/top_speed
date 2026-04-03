@@ -7,3 +7,4 @@ namespace TopSpeed.Core.Multiplayer
         public readonly HistoryBuffers History = new HistoryBuffers(100);
     }
 }
+

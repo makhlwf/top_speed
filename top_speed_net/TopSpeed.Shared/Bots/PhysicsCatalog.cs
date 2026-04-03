@@ -75,7 +75,16 @@ namespace TopSpeed.Bots
                 spec.Gears,
                 torqueCurve,
                 spec.GearRatios,
-                spec.TransmissionPolicy);
+                spec.TransmissionPolicy,
+                frictionLinearNmPerKrpm: spec.FrictionLinearNmPerKrpm,
+                frictionQuadraticNmPerKrpm2: spec.FrictionQuadraticNmPerKrpm2,
+                idleControlWindowRpm: spec.IdleControlWindowRpm,
+                idleControlGainNmPerRpm: spec.IdleControlGainNmPerRpm,
+                minCoupledRiseIdleRpmPerSecond: spec.MinCoupledRiseIdleRpmPerSecond,
+                minCoupledRiseFullRpmPerSecond: spec.MinCoupledRiseFullRpmPerSecond,
+                engineOverrunIdleLossFraction: spec.EngineOverrunIdleLossFraction,
+                overrunCurveExponent: spec.OverrunCurveExponent,
+                engineBrakeTransferEfficiency: spec.EngineBrakeTransferEfficiency);
         }
 
         private static CurveProfile BuildTorqueCurve(OfficialVehicleSpec spec)

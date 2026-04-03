@@ -148,7 +148,7 @@ namespace TopSpeed.Core.Multiplayer
             {
                 new MenuItem(LocalizationService.Mark("Automatic transmission"), MenuAction.None, onActivate: () => SubmitLoadoutReady(true)),
                 new MenuItem(LocalizationService.Mark("Manual transmission"), MenuAction.None, onActivate: () => SubmitLoadoutReady(false)),
-                new MenuItem(LocalizationService.Mark("Random transmission mode"), MenuAction.None, onActivate: () => SubmitLoadoutReady(PickRandomLoadoutTransmission(_state.Rooms.PendingLoadoutVehicleIndex))),
+                new MenuItem(LocalizationService.Mark("Random transmission mode"), MenuAction.None, onActivate: () => SubmitLoadoutReady(PickRandomLoadoutTransmission(_state.RoomDrafts.PendingLoadoutVehicleIndex))),
                 new MenuItem(LocalizationService.Mark("Go back to vehicle selection"), MenuAction.Back)
             };
             _menu.UpdateItems(MultiplayerMenuKeys.LoadoutTransmission, items);
@@ -196,6 +196,8 @@ namespace TopSpeed.Core.Multiplayer
         }
     }
 }
+
+
 
 
 

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using SharpDX.DirectInput;
+using Key = TopSpeed.Input.InputKey;
 using TopSpeed.Input;
 using TopSpeed.Localization;
 
@@ -25,13 +25,13 @@ namespace TopSpeed.Core.Settings
 
             ApplyMenuShortcuts(settings, input.MenuShortcuts, issues);
 
-            if (input.Joystick == null)
+            if (input.Controller == null)
                 issues.Add(new SettingsIssue(
                     SettingsIssueSeverity.Warning,
-                    "input.joystick",
-                    LocalizationService.Mark("Joystick bindings section is missing. Defaults were used for joystick bindings.")));
+                    "input.controller",
+                    LocalizationService.Mark("Controller bindings section is missing. Defaults were used for controller bindings.")));
             else
-                ApplyJoystick(settings, input.Joystick, issues);
+                ApplyController(settings, input.Controller, issues);
         }
 
         private static void ApplyKeyboard(RaceSettings settings, SettingsKeyboardDocument keyboard, List<SettingsIssue> issues)
@@ -57,44 +57,44 @@ namespace TopSpeed.Core.Settings
             settings.KeyPause = ReadKey(keyboard.Pause, settings.KeyPause, "input.keyboard.pause", issues);
         }
 
-        private static void ApplyJoystick(RaceSettings settings, SettingsJoystickDocument joystick, List<SettingsIssue> issues)
+        private static void ApplyController(RaceSettings settings, SettingsControllerDocument controller, List<SettingsIssue> issues)
         {
-            settings.JoystickLeft = ReadJoystick(joystick.Left, settings.JoystickLeft, "input.joystick.left", issues);
-            settings.JoystickRight = ReadJoystick(joystick.Right, settings.JoystickRight, "input.joystick.right", issues);
-            settings.JoystickThrottle = ReadJoystick(joystick.Throttle, settings.JoystickThrottle, "input.joystick.throttle", issues);
-            settings.JoystickBrake = ReadJoystick(joystick.Brake, settings.JoystickBrake, "input.joystick.brake", issues);
-            settings.JoystickClutch = ReadJoystick(joystick.Clutch, settings.JoystickClutch, "input.joystick.clutch", issues);
-            settings.JoystickGearUp = ReadJoystick(joystick.GearUp, settings.JoystickGearUp, "input.joystick.gearUp", issues);
-            settings.JoystickGearDown = ReadJoystick(joystick.GearDown, settings.JoystickGearDown, "input.joystick.gearDown", issues);
-            settings.JoystickHorn = ReadJoystick(joystick.Horn, settings.JoystickHorn, "input.joystick.horn", issues);
-            settings.JoystickRequestInfo = ReadJoystick(joystick.RequestInfo, settings.JoystickRequestInfo, "input.joystick.requestInfo", issues);
-            settings.JoystickCurrentGear = ReadJoystick(joystick.CurrentGear, settings.JoystickCurrentGear, "input.joystick.currentGear", issues);
-            settings.JoystickCurrentLapNr = ReadJoystick(joystick.CurrentLapNr, settings.JoystickCurrentLapNr, "input.joystick.currentLapNr", issues);
-            settings.JoystickCurrentRacePerc = ReadJoystick(joystick.CurrentRacePerc, settings.JoystickCurrentRacePerc, "input.joystick.currentRacePerc", issues);
-            settings.JoystickCurrentLapPerc = ReadJoystick(joystick.CurrentLapPerc, settings.JoystickCurrentLapPerc, "input.joystick.currentLapPerc", issues);
-            settings.JoystickCurrentRaceTime = ReadJoystick(joystick.CurrentRaceTime, settings.JoystickCurrentRaceTime, "input.joystick.currentRaceTime", issues);
-            settings.JoystickStartEngine = ReadJoystick(joystick.StartEngine, settings.JoystickStartEngine, "input.joystick.startEngine", issues);
-            settings.JoystickReportDistance = ReadJoystick(joystick.ReportDistance, settings.JoystickReportDistance, "input.joystick.reportDistance", issues);
-            settings.JoystickReportSpeed = ReadJoystick(joystick.ReportSpeed, settings.JoystickReportSpeed, "input.joystick.reportSpeed", issues);
-            settings.JoystickTrackName = ReadJoystick(joystick.TrackName, settings.JoystickTrackName, "input.joystick.trackName", issues);
-            settings.JoystickPause = ReadJoystick(joystick.Pause, settings.JoystickPause, "input.joystick.pause", issues);
-            settings.JoystickThrottleInvertMode = ReadEnum(joystick.ThrottleInvertMode, settings.JoystickThrottleInvertMode, "input.joystick.throttleInvertMode", issues);
-            settings.JoystickBrakeInvertMode = ReadEnum(joystick.BrakeInvertMode, settings.JoystickBrakeInvertMode, "input.joystick.brakeInvertMode", issues);
-            settings.JoystickSteeringDeadZone = ClampInt(joystick.SteeringDeadZone, settings.JoystickSteeringDeadZone, 1, 5, "input.joystick.steeringDeadZone", issues);
+            settings.ControllerLeft = ReadController(controller.Left, settings.ControllerLeft, "input.controller.left", issues);
+            settings.ControllerRight = ReadController(controller.Right, settings.ControllerRight, "input.controller.right", issues);
+            settings.ControllerThrottle = ReadController(controller.Throttle, settings.ControllerThrottle, "input.controller.throttle", issues);
+            settings.ControllerBrake = ReadController(controller.Brake, settings.ControllerBrake, "input.controller.brake", issues);
+            settings.ControllerClutch = ReadController(controller.Clutch, settings.ControllerClutch, "input.controller.clutch", issues);
+            settings.ControllerGearUp = ReadController(controller.GearUp, settings.ControllerGearUp, "input.controller.gearUp", issues);
+            settings.ControllerGearDown = ReadController(controller.GearDown, settings.ControllerGearDown, "input.controller.gearDown", issues);
+            settings.ControllerHorn = ReadController(controller.Horn, settings.ControllerHorn, "input.controller.horn", issues);
+            settings.ControllerRequestInfo = ReadController(controller.RequestInfo, settings.ControllerRequestInfo, "input.controller.requestInfo", issues);
+            settings.ControllerCurrentGear = ReadController(controller.CurrentGear, settings.ControllerCurrentGear, "input.controller.currentGear", issues);
+            settings.ControllerCurrentLapNr = ReadController(controller.CurrentLapNr, settings.ControllerCurrentLapNr, "input.controller.currentLapNr", issues);
+            settings.ControllerCurrentRacePerc = ReadController(controller.CurrentRacePerc, settings.ControllerCurrentRacePerc, "input.controller.currentRacePerc", issues);
+            settings.ControllerCurrentLapPerc = ReadController(controller.CurrentLapPerc, settings.ControllerCurrentLapPerc, "input.controller.currentLapPerc", issues);
+            settings.ControllerCurrentRaceTime = ReadController(controller.CurrentRaceTime, settings.ControllerCurrentRaceTime, "input.controller.currentRaceTime", issues);
+            settings.ControllerStartEngine = ReadController(controller.StartEngine, settings.ControllerStartEngine, "input.controller.startEngine", issues);
+            settings.ControllerReportDistance = ReadController(controller.ReportDistance, settings.ControllerReportDistance, "input.controller.reportDistance", issues);
+            settings.ControllerReportSpeed = ReadController(controller.ReportSpeed, settings.ControllerReportSpeed, "input.controller.reportSpeed", issues);
+            settings.ControllerTrackName = ReadController(controller.TrackName, settings.ControllerTrackName, "input.controller.trackName", issues);
+            settings.ControllerPause = ReadController(controller.Pause, settings.ControllerPause, "input.controller.pause", issues);
+            settings.ControllerThrottleInvertMode = ReadEnum(controller.ThrottleInvertMode, settings.ControllerThrottleInvertMode, "input.controller.throttleInvertMode", issues);
+            settings.ControllerBrakeInvertMode = ReadEnum(controller.BrakeInvertMode, settings.ControllerBrakeInvertMode, "input.controller.brakeInvertMode", issues);
+            settings.ControllerSteeringDeadZone = ClampInt(controller.SteeringDeadZone, settings.ControllerSteeringDeadZone, 1, 5, "input.controller.steeringDeadZone", issues);
 
-            if (joystick.Center == null)
+            if (controller.Center == null)
                 return;
 
-            var center = settings.JoystickCenter;
-            if (joystick.Center.X.HasValue) center.X = joystick.Center.X.Value;
-            if (joystick.Center.Y.HasValue) center.Y = joystick.Center.Y.Value;
-            if (joystick.Center.Z.HasValue) center.Z = joystick.Center.Z.Value;
-            if (joystick.Center.Rx.HasValue) center.Rx = joystick.Center.Rx.Value;
-            if (joystick.Center.Ry.HasValue) center.Ry = joystick.Center.Ry.Value;
-            if (joystick.Center.Rz.HasValue) center.Rz = joystick.Center.Rz.Value;
-            if (joystick.Center.Slider1.HasValue) center.Slider1 = joystick.Center.Slider1.Value;
-            if (joystick.Center.Slider2.HasValue) center.Slider2 = joystick.Center.Slider2.Value;
-            settings.JoystickCenter = center;
+            var center = settings.ControllerCenter;
+            if (controller.Center.X.HasValue) center.X = controller.Center.X.Value;
+            if (controller.Center.Y.HasValue) center.Y = controller.Center.Y.Value;
+            if (controller.Center.Z.HasValue) center.Z = controller.Center.Z.Value;
+            if (controller.Center.Rx.HasValue) center.Rx = controller.Center.Rx.Value;
+            if (controller.Center.Ry.HasValue) center.Ry = controller.Center.Ry.Value;
+            if (controller.Center.Rz.HasValue) center.Rz = controller.Center.Rz.Value;
+            if (controller.Center.Slider1.HasValue) center.Slider1 = controller.Center.Slider1.Value;
+            if (controller.Center.Slider2.HasValue) center.Slider2 = controller.Center.Slider2.Value;
+            settings.ControllerCenter = center;
         }
 
         private static void ApplyMenuShortcuts(RaceSettings settings, SettingsMenuShortcutsDocument? menuShortcuts, List<SettingsIssue> issues)
@@ -137,3 +137,5 @@ namespace TopSpeed.Core.Settings
         }
     }
 }
+
+

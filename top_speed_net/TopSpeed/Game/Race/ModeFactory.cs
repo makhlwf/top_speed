@@ -5,6 +5,7 @@ using TopSpeed.Input;
 using TopSpeed.Input.Devices.Vibration;
 using TopSpeed.Network;
 using TopSpeed.Race;
+using TopSpeed.Runtime;
 using TopSpeed.Speech;
 using TopSpeed.Tracks;
 
@@ -37,6 +38,7 @@ namespace TopSpeed.Game
             string? vehicleFile,
             IVibrationDevice? vibrationDevice,
             MultiplayerSession session,
+            uint raceInstanceId,
             uint playerId,
             byte playerNumber,
             Func<byte, string> resolvePlayerName);
@@ -48,17 +50,20 @@ namespace TopSpeed.Game
         private readonly SpeechService _speech;
         private readonly RaceSettings _settings;
         private readonly RaceInput _raceInput;
+        private readonly IFileDialogs _fileDialogs;
 
         public RaceModeFactory(
             AudioManager audio,
             SpeechService speech,
             RaceSettings settings,
-            RaceInput raceInput)
+            RaceInput raceInput,
+            IFileDialogs fileDialogs)
         {
             _audio = audio;
             _speech = speech;
             _settings = settings;
             _raceInput = raceInput;
+            _fileDialogs = fileDialogs ?? throw new ArgumentNullException(nameof(fileDialogs));
         }
 
         public TimeTrialMode CreateTimeTrial(
@@ -79,7 +84,8 @@ namespace TopSpeed.Game
                 laps,
                 vehicleIndex,
                 vehicleFile,
-                vibrationDevice);
+                vibrationDevice,
+                _fileDialogs);
         }
 
         public SingleRaceMode CreateSingleRace(
@@ -100,7 +106,8 @@ namespace TopSpeed.Game
                 laps,
                 vehicleIndex,
                 vehicleFile,
-                vibrationDevice);
+                vibrationDevice,
+                _fileDialogs);
         }
 
         public MultiplayerMode CreateMultiplayer(
@@ -112,6 +119,7 @@ namespace TopSpeed.Game
             string? vehicleFile,
             IVibrationDevice? vibrationDevice,
             MultiplayerSession session,
+            uint raceInstanceId,
             uint playerId,
             byte playerNumber,
             Func<byte, string> resolvePlayerName)
@@ -128,10 +136,14 @@ namespace TopSpeed.Game
                 vehicleIndex,
                 vehicleFile,
                 vibrationDevice,
+                _fileDialogs,
                 session,
+                raceInstanceId,
                 playerId,
                 playerNumber,
                 resolvePlayerName);
         }
     }
 }
+
+

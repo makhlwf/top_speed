@@ -30,7 +30,7 @@ namespace TopSpeed.Server.Logging
         public void Info(string message) => Log(LogLevel.Info, message);
         public void Warning(string message) => Log(LogLevel.Warning, message);
         public void Error(string message) => Log(LogLevel.Error, message);
-        public void InfoAlways(string message) => Write(LogLevel.Info, message);
+        public void Raw(string message) => WriteRaw(message);
 
         public void Log(LogLevel level, string message)
         {
@@ -45,16 +45,31 @@ namespace TopSpeed.Server.Logging
             var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
             var levelTag = level.ToString().ToLowerInvariant();
             var consoleLine = $"[{levelTag}] {message}";
-                var fileTimeLine = $"[{timestamp}]";
-                var fileMessageLine = $"[{levelTag}] {message}";
-                lock (_lock)
+            var fileTimeLine = $"[{timestamp}]";
+            var fileMessageLine = $"[{levelTag}] {message}";
+            lock (_lock)
+            {
+                if (_writeToConsole)
+                    _writeToConsole = ConsoleSink.WriteLine(consoleLine);
+                if (_writer != null)
                 {
-                    if (_writeToConsole)
-                        _writeToConsole = ConsoleSink.WriteLine(consoleLine);
-                    if (_writer != null)
-                    {
-                        _writer.WriteLine(fileTimeLine);
-                        _writer.WriteLine(fileMessageLine);
+                    _writer.WriteLine(fileTimeLine);
+                    _writer.WriteLine(fileMessageLine);
+                }
+            }
+        }
+
+        private void WriteRaw(string message)
+        {
+            var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+            lock (_lock)
+            {
+                if (_writeToConsole)
+                    _writeToConsole = ConsoleSink.WriteLine(message);
+                if (_writer != null)
+                {
+                    _writer.WriteLine($"[{timestamp}]");
+                    _writer.WriteLine(message);
                 }
             }
         }

@@ -87,6 +87,8 @@ namespace TopSpeed.Vehicles
 
         public virtual void Pause()
         {
+            if (_soundStop != null && _soundStop.IsPlaying)
+                _soundStop.Stop();
             _audioFlow.Pause(
                 _surface,
                 _soundEngine,
@@ -117,3 +119,4 @@ namespace TopSpeed.Vehicles
         }
     }
 }
+

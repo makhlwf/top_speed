@@ -48,10 +48,16 @@ namespace TopSpeed.Core.Multiplayer
             _owner.HandleRoomEventCore(roomEvent);
         }
 
+        public void HandleRoomRaceStateChanged(PacketRoomRaceStateChanged roomRaceStateChanged)
+        {
+            _owner.HandleRoomRaceStateChangedCore(roomRaceStateChanged);
+        }
+
         public void HandleOnlinePlayers(PacketOnlinePlayers onlinePlayers)
         {
             _owner.HandleOnlinePlayersCore(onlinePlayers);
         }
     }
 }
+
 

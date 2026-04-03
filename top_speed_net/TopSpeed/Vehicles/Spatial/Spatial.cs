@@ -91,6 +91,7 @@ namespace TopSpeed.Vehicles
             SetSpatial(_soundBrake, brakePos, velocity);
             SetSpatial(_soundBackfire, enginePos, velocity);
             SetSpatial(_soundStart, enginePos, velocity);
+            SetSpatial(_soundStop, enginePos, velocity);
             SetSpatial(_soundCrash, crashPos, velocity);
             SetSpatial(_soundMiniCrash, vehiclePos, velocity);
             SetSpatial(_soundBump, vehiclePos, velocity);
@@ -143,3 +144,4 @@ namespace TopSpeed.Vehicles
         }
     }
 }
+

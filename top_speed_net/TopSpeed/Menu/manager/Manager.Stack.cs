@@ -58,3 +58,4 @@ namespace TopSpeed.Menu
         public string? CurrentId => _stack.Count > 0 ? _stack.Peek().Id : null;
     }
 }
+

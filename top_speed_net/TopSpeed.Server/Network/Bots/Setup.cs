@@ -25,7 +25,7 @@ namespace TopSpeed.Server.Network
             var bot = new RoomBot
             {
                 Id = _nextBotId++,
-                PlayerNumber = (byte)FindFreeRoomNumber(room),
+                PlayerNumber = (byte)_room.FindFreeNumber(room),
                 Name = name,
                 Difficulty = (BotDifficulty)_random.Next(0, 3),
                 AddedOrder = room.Bots.Count == 0 ? 1 : room.Bots.Max(b => b.AddedOrder) + 1,
@@ -81,3 +81,4 @@ namespace TopSpeed.Server.Network
 
     }
 }
+

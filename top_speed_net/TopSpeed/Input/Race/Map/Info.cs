@@ -1,14 +1,14 @@
-using SharpDX.DirectInput;
-using TopSpeed.Input.Devices.Joystick;
+using Key = TopSpeed.Input.InputKey;
+using TopSpeed.Input.Devices.Controller;
 
 namespace TopSpeed.Input
 {
     internal sealed partial class RaceInput
     {
-        public void SetRequestInfo(JoystickAxisOrButton a)
+        public void SetRequestInfo(AxisOrButton a)
         {
             _requestInfo = a;
-            _settings.JoystickRequestInfo = a;
+            _settings.ControllerRequestInfo = a;
         }
 
         public void SetRequestInfo(Key key)
@@ -17,10 +17,10 @@ namespace TopSpeed.Input
             _settings.KeyRequestInfo = key;
         }
 
-        public void SetCurrentGear(JoystickAxisOrButton a)
+        public void SetCurrentGear(AxisOrButton a)
         {
             _currentGear = a;
-            _settings.JoystickCurrentGear = a;
+            _settings.ControllerCurrentGear = a;
         }
 
         public void SetCurrentGear(Key key)
@@ -29,10 +29,10 @@ namespace TopSpeed.Input
             _settings.KeyCurrentGear = key;
         }
 
-        public void SetCurrentLapNr(JoystickAxisOrButton a)
+        public void SetCurrentLapNr(AxisOrButton a)
         {
             _currentLapNr = a;
-            _settings.JoystickCurrentLapNr = a;
+            _settings.ControllerCurrentLapNr = a;
         }
 
         public void SetCurrentLapNr(Key key)
@@ -41,10 +41,10 @@ namespace TopSpeed.Input
             _settings.KeyCurrentLapNr = key;
         }
 
-        public void SetCurrentRacePerc(JoystickAxisOrButton a)
+        public void SetCurrentRacePerc(AxisOrButton a)
         {
             _currentRacePerc = a;
-            _settings.JoystickCurrentRacePerc = a;
+            _settings.ControllerCurrentRacePerc = a;
         }
 
         public void SetCurrentRacePerc(Key key)
@@ -53,10 +53,10 @@ namespace TopSpeed.Input
             _settings.KeyCurrentRacePerc = key;
         }
 
-        public void SetCurrentLapPerc(JoystickAxisOrButton a)
+        public void SetCurrentLapPerc(AxisOrButton a)
         {
             _currentLapPerc = a;
-            _settings.JoystickCurrentLapPerc = a;
+            _settings.ControllerCurrentLapPerc = a;
         }
 
         public void SetCurrentLapPerc(Key key)
@@ -65,10 +65,10 @@ namespace TopSpeed.Input
             _settings.KeyCurrentLapPerc = key;
         }
 
-        public void SetCurrentRaceTime(JoystickAxisOrButton a)
+        public void SetCurrentRaceTime(AxisOrButton a)
         {
             _currentRaceTime = a;
-            _settings.JoystickCurrentRaceTime = a;
+            _settings.ControllerCurrentRaceTime = a;
         }
 
         public void SetCurrentRaceTime(Key key)
@@ -77,10 +77,10 @@ namespace TopSpeed.Input
             _settings.KeyCurrentRaceTime = key;
         }
 
-        public void SetStartEngine(JoystickAxisOrButton a)
+        public void SetStartEngine(AxisOrButton a)
         {
             _startEngine = a;
-            _settings.JoystickStartEngine = a;
+            _settings.ControllerStartEngine = a;
         }
 
         public void SetStartEngine(Key key)
@@ -89,10 +89,10 @@ namespace TopSpeed.Input
             _settings.KeyStartEngine = key;
         }
 
-        public void SetReportDistance(JoystickAxisOrButton a)
+        public void SetReportDistance(AxisOrButton a)
         {
             _reportDistance = a;
-            _settings.JoystickReportDistance = a;
+            _settings.ControllerReportDistance = a;
         }
 
         public void SetReportDistance(Key key)
@@ -101,10 +101,10 @@ namespace TopSpeed.Input
             _settings.KeyReportDistance = key;
         }
 
-        public void SetReportSpeed(JoystickAxisOrButton a)
+        public void SetReportSpeed(AxisOrButton a)
         {
             _reportSpeed = a;
-            _settings.JoystickReportSpeed = a;
+            _settings.ControllerReportSpeed = a;
         }
 
         public void SetReportSpeed(Key key)
@@ -113,10 +113,10 @@ namespace TopSpeed.Input
             _settings.KeyReportSpeed = key;
         }
 
-        public void SetTrackName(JoystickAxisOrButton a)
+        public void SetTrackName(AxisOrButton a)
         {
             _trackName = a;
-            _settings.JoystickTrackName = a;
+            _settings.ControllerTrackName = a;
         }
 
         public void SetTrackName(Key key)
@@ -125,10 +125,10 @@ namespace TopSpeed.Input
             _settings.KeyTrackName = key;
         }
 
-        public void SetPause(JoystickAxisOrButton a)
+        public void SetPause(AxisOrButton a)
         {
             _pause = a;
-            _settings.JoystickPause = a;
+            _settings.ControllerPause = a;
         }
 
         public void SetPause(Key key)
@@ -138,3 +138,5 @@ namespace TopSpeed.Input
         }
     }
 }
+
+

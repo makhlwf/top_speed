@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using SharpDX.DirectInput;
+using Key = TopSpeed.Input.InputKey;
 using TopSpeed.Audio;
 using TopSpeed.Shortcuts;
 using TopSpeed.Speech;
@@ -136,3 +136,5 @@ namespace TopSpeed.Menu
 
     }
 }
+
+

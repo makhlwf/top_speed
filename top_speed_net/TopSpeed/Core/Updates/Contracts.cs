@@ -33,3 +33,4 @@ namespace TopSpeed.Core.Updates
         public long? Size { get; set; }
     }
 }
+

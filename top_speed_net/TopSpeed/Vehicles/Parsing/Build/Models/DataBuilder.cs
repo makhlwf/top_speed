@@ -23,6 +23,7 @@ namespace TopSpeed.Vehicles.Parsing
                 {
                     Engine = values.EngineSound,
                     Start = values.StartSound,
+                    Stop = values.StopSound,
                     Horn = values.HornSound,
                     Throttle = values.ThrottleSound,
                     CrashVariants = values.CrashVariants,
@@ -59,9 +60,20 @@ namespace TopSpeed.Vehicles.Parsing
                 FrontalAreaM2 = values.FrontalArea,
                 RollingResistanceCoefficient = values.RollingResistance,
                 LaunchRpm = values.LaunchRpm,
+                CoastDragBaseMps2 = values.CoastDragBaseMps2,
+                CoastDragLinearPerMps = values.CoastDragLinearPerMps,
                 EngineInertiaKgm2 = values.EngineInertiaKgm2,
-                EngineFrictionTorqueNm = values.EngineFrictionTorqueNm,
+                EngineFrictionTorqueNm = values.EngineFrictionBaseNm,
+                EngineFrictionLinearNmPerKrpm = values.EngineFrictionLinearNmPerKrpm,
+                EngineFrictionQuadraticNmPerKrpm2 = values.EngineFrictionQuadraticNmPerKrpm2,
                 DrivelineCouplingRate = values.DrivelineCouplingRate,
+                IdleControlWindowRpm = values.IdleControlWindowRpm,
+                IdleControlGainNmPerRpm = values.IdleControlGainNmPerRpm,
+                MinCoupledRiseIdleRpmPerSecond = values.MinCoupledRiseIdleRpmPerSecond,
+                MinCoupledRiseFullRpmPerSecond = values.MinCoupledRiseFullRpmPerSecond,
+                EngineOverrunIdleLossFraction = values.EngineOverrunIdleLossFraction,
+                OverrunCurveExponent = values.OverrunCurveExponent,
+                EngineBrakeTransferEfficiency = values.EngineBrakeTransferEfficiency,
                 PowerFactor = values.PowerFactor,
                 TorqueCurvePreset = torqueCurvePreset,
                 TorqueCurveRpm = torqueCurveRpm,
@@ -99,3 +111,4 @@ namespace TopSpeed.Vehicles.Parsing
         }
     }
 }
+

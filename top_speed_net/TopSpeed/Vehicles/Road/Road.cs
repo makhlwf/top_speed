@@ -27,6 +27,7 @@ namespace TopSpeed.Vehicles
                         : (_positionX - road.Left) / roadWidth;
                     _panPos = CalculatePan(_relPos);
                     _soundStart.SetPanPercent(_panPos);
+                    _soundStop?.SetPanPercent(_panPos);
                     _soundHorn.SetPanPercent(_panPos);
                     _soundWipers?.SetPanPercent(_panPos);
                     UpdateSpatialAudio(road);
@@ -103,6 +104,7 @@ namespace TopSpeed.Vehicles
                         : (_positionX - road.Left) / roadWidth;
                     _panPos = CalculatePan(_relPos);
                     _soundStart.SetPanPercent(_panPos);
+                    _soundStop?.SetPanPercent(_panPos);
                     _soundHorn.SetPanPercent(_panPos);
                     _soundWipers?.SetPanPercent(_panPos);
                     UpdateSpatialAudio(road);
@@ -113,3 +115,4 @@ namespace TopSpeed.Vehicles
 
     }
 }
+

@@ -145,12 +145,13 @@ namespace TopSpeed.Tracks
             if (radius <= 0f)
                 radius = 1f;
 
-            var listenerZ = _lapDistance > 0f ? WrapPosition(playerPosition) : playerPosition;
+            var listenerZ = playerPosition;
             var dx = targetPosition.X;
             var dy = targetPosition.Y;
-            var dz = _lapDistance > 0f
-                ? AudioWorld.WrapDelta(targetPosition.Z - listenerZ, _lapDistance)
-                : targetPosition.Z - listenerZ;
+            var targetZ = _lapDistance > 0f
+                ? AlignToReferenceLap(targetPosition.Z, playerPosition)
+                : targetPosition.Z;
+            var dz = targetZ - listenerZ;
 
             var distanceSquared = (dx * dx) + (dy * dy) + (dz * dz);
             return distanceSquared <= (radius * radius);

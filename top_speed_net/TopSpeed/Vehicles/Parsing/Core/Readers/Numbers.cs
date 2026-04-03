@@ -79,5 +79,28 @@ namespace TopSpeed.Vehicles.Parsing
 
             return value;
         }
+
+        private static float? OptionalFloatRange(Section section, string key, float min, float max, List<VehicleTsvIssue> issues)
+        {
+            var value = OptionalFloat(section, key, issues);
+            if (!value.HasValue)
+                return null;
+
+            if (value.Value < min || value.Value > max)
+            {
+                issues.Add(new VehicleTsvIssue(
+                    VehicleTsvIssueSeverity.Error,
+                    section.Entries[key].Line,
+                    Localized(
+                        "Key '{0}' value {1} is outside allowed range {2} to {3}.",
+                        key,
+                        value.Value.ToString(CultureInfo.InvariantCulture),
+                        min.ToString(CultureInfo.InvariantCulture),
+                        max.ToString(CultureInfo.InvariantCulture))));
+            }
+
+            return value;
+        }
     }
 }
+

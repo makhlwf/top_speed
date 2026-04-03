@@ -10,3 +10,4 @@ namespace TopSpeed.Vehicles.Events
         StopBumpVibration
     }
 }
+

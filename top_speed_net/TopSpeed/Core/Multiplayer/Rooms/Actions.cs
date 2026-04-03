@@ -123,7 +123,7 @@ namespace TopSpeed.Core.Multiplayer
                 return;
             }
 
-            var vehicleIndex = Math.Max(0, Math.Min(VehicleCatalog.VehicleCount - 1, _state.Rooms.PendingLoadoutVehicleIndex));
+            var vehicleIndex = Math.Max(0, Math.Min(VehicleCatalog.VehicleCount - 1, _state.RoomDrafts.PendingLoadoutVehicleIndex));
             var parameters = VehicleCatalog.Vehicles[vehicleIndex];
             if (!TransmissionSelect.TryResolveRequested(
                     automaticRequested: automaticTransmission,
@@ -146,7 +146,7 @@ namespace TopSpeed.Core.Multiplayer
         private void CompleteLoadoutVehicleSelection(int vehicleIndex)
         {
             vehicleIndex = Math.Max(0, Math.Min(VehicleCatalog.VehicleCount - 1, vehicleIndex));
-            _state.Rooms.PendingLoadoutVehicleIndex = vehicleIndex;
+            _state.RoomDrafts.PendingLoadoutVehicleIndex = vehicleIndex;
             if (TryResolveSingleLoadoutTransmission(vehicleIndex, out var automaticTransmission))
             {
                 SubmitLoadoutReady(automaticTransmission);
@@ -216,7 +216,7 @@ namespace TopSpeed.Core.Multiplayer
                 return;
             }
 
-            if (_state.Rooms.CurrentRoom.PreparingRace)
+            if (_state.Rooms.CurrentRoom.RaceState == RoomRaceState.Preparing)
             {
                 if (!TrySend(session.SendRoomPlayerWithdraw(), "race preparation withdrawal"))
                     return;
@@ -231,6 +231,8 @@ namespace TopSpeed.Core.Multiplayer
         }
     }
 }
+
+
 
 
 

@@ -9,3 +9,4 @@ namespace TopSpeed.Menu
         string FormatMappingValue(InputAction action, InputMappingMode mode);
     }
 }
+

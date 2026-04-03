@@ -10,3 +10,4 @@ namespace TopSpeed.Vehicles.Events
         public VibrationEffectType? Effect { get; set; }
     }
 }
+

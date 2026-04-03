@@ -1,4 +1,5 @@
 using System;
+using TopSpeed.Physics.Powertrain;
 
 namespace TopSpeed.Vehicles
 {
@@ -25,6 +26,50 @@ namespace TopSpeed.Vehicles
         public void StopEngine()
         {
             _rpm = 0f;
+            _grossHorsepower = 0f;
+            _netHorsepower = 0f;
+        }
+
+        public void StepShutdown(float speedGameUnits, float elapsed)
+        {
+            var dt = Math.Max(0f, elapsed);
+            var speedMps = Math.Max(0f, speedGameUnits / 3.6f);
+            _speedMps = speedMps;
+            _distanceMeters += speedMps * dt;
+            _grossHorsepower = 0f;
+            _netHorsepower = 0f;
+
+            if (dt <= 0f)
+                return;
+            if (_rpm <= 0f)
+            {
+                _rpm = 0f;
+                return;
+            }
+
+            var clampedRpm = Math.Max(0f, Math.Min(_revLimiter, _rpm));
+            var shutdownLossTorque = Calculator.EngineLossTorqueNm(
+                clampedRpm,
+                _idleRpm,
+                _revLimiter,
+                _engineFrictionTorqueNm,
+                _engineFrictionLinearNmPerKrpm,
+                _engineFrictionQuadraticNmPerKrpm2,
+                _engineBrakingTorqueNm,
+                _engineBraking,
+                _engineOverrunIdleLossFraction,
+                _overrunCurveExponent,
+                closedThrottle: true);
+            var rpmDropPerSecond = (shutdownLossTorque / _engineInertiaKgm2) * (60f / (2f * (float)Math.PI));
+            if (!IsFinite(rpmDropPerSecond) || rpmDropPerSecond < 0f)
+                rpmDropPerSecond = 0f;
+
+            // Ensure engine-off rundown reaches zero in a short, audible shutdown window.
+            var shutdownBiasRpmPerSecond = (_idleRpm * 1.2f) + (0.20f * clampedRpm);
+            var rpmDrop = (rpmDropPerSecond + shutdownBiasRpmPerSecond) * dt;
+            _rpm = Math.Max(0f, _rpm - rpmDrop);
+            if (_rpm < 1f)
+                _rpm = 0f;
         }
 
         public void SetSpeed(float speedMps)
@@ -40,5 +85,11 @@ namespace TopSpeed.Vehicles
             _grossHorsepower = 0f;
             _netHorsepower = 0f;
         }
+
+        private static bool IsFinite(float value)
+        {
+            return !float.IsNaN(value) && !float.IsInfinity(value);
+        }
     }
 }
+

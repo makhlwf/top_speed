@@ -3,7 +3,7 @@ namespace TopSpeed.Input
     internal enum InputDeviceMode
     {
         Keyboard,
-        Joystick,
+        Controller,
         Both
     }
 
@@ -56,3 +56,4 @@ namespace TopSpeed.Input
         Imperial = 1
     }
 }
+

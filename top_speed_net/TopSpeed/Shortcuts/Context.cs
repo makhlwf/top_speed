@@ -12,3 +12,4 @@ namespace TopSpeed.Shortcuts
         public string ViewId { get; }
     }
 }
+

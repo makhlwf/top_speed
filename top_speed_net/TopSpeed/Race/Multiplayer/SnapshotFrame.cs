@@ -8,3 +8,4 @@ namespace TopSpeed.Race.Multiplayer
         public PacketPlayerData[] Players { get; set; } = System.Array.Empty<PacketPlayerData>();
     }
 }
+

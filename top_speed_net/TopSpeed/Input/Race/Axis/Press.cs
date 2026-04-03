@@ -1,17 +1,19 @@
-using SharpDX.DirectInput;
-using TopSpeed.Input.Devices.Joystick;
+using Key = TopSpeed.Input.InputKey;
+using TopSpeed.Input.Devices.Controller;
 
 namespace TopSpeed.Input
 {
     internal sealed partial class RaceInput
     {
-        private bool AxisPressed(JoystickAxisOrButton axis)
+        private bool AxisPressed(AxisOrButton axis)
         {
-            if (!UseJoystick)
+            if (!UseController)
                 return false;
-            var current = GetAxis(axis, _lastJoystick);
-            var previous = _hasPrevJoystick ? GetAxis(axis, _prevJoystick) : 0;
+            var current = GetAxis(axis, _lastController);
+            var previous = _hasPrevController ? GetAxis(axis, _prevController) : 0;
             return current > 50 && previous <= 50;
         }
     }
 }
+
+

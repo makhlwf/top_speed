@@ -8,6 +8,15 @@ using TopSpeed.Server.Bots;
 
 namespace TopSpeed.Server.Network
 {
+    internal sealed class RoomRaceParticipantResult
+    {
+        public uint PlayerId { get; set; }
+        public byte PlayerNumber { get; set; }
+        public RoomRaceResultStatus Status { get; set; } = RoomRaceResultStatus.Pending;
+        public int TimeMs { get; set; }
+        public byte FinishOrder { get; set; }
+    }
+
     internal sealed class RaceRoom
     {
         public RaceRoom(uint id, string name, GameRoomType roomType, byte playersToStart)
@@ -22,6 +31,7 @@ namespace TopSpeed.Server.Network
 
         public uint Id { get; }
         public uint Version { get; set; }
+        public uint RaceInstanceId { get; set; }
         public string Name { get; set; }
         public GameRoomType RoomType { get; set; }
         public byte PlayersToStart { get; set; }
@@ -30,15 +40,18 @@ namespace TopSpeed.Server.Network
         public List<RoomBot> Bots { get; } = new List<RoomBot>();
         public Dictionary<uint, PlayerLoadout> PendingLoadouts { get; } = new Dictionary<uint, PlayerLoadout>();
         public HashSet<uint> PrepareSkips { get; } = new HashSet<uint>();
-        public bool PreparingRace { get; set; }
-        public bool RaceStarted { get; set; }
+        public RoomRaceState RaceState { get; set; } = RoomRaceState.Lobby;
+        public bool PreparingRace => RaceState == RoomRaceState.Preparing;
+        public bool RaceStarted => RaceState == RoomRaceState.Racing;
         public bool TrackSelected { get; set; }
         public TrackData? TrackData { get; set; }
         public string TrackName { get; set; }
         public byte Laps { get; set; }
         public uint GameRulesFlags { get; set; }
+        public HashSet<uint> ActiveRaceParticipantIds { get; } = new HashSet<uint>();
         public List<byte> RaceResults { get; } = new List<byte>();
         public Dictionary<byte, int> RaceFinishTimesMs { get; } = new Dictionary<byte, int>();
+        public Dictionary<uint, RoomRaceParticipantResult> RaceParticipantResults { get; } = new Dictionary<uint, RoomRaceParticipantResult>();
         public DateTime RaceStartedUtc { get; set; }
         public bool RaceStopPending { get; set; }
         public float RaceStopDelaySeconds { get; set; }

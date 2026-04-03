@@ -1,5 +1,5 @@
 using System;
-using TopSpeed.Input.Devices.Joystick;
+using TopSpeed.Input.Devices.Controller;
 
 namespace TopSpeed.Input
 {
@@ -7,67 +7,67 @@ namespace TopSpeed.Input
     {
         public void Run(InputState input, float deltaSeconds)
         {
-            Run(input, null, deltaSeconds, joystickIsRacingWheel: false);
+            Run(input, null, deltaSeconds, controllerIsRacingWheel: false);
         }
 
-        public void Run(InputState input, JoystickStateSnapshot? joystick, float deltaSeconds)
+        public void Run(InputState input, State? controller, float deltaSeconds)
         {
-            Run(input, joystick, deltaSeconds, joystickIsRacingWheel: false);
+            Run(input, controller, deltaSeconds, controllerIsRacingWheel: false);
         }
 
-        public void Run(InputState input, JoystickStateSnapshot? joystick, float deltaSeconds, bool joystickIsRacingWheel)
+        public void Run(InputState input, State? controller, float deltaSeconds, bool controllerIsRacingWheel)
         {
             _prevState.CopyFrom(_lastState);
             _lastState.CopyFrom(input);
 
-            var wasJoystickAvailable = _joystickAvailable;
-            var nextWheelMode = joystick.HasValue && joystickIsRacingWheel;
-            var wheelModeChanged = _joystickIsRacingWheel != nextWheelMode;
-            _joystickIsRacingWheel = nextWheelMode;
+            var wasControllerAvailable = _controllerAvailable;
+            var nextWheelMode = controller.HasValue && controllerIsRacingWheel;
+            var wheelModeChanged = _controllerIsRacingWheel != nextWheelMode;
+            _controllerIsRacingWheel = nextWheelMode;
 
-            if (joystick.HasValue)
+            if (controller.HasValue)
             {
-                if (_hasPrevJoystick)
-                    _prevJoystick = _lastJoystick;
-                _lastJoystick = joystick.Value;
+                if (_hasPrevController)
+                    _prevController = _lastController;
+                _lastController = controller.Value;
                 if (!_hasCenter)
                 {
-                    _center = joystick.Value;
+                    _center = controller.Value;
                     _hasCenter = true;
                 }
-                if (!_hasPrevJoystick)
-                    _prevJoystick = joystick.Value;
-                _hasPrevJoystick = true;
+                if (!_hasPrevController)
+                    _prevController = controller.Value;
+                _hasPrevController = true;
             }
-            _joystickAvailable = joystick.HasValue;
-            if (!joystick.HasValue)
+            _controllerAvailable = controller.HasValue;
+            if (!controller.HasValue)
             {
-                _hasPrevJoystick = false;
-                _joystickIsRacingWheel = false;
+                _hasPrevController = false;
+                _controllerIsRacingWheel = false;
             }
 
-            if (!wasJoystickAvailable || !_joystickAvailable || wheelModeChanged)
+            if (!wasControllerAvailable || !_controllerAvailable || wheelModeChanged)
                 ResetPedalBaseline();
 
-            if (_joystickAvailable && _joystickIsRacingWheel && !_hasPedalBaseline)
+            if (_controllerAvailable && _controllerIsRacingWheel && !_hasPedalBaseline)
             {
-                _pedalBaseline = _lastJoystick;
+                _pedalBaseline = _lastController;
                 _hasPedalBaseline = true;
             }
 
             UpdateSimulatedInputs(deltaSeconds);
         }
 
-        public void SetCenter(JoystickStateSnapshot center)
+        public void SetCenter(State center)
         {
             _center = center;
             _hasCenter = true;
-            _settings.JoystickCenter = center;
+            _settings.ControllerCenter = center;
         }
 
-        public void SetDevice(bool useJoystick)
+        public void SetDevice(bool useController)
         {
-            SetDevice(useJoystick ? InputDeviceMode.Joystick : InputDeviceMode.Keyboard);
+            SetDevice(useController ? InputDeviceMode.Controller : InputDeviceMode.Keyboard);
         }
 
         public void SetDevice(InputDeviceMode mode)
@@ -77,3 +77,4 @@ namespace TopSpeed.Input
         }
     }
 }
+

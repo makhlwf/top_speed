@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using SharpDX.DirectInput;
+using Key = TopSpeed.Input.InputKey;
 using TopSpeed.Audio;
 using TopSpeed.Input;
 using TS.Audio;
@@ -31,7 +31,7 @@ namespace TopSpeed.Core
             }
         }
 
-        public bool Update(IGameInput input, float deltaSeconds)
+        public bool Update(IInputService input, float deltaSeconds)
         {
             if (_logo == null)
                 return true;
@@ -71,4 +71,7 @@ namespace TopSpeed.Core
         }
     }
 }
+
+
+
 

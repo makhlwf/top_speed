@@ -1,61 +1,21 @@
 using System;
-using SharpDX;
-using TopSpeed.Input.Devices.Joystick;
 
 namespace TopSpeed.Input
 {
-    internal sealed partial class InputManager
+    internal sealed partial class InputService
     {
         public void Suspend()
         {
             _suspended = true;
-            try
-            {
-                _keyboard.Unacquire();
-            }
-            catch (SharpDXException)
-            {
-            }
-
-            JoystickDevice? joystick;
-            lock (_hidLock)
-            {
-                joystick = _joystick;
-            }
-
-            if (joystick?.Device != null)
-            {
-                try
-                {
-                    joystick.Device.Unacquire();
-                }
-                catch (SharpDXException)
-                {
-                }
-            }
+            _keyboardBackend.Suspend();
+            _controllerBackend.Suspend();
         }
 
         public void Resume()
         {
             _suspended = false;
-            TryAcquire();
-
-            JoystickDevice? joystick;
-            lock (_hidLock)
-            {
-                joystick = _joystick;
-            }
-
-            if (joystick?.Device != null)
-            {
-                try
-                {
-                    joystick.Device.Acquire();
-                }
-                catch (SharpDXException)
-                {
-                }
-            }
+            _keyboardBackend.Resume();
+            _controllerBackend.Resume();
         }
 
         public void Dispose()
@@ -64,20 +24,9 @@ namespace TopSpeed.Input
                 return;
 
             _disposed = true;
-            StopHidScan();
-            SafeRelease(() => _keyboard.Unacquire());
-            SafeRelease(() => _keyboard.Dispose());
-            SafeRelease(() => _gamepad.Dispose());
-
-            JoystickDevice? joystick;
-            lock (_hidLock)
-            {
-                joystick = _joystick;
-                _joystick = null;
-            }
-
-            SafeRelease(() => joystick?.Dispose());
-            SafeRelease(() => _directInput.Dispose());
+            _controllerBackend.ScanTimedOut -= OnControllerScanTimedOut;
+            SafeRelease(() => _controllerBackend.Dispose());
+            SafeRelease(() => _keyboardBackend.Dispose());
         }
 
         private static void SafeRelease(Action release)
@@ -86,15 +35,16 @@ namespace TopSpeed.Input
             {
                 release();
             }
-            catch (SharpDXException)
+            catch (ObjectDisposedException)
             {
             }
             catch (NullReferenceException)
             {
             }
-            catch (ObjectDisposedException)
+            catch (InvalidOperationException)
             {
             }
         }
     }
 }
+

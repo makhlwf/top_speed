@@ -1,0 +1,94 @@
+using TopSpeed.Localization;
+using TopSpeed.Protocol;
+using TopSpeed.Server.Protocol;
+
+namespace TopSpeed.Server.Network
+{
+    internal sealed partial class RaceServer
+    {
+        private sealed partial class Room
+        {
+            public void PlayerReady(PlayerConnection player, PacketRoomPlayerReady ready)
+            {
+                if (!player.RoomId.HasValue || !_owner._rooms.TryGetValue(player.RoomId.Value, out var room))
+                {
+                    _owner.SendProtocolMessage(player, ProtocolMessageCode.NotInRoom, LocalizationService.Mark("You are not in a game room."));
+                    return;
+                }
+
+                if (!room.PreparingRace)
+                {
+                    _owner.SendProtocolMessage(player, ProtocolMessageCode.Failed, LocalizationService.Mark("Race setup has not started yet."));
+                    return;
+                }
+
+                if (!room.PlayerIds.Contains(player.Id))
+                {
+                    _owner.SendProtocolMessage(player, ProtocolMessageCode.NotInRoom, LocalizationService.Mark("You are not in this game room."));
+                    return;
+                }
+
+                var selectedCar = RaceServer.NormalizeNetworkCar(ready.Car);
+                player.Car = selectedCar;
+                RaceServer.ApplyVehicleDimensions(player, selectedCar);
+                room.PrepareSkips.Remove(player.Id);
+                room.PendingLoadouts[player.Id] = new PlayerLoadout(selectedCar, ready.AutomaticTransmission);
+                _owner._logger.Debug(LocalizationService.Format(
+                    LocalizationService.Mark("Player ready: room={0}, player={1}, car={2}, automatic={3}, ready={4}/{5}."),
+                    room.Id,
+                    player.Id,
+                    selectedCar,
+                    ready.AutomaticTransmission,
+                    room.PendingLoadouts.Count,
+                    room.PlayerIds.Count));
+                _owner.SendProtocolMessageToRoom(
+                    room,
+                    LocalizationService.Format(
+                        LocalizationService.Mark("{0} is ready."),
+                        RaceServer.DescribePlayer(player)));
+                _owner._race.TryStartAfterLoadout(room);
+            }
+
+            public void PlayerWithdraw(PlayerConnection player)
+            {
+                if (!player.RoomId.HasValue || !_owner._rooms.TryGetValue(player.RoomId.Value, out var room))
+                {
+                    _owner.SendProtocolMessage(player, ProtocolMessageCode.NotInRoom, LocalizationService.Mark("You are not in a game room."));
+                    return;
+                }
+
+                if (!room.PreparingRace)
+                {
+                    _owner.SendProtocolMessage(player, ProtocolMessageCode.Failed, LocalizationService.Mark("Race setup has not started yet."));
+                    return;
+                }
+
+                if (!room.PlayerIds.Contains(player.Id))
+                {
+                    _owner.SendProtocolMessage(player, ProtocolMessageCode.NotInRoom, LocalizationService.Mark("You are not in this game room."));
+                    return;
+                }
+
+                room.PendingLoadouts.Remove(player.Id);
+                room.PrepareSkips.Add(player.Id);
+                player.State = PlayerState.NotReady;
+                TouchVersion(room);
+                _owner._notify.RoomParticipant(
+                    room,
+                    RoomEventKind.ParticipantStateChanged,
+                    player.Id,
+                    player.PlayerNumber,
+                    player.State,
+                    string.IsNullOrWhiteSpace(player.Name)
+                        ? LocalizationService.Format(LocalizationService.Mark("Player {0}"), player.PlayerNumber + 1)
+                        : player.Name);
+                _owner.SendProtocolMessageToRoom(
+                    room,
+                    LocalizationService.Format(
+                        LocalizationService.Mark("{0} left race preparation."),
+                        RaceServer.DescribePlayer(player)));
+                _owner._race.TryStartAfterLoadout(room);
+            }
+        }
+    }
+}

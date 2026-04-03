@@ -21,3 +21,4 @@ namespace TopSpeed.Shortcuts
         public bool IsGlobal { get; }
     }
 }
+

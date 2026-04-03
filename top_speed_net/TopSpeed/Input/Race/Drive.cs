@@ -1,4 +1,4 @@
-using SharpDX.DirectInput;
+using Key = TopSpeed.Input.InputKey;
 using System;
 
 namespace TopSpeed.Input
@@ -10,22 +10,22 @@ namespace TopSpeed.Input
             if (!_allowDrivingInput || _overlayInputBlocked)
                 return 0;
 
-            var joystickSteer = 0;
-            if (UseJoystick)
+            var controllerSteer = 0;
+            if (UseController)
             {
                 var left = ApplySteeringDeadZone(GetAxis(_left));
                 var right = ApplySteeringDeadZone(GetAxis(_right));
-                joystickSteer = left != 0 ? -left : right;
+                controllerSteer = left != 0 ? -left : right;
             }
 
             if (!UseKeyboard)
-                return joystickSteer;
+                return controllerSteer;
 
             var keyboardSteer = _settings.KeyboardProgressiveRate == KeyboardProgressiveRate.Off
                 ? (_lastState.IsDown(_kbLeft) ? -100 : (_lastState.IsDown(_kbRight) ? 100 : 0))
                 : (int)(_simSteer * 100f);
 
-            return Math.Abs(keyboardSteer) > Math.Abs(joystickSteer) ? keyboardSteer : joystickSteer;
+            return Math.Abs(keyboardSteer) > Math.Abs(controllerSteer) ? keyboardSteer : controllerSteer;
         }
 
         public int GetThrottle()
@@ -33,15 +33,15 @@ namespace TopSpeed.Input
             if (!_allowDrivingInput || _overlayInputBlocked)
                 return 0;
 
-            var joystickThrottle = UseJoystick ? GetPedalAxis(_throttle, _settings.JoystickThrottleInvertMode) : 0;
+            var controllerThrottle = UseController ? GetPedalAxis(_throttle, _settings.ControllerThrottleInvertMode) : 0;
             if (!UseKeyboard)
-                return joystickThrottle;
+                return controllerThrottle;
 
             var keyboardThrottle = _settings.KeyboardProgressiveRate == KeyboardProgressiveRate.Off
                 ? (_lastState.IsDown(_kbThrottle) ? 100 : 0)
                 : (int)(_simThrottle * 100f);
 
-            return Math.Max(joystickThrottle, keyboardThrottle);
+            return Math.Max(controllerThrottle, keyboardThrottle);
         }
 
         public int GetBrake()
@@ -49,15 +49,15 @@ namespace TopSpeed.Input
             if (!_allowDrivingInput || _overlayInputBlocked)
                 return 0;
 
-            var joystickBrake = UseJoystick ? -GetPedalAxis(_brake, _settings.JoystickBrakeInvertMode) : 0;
+            var controllerBrake = UseController ? -GetPedalAxis(_brake, _settings.ControllerBrakeInvertMode) : 0;
             if (!UseKeyboard)
-                return joystickBrake;
+                return controllerBrake;
 
             var keyboardBrake = _settings.KeyboardProgressiveRate == KeyboardProgressiveRate.Off
                 ? (_lastState.IsDown(_kbBrake) ? -100 : 0)
                 : (int)(_simBrake * -100f);
 
-            return Math.Min(joystickBrake, keyboardBrake);
+            return Math.Min(controllerBrake, keyboardBrake);
         }
 
         public int GetClutch()
@@ -65,17 +65,17 @@ namespace TopSpeed.Input
             if (!_allowDrivingInput || _overlayInputBlocked)
                 return 0;
 
-            var joystickClutch = UseJoystick ? GetAxis(_clutch) : 0;
+            var controllerClutch = UseController ? GetAxis(_clutch) : 0;
             if (!UseKeyboard)
-                return joystickClutch;
+                return controllerClutch;
 
             var keyboardClutch = (int)Math.Round(_simClutch * 100f);
-            return Math.Max(joystickClutch, keyboardClutch);
+            return Math.Max(controllerClutch, keyboardClutch);
         }
 
         private int ApplySteeringDeadZone(int value)
         {
-            var deadZone = _settings.JoystickSteeringDeadZone;
+            var deadZone = _settings.ControllerSteeringDeadZone;
             if (deadZone < 1 || deadZone > 5)
                 deadZone = 1;
 
@@ -90,3 +90,5 @@ namespace TopSpeed.Input
         }
     }
 }
+
+

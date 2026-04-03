@@ -7,16 +7,7 @@ namespace TopSpeed.Server.Network
     {
         private void RegisterChatPackets()
         {
-            _pktReg.Add("chat", Command.ProtocolMessage, (player, payload, endPoint) =>
-            {
-                if (!PacketSerializer.TryReadProtocolMessage(payload, out var message))
-                {
-                    PacketFail(endPoint, Command.ProtocolMessage);
-                    return;
-                }
-
-                HandleGlobalChat(player, message);
-            });
+            _chat.RegisterPackets(_pktReg);
         }
 
         private void HandleGlobalChat(PlayerConnection player, PacketProtocolMessage message)

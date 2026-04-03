@@ -52,9 +52,20 @@ namespace TopSpeed.Vehicles
         public float FrontalAreaM2 { get; set; } = 2.2f;
         public float RollingResistanceCoefficient { get; set; } = 0.015f;       
         public float LaunchRpm { get; set; } = 1800f;
+        public float CoastDragBaseMps2 { get; set; } = -1f;
+        public float CoastDragLinearPerMps { get; set; } = -1f;
         public float EngineInertiaKgm2 { get; set; } = 0.24f;
         public float EngineFrictionTorqueNm { get; set; } = 20f;
+        public float EngineFrictionLinearNmPerKrpm { get; set; } = -1f;
+        public float EngineFrictionQuadraticNmPerKrpm2 { get; set; } = -1f;
         public float DrivelineCouplingRate { get; set; } = 12f;
+        public float IdleControlWindowRpm { get; set; } = -1f;
+        public float IdleControlGainNmPerRpm { get; set; } = -1f;
+        public float MinCoupledRiseIdleRpmPerSecond { get; set; } = -1f;
+        public float MinCoupledRiseFullRpmPerSecond { get; set; } = -1f;
+        public float EngineOverrunIdleLossFraction { get; set; } = -1f;
+        public float OverrunCurveExponent { get; set; } = -1f;
+        public float EngineBrakeTransferEfficiency { get; set; } = -1f;
         public float FinalDriveRatio { get; set; } = 3.5f;
         public float ReverseMaxSpeedKph { get; set; } = 35f;
         public float ReversePowerFactor { get; set; } = 0.55f;
@@ -103,7 +114,7 @@ namespace TopSpeed.Vehicles
         public float BrakeStrength { get; set; } = 1.0f;
         public TransmissionPolicy TransmissionPolicy { get; set; } = TransmissionPolicy.Default;
 
-        private readonly string?[] _sounds = new string?[7];
+        private readonly string?[] _sounds = new string?[8];
         private readonly Dictionary<VehicleAction, string[]> _soundVariants =
             new Dictionary<VehicleAction, string[]>();
 
@@ -141,3 +152,4 @@ namespace TopSpeed.Vehicles
         }
     }
 }
+

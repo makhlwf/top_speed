@@ -41,3 +41,4 @@ namespace TopSpeed.Game
         string IMenuMappingActions.FormatMappingValue(InputAction action, InputMappingMode mode) => _inputMapping.FormatMappingValue(action, mode);
     }
 }
+

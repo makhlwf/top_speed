@@ -12,3 +12,4 @@ namespace TopSpeed.Vehicles.Core
         public float Elapsed { get; set; }
     }
 }
+

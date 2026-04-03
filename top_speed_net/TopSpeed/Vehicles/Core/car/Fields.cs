@@ -150,6 +150,7 @@ namespace TopSpeed.Vehicles
         private AudioSourceHandle? _soundThrottle;
         private AudioSourceHandle _soundHorn = default!;
         private AudioSourceHandle _soundStart = default!;
+        private AudioSourceHandle? _soundStop;
         private AudioSourceHandle _soundBrake = default!;
         private AudioSourceHandle _soundCrash = default!;
         private AudioSourceHandle[] _soundCrashVariants = Array.Empty<AudioSourceHandle>();
@@ -178,6 +179,8 @@ namespace TopSpeed.Vehicles
         private bool _shiftOnDemandSupported;
         private bool _shiftOnDemandEnabled;
         private DrivelineState _drivelineState = DrivelineState.Locked;
+        private EngineLifecycleState _engineLifecycleState = EngineLifecycleState.Stopped;
     }
 }
+
 

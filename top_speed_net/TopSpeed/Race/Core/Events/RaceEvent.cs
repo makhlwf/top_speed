@@ -10,3 +10,4 @@ namespace TopSpeed.Race.Events
         public long Sequence { get; set; }
     }
 }
+

@@ -1,5 +1,5 @@
 using System;
-using SharpDX.DirectInput;
+using Key = TopSpeed.Input.InputKey;
 
 namespace TopSpeed.Shortcuts
 {
@@ -26,3 +26,5 @@ namespace TopSpeed.Shortcuts
         public Key Key { get; }
     }
 }
+
+

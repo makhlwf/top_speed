@@ -1,6 +1,7 @@
 using System;
-using TopSpeed.Menu;
 using TopSpeed.Localization;
+using TopSpeed.Menu;
+using Key = TopSpeed.Input.InputKey;
 
 namespace TopSpeed.Core.Multiplayer
 {
@@ -43,21 +44,21 @@ namespace TopSpeed.Core.Multiplayer
                 MultiplayerPingShortcutActionId,
                 LocalizationService.Mark("Check ping"),
                 LocalizationService.Mark("Speaks your current ping while you are in multiplayer menus."),
-                SharpDX.DirectInput.Key.F1,
+                Key.F1,
                 CheckCurrentPing);
 
             _menu.RegisterShortcutAction(
                 MultiplayerChatShortcutActionId,
                 LocalizationService.Mark("Open global chat"),
                 LocalizationService.Mark("Opens chat input for the global multiplayer lobby chat."),
-                SharpDX.DirectInput.Key.Slash,
+                Key.Slash,
                 OpenGlobalChatInput);
 
             _menu.RegisterShortcutAction(
                 MultiplayerRoomChatShortcutActionId,
                 LocalizationService.Mark("Open room chat"),
                 LocalizationService.Mark("Opens chat input for the current room chat when you are inside a room."),
-                SharpDX.DirectInput.Key.Backslash,
+                Key.Backslash,
                 OpenRoomChatInput,
                 () => IsInRoomCore);
 
@@ -65,7 +66,7 @@ namespace TopSpeed.Core.Multiplayer
                 MultiplayerRoomRulesShortcutActionId,
                 LocalizationService.Mark("View game rules"),
                 LocalizationService.Mark("Speaks currently active game rules for the current game room."),
-                SharpDX.DirectInput.Key.R,
+                Key.R,
                 AnnounceCurrentRoomGameRules,
                 () => IsInRoomCore);
 
@@ -151,7 +152,7 @@ namespace TopSpeed.Core.Multiplayer
             if (!_state.Rooms.CurrentRoom.InRoom)
                 return;
 
-            _state.Rooms.PendingLoadoutVehicleIndex = 0;
+            _state.RoomDrafts.PendingLoadoutVehicleIndex = 0;
             RebuildLoadoutVehicleMenu();
             RebuildLoadoutTransmissionMenu();
             _menu.ShowRoot(MultiplayerMenuKeys.LoadoutVehicle);
@@ -159,6 +160,8 @@ namespace TopSpeed.Core.Multiplayer
         }
     }
 }
+
+
 
 
 

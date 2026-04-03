@@ -10,13 +10,20 @@
 [2.4 RPM, Torque, and Why Some Gears Feel Stronger Than Others](#sec-2-4-rpm-torque-and-why-some-gears-feel-stronger-than-others)
 [2.4.1 RPM](#sec-2-4-1-rpm)
 [2.4.2 Torque](#sec-2-4-2-torque)
+[2.4.3 Horsepower (Gross vs Net)](#sec-2-4-3-horsepower-gross-vs-net)
+[2.4.4 Why Gear Multiplication Changes Wheel Torque](#sec-2-4-4-why-gear-multiplication-changes-wheel-torque)
+[2.4.5 Engine Behavior by Driving State](#sec-2-4-5-engine-behavior-by-driving-state)
 [2.5 Torque Curve Shape and Shift Recovery](#sec-2-5-torque-curve-shape-and-shift-recovery)
+[2.5.1 Torque Curve Presets at a Glance](#sec-2-5-1-torque-curve-presets-at-a-glance)
+[2.5.2 Preset Selection and Override Workflow](#sec-2-5-2-preset-selection-and-override-workflow)
 [2.6 Gears, Final Drive, and Effective Ratio](#sec-2-6-gears-final-drive-and-effective-ratio)
 [2.7 Drag and Rolling Resistance](#sec-2-7-drag-and-rolling-resistance)
 [2.8 Braking and Coasting](#sec-2-8-braking-and-coasting)
 [2.9 Steering, Grip, and Stability](#sec-2-9-steering-grip-and-stability)
 [2.10 Surface Behavior](#sec-2-10-surface-behavior)
 [2.11 Manual vs Automatic Transmission](#sec-2-11-manual-vs-automatic-transmission)
+[2.12 Powertrain State and Runtime Behavior](#sec-2-12-powertrain-state-and-runtime-behavior)
+[2.13 Engine Runtime (Detailed Step-by-Step)](#sec-2-13-engine-runtime-detailed-step-by-step)
 [3. Creating a Custom Vehicle Package](#sec-3-creating-a-custom-vehicle-package)
 [3.1 Folder Layout and Discovery](#sec-3-1-folder-layout-and-discovery)
 [3.2 Strict File Format Rules (Very Important)](#sec-3-2-strict-file-format-rules-very-important)
@@ -44,6 +51,9 @@
 [4.10 `[dimensions]` Section](#sec-4-10-dimensions-section)
 [4.11 `[tires]` Section](#sec-4-11-tires-section)
 [4.12 `[policy]` Section (Optional, Automatic Transmission Only)](#sec-4-12-policy-section)
+[4.13 `[engine_rot]` Section](#sec-4-13-engine-rot-section)
+[4.14 `[resistance]` Section](#sec-4-14-resistance-section)
+[4.15 Torque Curve Preset Profiles](#sec-4-15-torque-curve-preset-profiles)
 [5. Class Baseline Presets (Steering, Tire Model, Dynamics)](#sec-5-class-baseline-presets)
 [6. What Was Removed From the Old Format](#sec-6-what-was-removed-from-the-old-format)
 [7. Tuning Advice and Common Problems](#sec-7-tuning-advice-and-common-problems)
@@ -56,7 +66,7 @@ This guide explains how vehicles work in the current Top Speed rewrite and how t
 
 The main goal is practical understanding. You should be able to read this document, understand what the game is simulating, create a valid vehicle file, and tune the vehicle so it feels good in gameplay without needing advanced math or real-world engineering training.
 
-Top Speed now uses a force-based driving model. The game calculates acceleration from engine torque, gearing, drivetrain efficiency, tire circumference, traction, drag, rolling resistance, and braking forces. Some parameter names are inherited from older versions of the game, but the custom vehicle format itself is now fully redesigned and strict. There is no backward compatibility with old vehicle files.
+Top Speed now uses a force-based driving model with explicit powertrain modules. The game calculates acceleration from engine torque, gearing, drivetrain efficiency, tire circumference, traction, drag, rolling resistance, and braking forces, then applies transmission-family coupling and shift logic. Some parameter names are inherited from older versions of the game, but the custom vehicle format itself is now fully redesigned and strict. There is no backward compatibility with old vehicle files.
 
 That means three important things for authors. First, all values are entered directly as real numbers, not encoded legacy numbers that get divided by 100. Second, every parameter must be inside a supported section. Third, invalid or extreme values are rejected with line-aware error messages instead of being silently accepted.
 
@@ -78,14 +88,34 @@ Transmission behavior is now split into two layers. The first layer is vehicle d
 
 Manual and automatic families now follow different driveline physics. Manual mode uses clutch state and can stall at low speed/high load when clutch is engaged in an unsuitable gear. Automatic families use type-specific coupling models (ATC, DCT, CVT), including launch coupling behavior, lock thresholds, and in ATC/CVT the low-speed creep behavior.
 
+The format is also split by responsibility. Core engine limits live in `[engine]`, torque curve shape in `[torque]` and `[torque_curve]`, rotational engine behavior in `[engine_rot]`, and chassis/air resistance in `[resistance]`. Keeping these sections separate makes tuning safer and easier to reason about.
+
 <a id="sec-2-2-units-used-by-the-game"></a>
 ## 2.2 Units Used by the Game
 
-Most gameplay speed values are expressed in kilometers per hour. Physics calculations internally use SI-style units in many places, especially meters, seconds, kilograms, and Newton-meters.
+This section exists because many tuning mistakes come from unit confusion, not from bad physics ideas. The easiest way to think about units is that they are the language used by the simulation. If a value is entered in the wrong unit, the game still runs, but the result feels wrong in ways that are hard to diagnose.
 
-As a vehicle author, you do not need to convert everything manually, but it is important to enter values in the expected units. Examples include `mass_kg` in kilograms, `peak_torque` in Newton-meters, `wheelbase` in meters, `max_steer_deg` in degrees, and `frontal_area` in square meters.
+The game is player-facing in km/h for speed, but internally it still uses standard physics units for force and motion. You do not need to do advanced math while authoring, but you do need to know what each unit means in plain language.
 
-The new custom vehicle format does not use encoded legacy values. You write the actual value directly. For example, `max_speed=170` means 170 km/h. `steering_response=1.8` means 1.8, not 180. `surface_traction_factor=0.10` means 0.10, not 10.
+`kg` (kilogram) is mass. In this guide, `mass_kg=1500` means the car has 1500 kg of mass, and that directly affects how much acceleration you get from the same force. Heavier vehicles need more force to feel equally quick.
+
+`Nm` (Newton-meter) is torque. It is twisting strength. If you imagine a wrench on a bolt, torque is how strongly you twist that wrench. In the game, engine torque is what the engine can produce at a given RPM before gearing multiplies it.
+
+`N` (Newton) is force. Wheel force is what actually pushes the vehicle forward on the road after torque has been converted through wheel radius. Acceleration comes from net force after resistance is removed.
+
+`m` (meter) is distance, and `m^2` (square meter) is area. `wheelbase` is in meters, and `frontal_area` is in square meters. Frontal area is used with drag coefficient to model how strongly air resists the vehicle at speed.
+
+`rpm` means revolutions per minute. It is how fast the engine is spinning, not how powerful the engine is by itself. RPM decides where you are on the torque curve.
+
+`m/s^2` is acceleration or deceleration rate. For example, `coast_base_mps2` is a coast deceleration term: how quickly speed drops per second during lift-off, before other terms are added.
+
+`kg*m^2` (written as `kgm2` in key names like `inertia_kgm2`) is rotational inertia. This is one of the most confusing units for beginners, so treat it simply: it controls how quickly RPM can change. Higher inertia means slower RPM rise and slower RPM fall. Lower inertia means the engine revs up and down faster.
+
+You may also see `km/h/s` in some transmission keys such as `creep_accel_kphps`. That unit means "how many km/h of speed are added each second" during creep behavior.
+
+The new custom format uses direct values only. There is no legacy divide-by-100 encoding. If you want 170 km/h target speed, write `max_speed=170`. If you want 0.10 traction factor, write `surface_traction_factor=0.10`. If you want steering response of 1.8, write `steering_response=1.8`.
+
+If you are unsure about a key, read its unit first, then tune. In practice, this single habit prevents many unrealistic results.
 
 <a id="sec-2-3-the-main-acceleration-flow-plain-language"></a>
 ## 2.3 The Main Acceleration Flow (Plain Language)
@@ -102,6 +132,8 @@ The wheel force is capped by grip. Even if the engine could theoretically push h
 
 Finally, the game subtracts resistance forces. Rolling resistance acts all the time and is noticeable at lower speeds. Aerodynamic drag grows rapidly with speed and becomes dominant near top speed. The remaining force becomes acceleration after dividing by `mass_kg`.
 
+During lift-off and coast, the runtime computes total deceleration from multiple components: passive resistance, configurable chassis coast drag, engine-brake transfer through gearing, and optional brake input. This is why high-gear lift-off, low-gear lift-off, and neutral coast can now behave differently but still remain physically consistent.
+
 The result is a system where low-speed acceleration, mid-speed pull, and high-speed pull can all be tuned differently using different parameters.
 
 <a id="sec-2-4-rpm-torque-and-why-some-gears-feel-stronger-than-others"></a>
@@ -110,20 +142,86 @@ The result is a system where low-speed acceleration, mid-speed pull, and high-sp
 <a id="sec-2-4-1-rpm"></a>
 ## 2.4.1 RPM
 
-RPM is engine speed in revolutions per minute. RPM is not power by itself, but it controls where the engine is on the torque curve. If a shift drops RPM too far below the strong part of the curve, the next gear can feel weak even if the vehicle has a high torque peak on paper.
+RPM means how many full turns the engine crankshaft makes in one minute. If the engine is at 3000 RPM, the crankshaft is making 3000 turns per minute. That number is easy to read in logs, but the important point is what it means for torque. Every engine has stronger and weaker parts of its RPM range, so RPM tells you where the engine currently lives on that strength map.
 
-This is why RPM drop after an upshift is normal but must be usable. A good upshift causes RPM to drop and then recover. A bad upshift drops RPM into a weak zone and the vehicle feels flat or stalls in that gear.
+In gameplay terms, RPM explains why one shift feels strong and another shift feels dead. After an upshift, RPM always drops. That is normal. The question is where it lands. If it lands near the useful torque region, the vehicle keeps pulling. If it lands too low, the vehicle feels lazy until RPM climbs back up.
+
+This is also why simply raising `rev_limiter` is not always a fix. A higher limiter gives longer gears, but if torque falls hard near the top or shift landing is too low, drivability may get worse. Good tuning is not "highest RPM possible." Good tuning is "RPM lands in a usable part of the curve across real shifts."
 
 <a id="sec-2-4-2-torque"></a>
 ## 2.4.2 Torque
 
-Torque is twisting force at the engine. In the game, torque becomes acceleration only after gearing and drivetrain efficiency are applied, and then after traction and resistance are considered.
+Torque is the engine's twisting strength. A beginner-friendly way to picture it is this: torque is what tries to rotate the drivetrain, and the drivetrain turns that rotation into push at the tires. In Top Speed, torque is not directly equal to acceleration. It must pass through gearing, efficiency, traction limits, and resistance first.
 
-If a vehicle feels too strong everywhere, reducing `peak_torque` can help, but it is not the only option. `power_factor`, gear ratios, final drive, and mass are often better gameplay-balance controls because they can shape the feel without destroying the engine character.
+The order matters. The engine first produces torque at the current RPM from the torque curve. That torque is then scaled by `power_factor`, multiplied by gear ratio and `final_drive`, and reduced by `drivetrain_efficiency`. After that, wheel torque is converted into forward wheel force. Only then can the game compare that force against traction and resistance. The leftover force, divided by mass, is acceleration.
 
-If a vehicle is fine in lower gears but too strong at high speed, lowering `redline_torque` or increasing drag is usually more targeted than lowering `peak_torque`.
+This is why two vehicles with similar peak torque can feel completely different. A vehicle with short gearing and good midrange torque can feel very alive. A vehicle with tall gearing and weak post-shift RPM landing can feel flat, even if the peak torque number looks large on paper.
 
-The runtime also distinguishes gross and net engine output. Gross output is engine-produced torque/power before internal losses. Net output subtracts friction and engine-braking losses. Near idle, net horsepower can be low or zero while gross torque still exists to hold idle behavior.
+Worked example (simplified):
+
+1. Engine torque at current RPM is `300 Nm`.
+2. `power_factor=0.80`, so effective engine torque becomes `240 Nm`.
+3. Gear ratio `2.20` and `final_drive=3.50` give wheel torque before losses: `240 * 2.20 * 3.50 = 1848 Nm`.
+4. With `drivetrain_efficiency=0.88`, wheel torque becomes `1626.24 Nm`.
+5. With wheel radius `0.34 m`, wheel force is `1626.24 / 0.34 = 4783 N`.
+6. If resistance at that moment is `1800 N`, net force is `2983 N`.
+7. With `mass_kg=1500`, acceleration is `2983 / 1500 = 1.99 m/s^2`.
+
+In tuning practice, this explains why "just lower peak torque" is often the wrong first reaction. If the vehicle is only too strong near top speed, adjust high-RPM torque shape or resistance first. If launch is weak but upper pull is fine, adjust low-band torque and gearing first. Torque tuning works best when you target the wrong speed region, not the whole curve blindly.
+
+The runtime also tracks gross and net engine output. Gross torque is what the combustion side produces from the curve. Net torque subtracts internal losses such as friction and overrun. This is why near idle you can still have stable RPM behavior while reported net horsepower is low.
+
+<a id="sec-2-4-3-horsepower-gross-vs-net"></a>
+## 2.4.3 Horsepower (Gross vs Net)
+
+Horsepower is a derived value that combines torque and RPM into one "rate of work" number. In this project, horsepower is not a primary input key. It is calculated from torque and RPM using `horsepower = (torque_nm * rpm) / 7127`.
+
+A practical way to read this is that torque tells you "how strong the twist is," while RPM tells you "how fast that twist is happening." You need both to understand engine output at a moment in time. For example, `260 Nm` at `2000 RPM` and `260 Nm` at `5000 RPM` are not the same horsepower.
+
+The runtime publishes two variants: gross horsepower and net horsepower. Gross horsepower comes from gross torque before internal losses. Net horsepower comes after friction and overrun losses are subtracted. This distinction is important when debugging logs. If the engine is near idle or the player lifted throttle at high RPM, net output can look much smaller than expected, or even negative briefly, while gross output still reflects the underlying torque curve behavior.
+
+<a id="sec-2-4-4-why-gear-multiplication-changes-wheel-torque"></a>
+## 2.4.4 Why Gear Multiplication Changes Wheel Torque
+
+Engine torque is produced at the crankshaft. Wheel torque is:
+
+- engine torque
+- multiplied by current gear ratio
+- multiplied by `final_drive`
+- multiplied by `drivetrain_efficiency`
+
+So at the same engine torque, lower gears (numerically higher ratios) usually produce more wheel torque than higher gears. This is why first and second gear feel strong.
+
+If you are comparing logs at the same *vehicle speed*, a higher gear can still sometimes show healthy pull if that gear lands the engine in a stronger torque zone while the lower gear is near torque fade or limiter. So the correct rule is:
+
+- lower gears multiply torque more
+- actual acceleration depends on where RPM lands on the torque curve and what resistance dominates at that speed
+
+This also explains a common confusion:
+
+- "Why is torque higher in higher gears?"  
+  Usually what changes is *engine* torque at the new RPM point, not gear multiplication itself. Higher gears reduce multiplication, but if RPM lands closer to peak torque, engine-side torque can increase while wheel torque still drops compared with a lower gear at the same engine state.
+
+For tuning, always distinguish:
+
+- engine torque (`[torque]` + `[torque_curve]`)
+- wheel torque (engine torque after ratio multipliers and efficiency)
+- acceleration (wheel force after traction limits and total resistance)
+
+<a id="sec-2-4-5-engine-behavior-by-driving-state"></a>
+## 2.4.5 Engine Behavior by Driving State
+
+The same vehicle can produce very different RPM and horsepower logs depending on whether the engine is mechanically tied to the wheels. This is normal, and understanding it removes a lot of confusion during tuning.
+
+When the vehicle is in neutral or the clutch is disengaged, wheel speed does not strongly force engine RPM. The engine behaves like a mostly free rotating body. Throttle adds torque, friction removes torque, overrun may add extra loss during lift-off, and `inertia_kgm2` decides how quickly RPM can rise or fall. In this state, odd free-rev behavior usually points to `[engine_rot]` keys, not to drag or rolling resistance.
+
+When the vehicle is coupled in gear, RPM is no longer free. Wheel speed, tire circumference, and overall ratio demand a coupled RPM. If road load is high and available torque is low, the engine can be pulled down toward lower RPM even while throttle is applied. This is why a vehicle can feel fine in one gear and weak in another without any bug: the engine may simply be landing in a weaker torque region for that ratio.
+
+In automatic launch conditions, ATC, DCT, and CVT families can apply low-speed coupling behavior and minimum-coupled RPM assistance. The goal is to avoid the classic engage-drive bog where RPM collapses under idle before recovering. If launch surges too hard, inspect launch and coupling controls. If launch feels lazy or dips under idle, inspect low-RPM torque support and coupling floor behavior.
+
+Lift-off behavior also depends on state. In gear, the vehicle sees aerodynamic drag, rolling resistance, chassis coast terms, and engine-brake transfer through the current ratio. In neutral, only internal engine loss terms dominate RPM decay. This is why free-rev drop speed and in-gear coast speed should not match exactly, and why gear 1 often slows harder on lift-off than gear 3.
+
+A practical diagnosis shortcut is to classify the symptom by speed and state first. Very-low-speed oddities often come from launch, coupling, or idle control. Mid/high-speed pull issues usually come from torque shape, gearing, and resistance balance. Slow neutral rev-fall almost always points to rotational loss and inertia settings.
 
 <a id="sec-2-5-torque-curve-shape-and-shift-recovery"></a>
 ## 2.5 Torque Curve Shape and Shift Recovery
@@ -140,6 +238,45 @@ If both are present, preset points are loaded first and your explicit RPM lines 
 Lower `peak_torque_rpm` generally makes a vehicle easier to pull in taller gears because the strong torque band starts earlier. Higher `peak_torque_rpm` makes the vehicle feel more high-rev and can punish early upshifts if the next gear lands too low.
 
 Higher `redline_torque` makes the vehicle continue pulling strongly near the top of each gear. Lower `redline_torque` creates a more obvious fade near the rev limiter and can be used to calm high-gear acceleration without heavily changing launch.
+
+<a id="sec-2-5-1-torque-curve-presets-at-a-glance"></a>
+## 2.5.1 Torque Curve Presets at a Glance
+
+The built-in presets are baseline curve generators. They are not rigid classes, and they do not lock a vehicle into one behavior. Their purpose is to give you a believable starting shape quickly so you do not have to hand-author every RPM point from zero.
+
+Under the hood, the runtime samples torque points from idle to limiter, shapes the rise to peak with `rise_exponent`, shapes the fall after peak with `fall_exponent`, and uses fallback idle/redline factors only when explicit `idle_torque` or `redline_torque` are missing. After that, your explicit `NNNNrpm` keys override matching points. This design lets you start broad and then fix only the exact RPM bands that feel wrong.
+
+For beginners, choose a preset by "where torque should feel strongest," not by vehicle badge name. A family sedan and a compact SUV can both use the same preset if they need similar low-mid drivability. A sports coupe and a high-rev bike can both need late-ramp behavior even though they are different classes.
+
+Preset quick meanings:
+
+| preset | simple interpretation |
+|---|---|
+| `city_compact` | easy daily low-mid response, modest top-end |
+| `family_sedan` | balanced and forgiving across common road speeds |
+| `sport_sedan` | stronger midrange and better high-speed continuation |
+| `sport_coupe` | more top-end bias than sedan presets |
+| `grand_tourer` | broad, smooth pull over a wide speed range |
+| `hot_hatch` | lively midrange response and quick recovery |
+| `muscle_v8` | stronger low-mid push with earlier high-end softness |
+| `supercar_na` | high-rev naturally aspirated behavior |
+| `supercar_turbo` | boosted midrange plus solid upper pull |
+| `rally_turbo` | punchy midrange focus for rapid recovery |
+| `diesel_suv` | early torque and calmer high-RPM region |
+| `diesel_truck` | very early torque emphasis with clear fade |
+| `supersport_bike` | aggressive, peaky high-rev style |
+| `naked_bike` | sporty shape with broader usable band than supersport |
+
+<a id="sec-2-5-2-preset-selection-and-override-workflow"></a>
+## 2.5.2 Preset Selection and Override Workflow
+
+The safest workflow is to treat presets as first pass and explicit points as correction tools. Start by choosing the closest overall behavior family, then set your anchor values (`peak_torque`, `peak_torque_rpm`, and either explicit or fallback idle/redline torque). After that, run short real driving checks for launch, shift recovery, and upper-speed pull. This gives you a behavior map before you touch detailed points.
+
+Once you identify the bad region, use explicit RPM points only in that region. If shift recovery is weak, add support around the post-shift landing RPM. If the top end is unrealistically strong, reduce points near the upper limiter band. If launch is weak despite correct gearing, strengthen the low RPM band. This targeted approach is much more stable than flattening the whole curve.
+
+Keep manual point authoring sparse at first. Four to eight meaningful points usually outperform a dense grid of tiny edits, because dense editing often introduces noise and makes future diagnosis harder. Increase point density only when you are intentionally building a specific custom character.
+
+Always retest after any ratio change. A torque curve that felt perfect before a `final_drive` edit can feel wrong after the edit because shift landing RPM and in-gear operating RPM moved. In other words, curve tuning and gearing tuning are linked, and they must be validated together.
 
 <a id="sec-2-6-gears-final-drive-and-effective-ratio"></a>
 ## 2.6 Gears, Final Drive, and Effective Ratio
@@ -218,6 +355,64 @@ Policy improves shift decisions, but it does not fix weak physics. If a gear can
 
 For tuning work, manual mode is still the best diagnostic tool because it exposes raw powertrain behavior. If manual feels healthy but automatic shifts too early, hunts, or enters overdrive too soon, tune `[policy]` and the relevant `[transmission_*]` section for that automatic family.
 
+<a id="sec-2-12-powertrain-state-and-runtime-behavior"></a>
+## 2.12 Powertrain State and Runtime Behavior
+
+The current runtime separates engine and vehicle motion into three cooperating layers so bugs can be isolated correctly. The engine-state layer resolves coupling state, automatic low-speed RPM support, and manual stall conditions. The automatic-shift layer resolves shift timing, cooldowns, transition metadata, and family-specific behaviors such as CVT forcing logic. The longitudinal-motion layer resolves actual speed change from drive force, resistance, coast, and braking.
+
+This separation matters because similar symptoms can come from different layers. A bad shift decision can feel like weak engine torque. A coupling problem can look like a torque-curve hole. A resistance imbalance can look like a gearbox problem. Debugging is faster when you first identify which layer owns the symptom.
+
+Recent stability work also changed neutral and launch behavior in a way authors should know. Automatic launch support now ramps by speed and coupling instead of snapping, so RPM should no longer cliff-drop right after engagement. Clutch-disengaged manual state no longer runs driveline stall logic, so free clutch behavior is physically cleaner. Neutral free-rev lift-off now applies high-RPM overrun loss while still guarding near-idle behavior, so decay can be realistic without falling below idle.
+
+<a id="sec-2-13-engine-runtime-detailed-step-by-step"></a>
+## 2.13 Engine Runtime (Detailed Step-by-Step)
+
+This section explains how engine RPM and horsepower are actually updated each frame in the current runtime.
+
+1. **Compute coupled RPM from speed and ratio**  
+   The model converts vehicle speed + tire circumference + drive ratio into driveline-coupled RPM.
+
+2. **Apply automatic minimum-coupled RPM floor (when active)**  
+   In automatic-family driving states, launch-assist can request a minimum coupled RPM.  
+   That floor is ramp-limited by `min_coupled_rise_idle_rpm_per_s` and `min_coupled_rise_full_rpm_per_s`.
+
+3. **Select base RPM according to coupling mode**  
+   - locked: use coupled RPM directly  
+   - blended/disengaged: use prior/free engine RPM state as base
+
+4. **Evaluate available engine torque from curve**  
+   Torque at base RPM comes from `[torque_curve]` and core `[torque]` anchors, then scaled by `power_factor`.
+
+5. **Apply idle-control torque when needed**  
+   Near idle with low throttle, idle-control adds compensation torque using:
+   - `idle_control_window_rpm`
+   - `idle_control_gain_nm_per_rpm`
+
+6. **Compute losses (friction + overrun)**  
+   Loss torque includes base/linear/quadratic friction plus optional closed-throttle overrun shaping:
+   - `friction_base_nm`
+   - `friction_linear_nm_per_krpm`
+   - `friction_quadratic_nm_per_krpm2`
+   - `overrun_idle_fraction`
+   - `overrun_curve_exponent`
+
+7. **Integrate net torque through inertia**  
+   Net torque is converted to RPM change via `inertia_kgm2`.  
+   High inertia smooths RPM transitions; low inertia makes RPM more reactive.
+
+8. **Blend or lock to driveline**  
+   In blended states, engine RPM is mixed toward coupled RPM using `coupling_rate` and current coupling factor.
+
+9. **Clamp and publish outputs**  
+   RPM is clamped to stall/limit boundaries, then gross and net horsepower are updated.
+
+What this means for tuning:
+
+- weak launch but healthy midrange: inspect launch RPM support and low-RPM curve shape first
+- engine hangs too long after free rev: usually too little high-RPM loss/inertia interaction
+- sub-idle dip near neutral idle: usually idle-control window/gain or overrun-low-RPM balance
+- harsh lift-off in gear: inspect overrun terms and `brake_transfer_efficiency`
+
 <a id="sec-3-creating-a-custom-vehicle-package"></a>
 ## 3. Creating a Custom Vehicle Package
 
@@ -260,7 +455,9 @@ The format uses `key=value` lines inside sections, and comments start with `;` o
 
 The following sections are supported by the parser.
 
-`[meta]`, `[sounds]`, `[general]`, `[engine]`, `[torque]`, `[torque_curve]`, `[transmission]`, `[drivetrain]`, `[gears]`, `[steering]`, `[tire_model]`, `[dynamics]`, `[dimensions]`, and `[tires]` are always required. `[policy]` is optional.
+`[meta]`, `[sounds]`, `[general]`, `[engine]`, `[torque]`, `[engine_rot]`, `[resistance]`, `[torque_curve]`, `[transmission]`, `[drivetrain]`, `[gears]`, `[steering]`, `[tire_model]`, `[dynamics]`, `[dimensions]`, and `[tires]` are always required. `[policy]` is optional.
+
+The parser is strict about section ownership. Keys such as `drag_coefficient` and `rolling_resistance` must be in `[resistance]`, and rotational keys such as `inertia_kgm2` must be in `[engine_rot]`. Putting valid keys in the wrong section is still an error.
 
 `[transmission_atc]`, `[transmission_dct]`, and `[transmission_cvt]` are conditionally required based on `supported_types`:
 
@@ -289,6 +486,7 @@ description=Balanced front-engine touring sedan with usable 8-speed overdrive ge
 [sounds]
 engine=builtin6
 start=builtin1
+stop=stop.wav
 horn=builtin4
 throttle=
 crash=builtin3,crash1.wav,crash2.wav
@@ -313,9 +511,6 @@ auto_shift_rpm=4600
 engine_braking=0.35
 mass_kg=1500
 drivetrain_efficiency=0.88
-drag_coefficient=0.27
-frontal_area=2.20
-rolling_resistance=0.014
 launch_rpm=1800
 
 [torque]
@@ -325,9 +520,27 @@ peak_torque_rpm=3800
 idle_torque=110
 redline_torque=220
 power_factor=0.64
-engine_inertia_kgm2=0.24
-engine_friction_torque_nm=20
-driveline_coupling_rate=12
+
+[engine_rot]
+inertia_kgm2=0.24
+coupling_rate=12
+friction_base_nm=20
+friction_linear_nm_per_krpm=0
+friction_quadratic_nm_per_krpm2=0
+idle_control_window_rpm=150
+idle_control_gain_nm_per_rpm=0.08
+min_coupled_rise_idle_rpm_per_s=2200
+min_coupled_rise_full_rpm_per_s=6200
+overrun_idle_fraction=0.35
+overrun_curve_exponent=1.0
+brake_transfer_efficiency=0.68
+
+[resistance]
+drag_coefficient=0.27
+frontal_area=2.20
+rolling_resistance=0.014
+coast_base_mps2=2.6
+coast_linear_per_mps=0.032
 
 [torque_curve]
 preset=diesel_suv
@@ -338,6 +551,7 @@ preset=diesel_suv
 [transmission]
 primary_type=atc
 supported_types=atc,manual
+shift_on_demand=1
 
 [transmission_atc]
 creep_accel_kphps=0.70
@@ -412,6 +626,8 @@ top_speed_pursuit_speed_fraction=0.97
 prefer_intended_top_speed_gear_near_limit=true
 ```
 
+In this example, `stop` is optional and points to a shutdown-complete sound. The game plays it only when engine shutdown fully finishes and engine RPM reaches zero.
+
 <a id="sec-3-5-sound-path-rules-and-safety-rules"></a>
 ## 3.5 Sound Path Rules and Safety Rules
 
@@ -424,6 +640,8 @@ The exception is built-in sound references using `builtinN`, such as `builtin1`,
 In practice, a very good beginner workflow is to build the vehicle with `builtinN` sounds first, tune the physics until it feels correct, and only then replace the sounds with custom files. This reduces the number of things you are debugging at the same time.
 
 `crash` and `backfire` support comma-separated lists. All listed sounds are initialized when the vehicle loads, and the game randomizes among them at runtime when a crash or backfire event is played. This gives better variety without changing any physics behavior.
+
+`stop` is a single optional sound reference (not a list). Use it when you want an explicit shutdown-complete cue after RPM has fully decayed.
 
 <a id="sec-3-6-validation-behavior-and-error-messages"></a>
 ## 3.6 Validation Behavior and Error Messages
@@ -501,6 +719,12 @@ This sound usually carries most of the vehicle identity for blind players, so it
 Engine start sound. Required. Used when the vehicle is started.
 
 There is no numeric range because this is a sound reference. The same path safety rules apply as `engine`.
+
+### `stop`
+
+Optional engine stop sound. If provided, it is played once when shutdown has fully completed and engine RPM has decayed to `0`. This gives authors a clean "engine off" cue that occurs at the end of the shutdown process, not at the moment the stop command is requested.
+
+There is no numeric range because this is a sound reference. If omitted, no stop sound is played. If provided, the same path safety rules apply as `engine`.
 
 ### `horn`
 
@@ -614,7 +838,23 @@ This is still worth setting correctly because weather audio feedback is importan
 <a id="sec-4-4-engine-section"></a>
 ## 4.4 `[engine]` Section
 
-The `[engine]` section contains RPM limits, braking and mass values, and resistance values used in acceleration calculations. Torque-shape and engine rotational dynamics are defined in `[torque]` and `[torque_curve]`.
+The `[engine]` section contains core RPM and mass/efficiency values. Torque shape is defined in `[torque]` and `[torque_curve]`. Rotational runtime controls are in `[engine_rot]`, and drag/coast controls are in `[resistance]`.
+
+Runtime interaction summary:
+
+- `[engine]` sets RPM boundaries and global vehicle energy context (`mass_kg`, `drivetrain_efficiency`)
+- `[torque]` and `[torque_curve]` define how much gross engine torque is available at each RPM
+- `[engine_rot]` controls how fast RPM moves toward that state and how lift-off/idle losses are applied
+- `[resistance]` controls external road/air load opposing motion
+
+If behavior looks inconsistent, tune in this order:
+
+1. fix RPM range correctness in `[engine]` (`idle_rpm`, `rev_limiter`)
+2. fix torque shape in `[torque]` and `[torque_curve]`
+3. fix RPM transition and decay behavior in `[engine_rot]`
+4. only then adjust `[resistance]` for speed-domain balancing
+
+This order avoids masking an engine-shape problem with resistance hacks.
 
 ### `idle_rpm`
 
@@ -672,34 +912,6 @@ Allowed range is 0.1 to 1.0.
 
 Higher values send more torque to the wheels. Lower values reduce acceleration and engine braking transfer. This is useful but usually not the first tuning lever for gameplay balance.
 
-### `drag_coefficient`
-
-Aerodynamic drag coefficient used in the drag force calculation.
-
-Allowed range is 0.01 to 1.5.
-
-Lower values improve high-speed pull and top-speed reach. Higher values reduce high-speed acceleration and can be used to balance fast vehicles while keeping low-speed behavior more intact than a large torque reduction would.
-
-### `frontal_area`
-
-Frontal area in square meters used in the drag calculation.
-
-Allowed range is 0.05 to 10.0.
-
-This works together with `drag_coefficient`. Larger values increase aerodynamic drag, especially at higher speeds.
-
-### `rolling_resistance`
-
-Rolling resistance coefficient.
-
-Allowed range is 0.001 to 0.1.
-
-This affects resistance across the speed range and is especially noticeable at low and medium speed. If a vehicle feels weak everywhere, inspect this along with mass and power settings.
-
-For road vehicles, realistic values are usually much lower than the top end of the allowed range. In practice, many normal road-vehicle tunes will sit roughly in the low hundredths. The `0.1` maximum is an intentionally generous upper limit for gameplay safety and experimentation, not a recommended target for normal cars or motorcycles.
-
-A useful beginner test is coasting behavior. If the vehicle loses speed too quickly even when the engine and brakes are not the main issue, `rolling_resistance` may be too high. If the vehicle seems to glide too easily and never feels like it settles, it may be too low.
-
 ### `launch_rpm`
 
 Launch RPM assist floor under throttle at low speed.
@@ -711,7 +923,7 @@ Higher values can make launch feel stronger and reduce bogging. Lower values can
 <a id="sec-4-4-1-torque-section"></a>
 ## 4.4.1 `[torque]` Section
 
-The `[torque]` section contains engine torque shape controls and rotational dynamics controls. This section is required.
+The `[torque]` section contains engine torque-shape and power scaling controls. Rotational dynamics keys are documented in `[engine_rot]`.
 
 ### `engine_braking_torque`
 
@@ -760,30 +972,6 @@ Global power scaling multiplier for throttle-driven acceleration calculations.
 Allowed range is 0.05 to 2.0.
 
 This is one of the best gameplay-balance controls in the entire format. It lets you adjust acceleration without fully rebuilding the torque curve. If a vehicle is too dominant, lowering `power_factor` is often the cleanest first step.
-
-### `engine_inertia_kgm2`
-
-Engine rotational inertia in kg*m^2.
-
-Allowed range is 0.01 to 5.0.
-
-Higher values make RPM change more slowly when torque changes, so the engine feels heavier and calmer. Lower values make RPM rise and fall faster, which feels more reactive but can also feel jumpy if coupled with aggressive gearing.
-
-### `engine_friction_torque_nm`
-
-Parasitic friction torque inside the engine in Newton-meters.
-
-Allowed range is 0 to 1000.
-
-This contributes to negative net torque and influences low-throttle RPM behavior. Raising it increases internal loss and can reduce free-rev feel. If set too high, it can make off-throttle behavior feel harsh unless compensated by other values.
-
-### `driveline_coupling_rate`
-
-Blend rate between free engine RPM integration and wheel-coupled RPM.
-
-Allowed range is 0.1 to 80.0.
-
-Higher values make engine RPM lock to wheel speed faster through the driveline. Lower values allow more free engine behavior before RPM fully couples to wheel speed.
 
 <a id="sec-4-4-2-torque-curve-section"></a>
 ## 4.4.2 `[torque_curve]` Section
@@ -855,6 +1043,14 @@ If `supported_types` includes an automatic family, the matching type-specific se
 - `atc` requires `[transmission_atc]`.
 - `dct` requires `[transmission_dct]`.
 - `cvt` requires `[transmission_cvt]`.
+
+### `shift_on_demand`
+
+Optional boolean-like key (`true`/`false` or `0`/`1`) that enables manual up/down shift control while an automatic family is active.
+
+Default is `false` when omitted.
+
+When enabled and active in gameplay, automatic upshift/downshift policy is bypassed until shift-on-demand mode is turned off. If no automatic family is present in `supported_types`, this key is accepted but ignored and the parser emits a warning.
 
 <a id="sec-4-4-4-transmission-atc-section"></a>
 ## 4.4.4 `[transmission_atc]` Section
@@ -1510,6 +1706,207 @@ Boolean policy flag for preferring the intended top-speed gear near the speed li
 This key has no numeric range because it is boolean. Use `true` or `false`.
 
 When enabled, automatic mode tries to stay in or below the intended top-speed gear until it is appropriate to use overdrives.
+
+<a id="sec-4-13-engine-rot-section"></a>
+## 4.13 `[engine_rot]` Section
+
+The `[engine_rot]` section defines engine rotational behavior, RPM coupling behavior, and overrun/loss shaping. This section is required.
+
+### `inertia_kgm2`
+
+Engine rotational inertia in kg*m^2.
+
+Allowed range is 0.01 to 5.0.
+
+Higher values make RPM rise/fall slower and smoother. Lower values make RPM react quickly to throttle/lift changes.
+
+### `coupling_rate`
+
+Blend rate between free engine RPM integration and wheel-coupled RPM.
+
+Allowed range is 0.1 to 80.0.
+
+Higher values lock blended RPM to driveline demand faster. Lower values allow more slip behavior before lock.
+
+### `friction_base_nm`
+
+Base parasitic friction torque in Newton-meters.
+
+Allowed range is 0 to 1000.
+
+Raises internal loss everywhere. Too high can make free-rev and lift-off feel heavy.
+
+### `friction_linear_nm_per_krpm`
+
+Linear friction growth per 1000 RPM.
+
+Allowed range is 0 to 1000.
+
+Use this when high-RPM losses should rise proportionally with RPM.
+
+### `friction_quadratic_nm_per_krpm2`
+
+Quadratic friction growth per (1000 RPM)^2.
+
+Allowed range is 0 to 1000.
+
+Use this for stronger high-RPM loss shaping near top revs.
+
+### `idle_control_window_rpm`
+
+Idle-control activation window above idle RPM.
+
+Allowed range is 0 to 1000.
+
+Within this window (with low throttle), idle-control torque can hold RPM stable instead of dropping too low.
+
+### `idle_control_gain_nm_per_rpm`
+
+Idle-control proportional gain in Nm per RPM deficit.
+
+Allowed range is 0 to 2.
+
+Higher values recover idle faster. Too high can make off-throttle near-idle feel artificial.
+
+### `min_coupled_rise_idle_rpm_per_s`
+
+Minimum automatic coupled-RPM rise rate at zero throttle.
+
+Allowed range is 0 to 20000.
+
+This limits how abruptly launch-assist RPM floors can jump at low throttle.
+
+### `min_coupled_rise_full_rpm_per_s`
+
+Minimum automatic coupled-RPM rise rate at full throttle.
+
+Allowed range is 0 to 20000, and it must be greater than or equal to `min_coupled_rise_idle_rpm_per_s`.
+
+Higher values allow faster launch RPM build under high throttle.
+
+### `overrun_idle_fraction`
+
+Closed-throttle overrun-loss fraction at idle end of RPM range.
+
+Allowed range is 0 to 1.
+
+Higher values increase low-RPM overrun losses; lower values keep low-RPM lift-off gentler.
+
+### `overrun_curve_exponent`
+
+Shape exponent for overrun-loss growth from idle toward limiter.
+
+Allowed range is 0.2 to 5.0.
+
+Higher values push more overrun effect toward higher RPM. Lower values spread it more evenly.
+
+### `brake_transfer_efficiency`
+
+Engine-brake torque transfer efficiency to wheels.
+
+Allowed range is 0.1 to 1.0.
+
+Higher values increase lift-off decel transfer through gearing. Lower values soften engine-brake effect at wheels.
+
+<a id="sec-4-14-resistance-section"></a>
+## 4.14 `[resistance]` Section
+
+The `[resistance]` section defines aerodynamic, rolling, and chassis coast drag terms. This section is required.
+
+### `drag_coefficient`
+
+Aerodynamic drag coefficient.
+
+Allowed range is 0.01 to 1.5.
+
+Main high-speed drag tuning lever.
+
+### `frontal_area`
+
+Frontal area in square meters.
+
+Allowed range is 0.05 to 10.0.
+
+Works with `drag_coefficient`; larger area increases high-speed drag.
+
+### `rolling_resistance`
+
+Rolling resistance coefficient.
+
+Allowed range is 0.001 to 0.1.
+
+Mostly affects low/mid-speed "always-on" resistance feel.
+
+### `coast_base_mps2`
+
+Base chassis coast drag term in m/s^2.
+
+Allowed range is 0 to 30.
+
+Adds speed-independent coast deceleration on lift-off.
+
+### `coast_linear_per_mps`
+
+Linear chassis coast drag term per m/s.
+
+Allowed range is 0 to 3.
+
+Adds speed-dependent extra coast deceleration. Higher values increase lift-off slowdown as speed rises.
+
+<a id="sec-4-15-torque-curve-preset-profiles"></a>
+## 4.15 Torque Curve Preset Profiles
+
+This section documents intended behavior of `[torque_curve] preset` values. Use these as starting points, then override with explicit `NNNNrpm` keys where needed.
+
+Preset coefficients used by the runtime:
+
+| preset | rise_exponent | fall_exponent | idle_factor | redline_factor | practical character |
+|---|---:|---:|---:|---:|---|
+| `city_compact` | 1.00 | 1.55 | 0.42 | 0.58 | modest peak, practical low-mid |
+| `family_sedan` | 1.05 | 1.35 | 0.38 | 0.64 | balanced and forgiving |
+| `sport_sedan` | 1.15 | 1.25 | 0.34 | 0.70 | broader mid-high pull |
+| `sport_coupe` | 1.24 | 1.18 | 0.32 | 0.74 | more top-end bias |
+| `grand_tourer` | 1.08 | 1.16 | 0.36 | 0.73 | broad high-speed pull |
+| `hot_hatch` | 1.10 | 1.28 | 0.35 | 0.68 | lively midrange response |
+| `muscle_v8` | 0.90 | 1.22 | 0.44 | 0.66 | stronger low-mid character |
+| `supercar_na` | 1.34 | 1.10 | 0.28 | 0.77 | naturally aspirated high-rev |
+| `supercar_turbo` | 0.88 | 1.40 | 0.34 | 0.66 | boosted midrange + top pull |
+| `rally_turbo` | 0.86 | 1.38 | 0.36 | 0.64 | punchy boost-oriented midrange |
+| `diesel_suv` | 0.80 | 1.90 | 0.50 | 0.56 | early heavy torque, calmer top |
+| `diesel_truck` | 0.66 | 2.05 | 0.58 | 0.52 | very early torque and clear fade |
+| `supersport_bike` | 1.62 | 1.14 | 0.26 | 0.69 | very peaky high-rev behavior |
+| `naked_bike` | 1.45 | 1.20 | 0.30 | 0.67 | sporty but broader than supersport |
+
+Practical preset selection matrix:
+
+| if your target feel is... | first preset to try | common first override zone |
+|---|---|---|
+| calm launch, smooth everyday response | `family_sedan` | raise/trim 1500 to 2800 RPM |
+| lively city acceleration without supercar top-end | `hot_hatch` | smooth 1800 to 3500 RPM |
+| strong low-mid push, less high-rev focus | `muscle_v8` | trim 4500 RPM to limiter |
+| high-rev naturally aspirated pull | `supercar_na` | support 3500 to 5500 RPM landings |
+| turbo-like midrange surge | `supercar_turbo` or `rally_turbo` | smooth 2200 to 4200 RPM boost band |
+| heavy diesel-like early torque and early fade | `diesel_suv` or `diesel_truck` | reduce very-low RPM spikes under 1500 |
+| very peaky bike behavior | `supersport_bike` | ensure enough torque below 5000 RPM for driveability |
+
+How to read the columns:
+
+- higher `rise_exponent`: slower torque climb early, more late ramp toward peak (peaky feel)
+- lower `rise_exponent`: earlier low-mid torque build (stronger out of lower RPM)
+- higher `fall_exponent`: holds near peak longer before dropping close to limiter
+- lower `fall_exponent`: begins fading earlier after peak
+- higher `idle_factor`: stronger torque floor if `idle_torque` is omitted
+- higher `redline_factor`: stronger top-end if `redline_torque` is omitted
+
+Important: `idle_factor` and `redline_factor` are only fallback multipliers. If you set `idle_torque` and `redline_torque` explicitly, those explicit values dominate.
+
+Preset tuning workflow in one pass:
+
+1. choose one preset only
+2. set anchors (`peak_torque`, `peak_torque_rpm`, `idle_torque`, `redline_torque`)
+3. add minimal explicit points around launch RPM, common shift-landing RPM, and upper pull/fade RPM
+4. verify with launch, midrange, and top-speed pull checks
+5. if behavior is still far off, switch preset family before overfitting many manual points
 
 <a id="sec-5-class-baseline-presets"></a>
 ## 5. Class Baseline Presets (Steering, Tire Model, Dynamics)

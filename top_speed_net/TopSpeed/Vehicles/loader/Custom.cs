@@ -43,6 +43,8 @@ namespace TopSpeed.Vehicles.Loader
 
             def.SetSoundPath(VehicleAction.Engine, Sound.ResolveCustom(parsed.Sounds.Engine, builtinRoot, parsed.SourceDirectory, VehicleAction.Engine));
             def.SetSoundPath(VehicleAction.Start, Sound.ResolveCustom(parsed.Sounds.Start, builtinRoot, parsed.SourceDirectory, VehicleAction.Start));
+            if (!string.IsNullOrWhiteSpace(parsed.Sounds.Stop))
+                def.SetSoundPath(VehicleAction.Stop, Sound.ResolveCustom(parsed.Sounds.Stop!, builtinRoot, parsed.SourceDirectory, VehicleAction.Stop));
             def.SetSoundPath(VehicleAction.Horn, Sound.ResolveCustom(parsed.Sounds.Horn, builtinRoot, parsed.SourceDirectory, VehicleAction.Horn));
             if (!string.IsNullOrWhiteSpace(parsed.Sounds.Throttle))
                 def.SetSoundPath(VehicleAction.Throttle, Sound.ResolveCustom(parsed.Sounds.Throttle!, builtinRoot, parsed.SourceDirectory, VehicleAction.Throttle));
@@ -55,3 +57,4 @@ namespace TopSpeed.Vehicles.Loader
         }
     }
 }
+

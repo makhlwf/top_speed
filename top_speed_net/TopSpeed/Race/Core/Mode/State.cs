@@ -66,7 +66,7 @@ namespace TopSpeed.Race
             }
 
             _car.ManualTransmission = false;
-            _car.SetOverrideController(FinishLockController);
+            _car.SetOverrideController(_finishLockController);
             _car.SetNeutralGear();
             _car.Quiet();
             _car.Stop();
@@ -131,4 +131,5 @@ namespace TopSpeed.Race
         }
     }
 }
+
 

@@ -35,14 +35,14 @@ namespace TopSpeed.Server
             var serverRelease = $"{ReleaseVersionInfo.ServerYear}.{ReleaseVersionInfo.ServerMonth}.{ReleaseVersionInfo.ServerDay} (r{ReleaseVersionInfo.ServerRevision})";
             if (loggingEnabled)
             {
-                logger.InfoAlways(LocalizationService.Format(
+                logger.Raw(LocalizationService.Format(
                     LocalizationService.Mark("Logging enabled. Levels: {0}. File: {1}."),
                     FormatLogLevels(levels),
                     string.IsNullOrWhiteSpace(logFile)
                         ? LocalizationService.Translate(LocalizationService.Mark("none"))
                         : logFile));
-                logger.InfoAlways(LocalizationService.Format(LocalizationService.Mark("Server release: {0}."), serverRelease));
-                logger.InfoAlways(LocalizationService.Format(LocalizationService.Mark("Protocol current: {0}. Supported: {1}."), ProtocolProfile.Current, ProtocolProfile.ServerSupported));
+                logger.Raw(LocalizationService.Format(LocalizationService.Mark("Server release: {0}."), serverRelease));
+                logger.Raw(LocalizationService.Format(LocalizationService.Mark("Protocol current: {0}. Supported: {1}."), ProtocolProfile.Current, ProtocolProfile.ServerSupported));
                 logger.Info(LocalizationService.Mark("TopSpeed Server starting."));
             }
             else

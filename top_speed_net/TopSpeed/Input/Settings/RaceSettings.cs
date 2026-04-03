@@ -1,7 +1,7 @@
-using SharpDX.DirectInput;
+using Key = TopSpeed.Input.InputKey;
 using System;
 using System.Collections.Generic;
-using TopSpeed.Input.Devices.Joystick;
+using TopSpeed.Input.Devices.Controller;
 
 namespace TopSpeed.Input
 {
@@ -13,29 +13,29 @@ namespace TopSpeed.Input
         }
 
         public string Language { get; set; } = "en";
-        public JoystickAxisOrButton JoystickLeft { get; set; }
-        public JoystickAxisOrButton JoystickRight { get; set; }
-        public JoystickAxisOrButton JoystickThrottle { get; set; }
-        public JoystickAxisOrButton JoystickBrake { get; set; }
-        public JoystickAxisOrButton JoystickClutch { get; set; }
-        public JoystickAxisOrButton JoystickGearUp { get; set; }
-        public JoystickAxisOrButton JoystickGearDown { get; set; }
-        public JoystickAxisOrButton JoystickHorn { get; set; }
-        public JoystickAxisOrButton JoystickRequestInfo { get; set; }
-        public JoystickAxisOrButton JoystickCurrentGear { get; set; }
-        public JoystickAxisOrButton JoystickCurrentLapNr { get; set; }
-        public JoystickAxisOrButton JoystickCurrentRacePerc { get; set; }
-        public JoystickAxisOrButton JoystickCurrentLapPerc { get; set; }
-        public JoystickAxisOrButton JoystickCurrentRaceTime { get; set; }
-        public JoystickAxisOrButton JoystickStartEngine { get; set; }
-        public JoystickAxisOrButton JoystickReportDistance { get; set; }
-        public JoystickAxisOrButton JoystickReportSpeed { get; set; }
-        public JoystickAxisOrButton JoystickTrackName { get; set; }
-        public JoystickAxisOrButton JoystickPause { get; set; }
-        public PedalInvertMode JoystickThrottleInvertMode { get; set; }
-        public PedalInvertMode JoystickBrakeInvertMode { get; set; }
-        public int JoystickSteeringDeadZone { get; set; }
-        public JoystickStateSnapshot JoystickCenter { get; set; }
+        public AxisOrButton ControllerLeft { get; set; }
+        public AxisOrButton ControllerRight { get; set; }
+        public AxisOrButton ControllerThrottle { get; set; }
+        public AxisOrButton ControllerBrake { get; set; }
+        public AxisOrButton ControllerClutch { get; set; }
+        public AxisOrButton ControllerGearUp { get; set; }
+        public AxisOrButton ControllerGearDown { get; set; }
+        public AxisOrButton ControllerHorn { get; set; }
+        public AxisOrButton ControllerRequestInfo { get; set; }
+        public AxisOrButton ControllerCurrentGear { get; set; }
+        public AxisOrButton ControllerCurrentLapNr { get; set; }
+        public AxisOrButton ControllerCurrentRacePerc { get; set; }
+        public AxisOrButton ControllerCurrentLapPerc { get; set; }
+        public AxisOrButton ControllerCurrentRaceTime { get; set; }
+        public AxisOrButton ControllerStartEngine { get; set; }
+        public AxisOrButton ControllerReportDistance { get; set; }
+        public AxisOrButton ControllerReportSpeed { get; set; }
+        public AxisOrButton ControllerTrackName { get; set; }
+        public AxisOrButton ControllerPause { get; set; }
+        public PedalInvertMode ControllerThrottleInvertMode { get; set; }
+        public PedalInvertMode ControllerBrakeInvertMode { get; set; }
+        public int ControllerSteeringDeadZone { get; set; }
+        public State ControllerCenter { get; set; }
 
         public Key KeyLeft { get; set; }
         public Key KeyRight { get; set; }
@@ -90,38 +90,38 @@ namespace TopSpeed.Input
         public Dictionary<string, Key> ShortcutKeyBindings { get; set; } = new Dictionary<string, Key>(StringComparer.Ordinal);
         public List<SavedServerEntry> SavedServers { get; set; } = new List<SavedServerEntry>();
 
-        public bool UseJoystick
+        public bool UseController
         {
             get => DeviceMode != InputDeviceMode.Keyboard;
-            set => DeviceMode = value ? InputDeviceMode.Joystick : InputDeviceMode.Keyboard;
+            set => DeviceMode = value ? InputDeviceMode.Controller : InputDeviceMode.Keyboard;
         }
 
         public void RestoreDefaults()
         {
             Language = "en";
-            JoystickLeft = JoystickAxisOrButton.AxisXNeg;
-            JoystickRight = JoystickAxisOrButton.AxisXPos;
-            JoystickThrottle = JoystickAxisOrButton.AxisRzPos;
-            JoystickBrake = JoystickAxisOrButton.AxisZPos;
-            JoystickClutch = JoystickAxisOrButton.AxisSlider1Pos;
-            JoystickGearUp = JoystickAxisOrButton.Button2;
-            JoystickGearDown = JoystickAxisOrButton.Button1;
-            JoystickHorn = JoystickAxisOrButton.Button3;
-            JoystickRequestInfo = JoystickAxisOrButton.Button4;
-            JoystickCurrentGear = JoystickAxisOrButton.Button5;
-            JoystickCurrentLapNr = JoystickAxisOrButton.Button6;
-            JoystickCurrentRacePerc = JoystickAxisOrButton.Button7;
-            JoystickCurrentLapPerc = JoystickAxisOrButton.Button8;
-            JoystickCurrentRaceTime = JoystickAxisOrButton.Button9;
-            JoystickStartEngine = JoystickAxisOrButton.Button10;
-            JoystickReportDistance = JoystickAxisOrButton.Button11;
-            JoystickReportSpeed = JoystickAxisOrButton.Button12;
-            JoystickTrackName = JoystickAxisOrButton.Button13;
-            JoystickPause = JoystickAxisOrButton.Button14;
-            JoystickThrottleInvertMode = PedalInvertMode.Auto;
-            JoystickBrakeInvertMode = PedalInvertMode.Auto;
-            JoystickSteeringDeadZone = 1;
-            JoystickCenter = default;
+            ControllerLeft = AxisOrButton.AxisXNeg;
+            ControllerRight = AxisOrButton.AxisXPos;
+            ControllerThrottle = AxisOrButton.AxisRzPos;
+            ControllerBrake = AxisOrButton.AxisZPos;
+            ControllerClutch = AxisOrButton.AxisSlider1Pos;
+            ControllerGearUp = AxisOrButton.Button2;
+            ControllerGearDown = AxisOrButton.Button1;
+            ControllerHorn = AxisOrButton.Button3;
+            ControllerRequestInfo = AxisOrButton.Button4;
+            ControllerCurrentGear = AxisOrButton.Button5;
+            ControllerCurrentLapNr = AxisOrButton.Button6;
+            ControllerCurrentRacePerc = AxisOrButton.Button7;
+            ControllerCurrentLapPerc = AxisOrButton.Button8;
+            ControllerCurrentRaceTime = AxisOrButton.Button9;
+            ControllerStartEngine = AxisOrButton.Button10;
+            ControllerReportDistance = AxisOrButton.Button11;
+            ControllerReportSpeed = AxisOrButton.Button12;
+            ControllerTrackName = AxisOrButton.Button13;
+            ControllerPause = AxisOrButton.Button14;
+            ControllerThrottleInvertMode = PedalInvertMode.Auto;
+            ControllerBrakeInvertMode = PedalInvertMode.Auto;
+            ControllerSteeringDeadZone = 1;
+            ControllerCenter = default;
 
             KeyLeft = Key.Left;
             KeyRight = Key.Right;
@@ -192,3 +192,5 @@ namespace TopSpeed.Input
         }
     }
 }
+
+

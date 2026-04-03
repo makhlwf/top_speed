@@ -108,9 +108,9 @@ namespace TopSpeed.Server.Network
             bot.HornSecondsRemaining = 0f;
             bot.BackfirePulseSeconds = 0f;
             bot.BackfireArmed = true;
-            RecordRaceFinish(room, bot.PlayerNumber, CaptureFinishTimeMs(room));
-
-            SendToRoomOnStream(room, PacketSerializer.WritePlayer(Command.PlayerFinished, bot.Id, bot.PlayerNumber), PacketStream.RaceEvent);
+            var finishTimeMs = _race.CaptureFinishTimeMs(room);
+            if (_race.TryMarkParticipantFinished(room, bot.Id, bot.PlayerNumber, finishTimeMs, out var finishOrder))
+                _notify.RacePlayerFinished(room, bot.Id, bot.PlayerNumber, finishOrder, finishTimeMs);
             _botFinishEvents++;
             _logger.Debug(LocalizationService.Format(
                 LocalizationService.Mark("Bot finished: room={0}, bot={1}, number={2}, place={3}."),
@@ -118,7 +118,9 @@ namespace TopSpeed.Server.Network
                 bot.Id,
                 bot.PlayerNumber,
                 room.RaceResults.Count));
-            UpdateRaceStopState(room, 0f);
+            _race.UpdateStopState(room, 0f);
         }
     }
 }
+
+

@@ -39,3 +39,4 @@ namespace TopSpeed.Core.Settings
         public bool SettingsFileMissing { get; }
     }
 }
+

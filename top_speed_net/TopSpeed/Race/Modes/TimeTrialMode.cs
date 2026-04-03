@@ -5,6 +5,7 @@ using TopSpeed.Input;
 using TopSpeed.Localization;
 using TopSpeed.Race.Events;
 using TopSpeed.Race.TimeTrial;
+using TopSpeed.Runtime;
 using TopSpeed.Speech;
 using TopSpeed.Tracks;
 using TopSpeed.Vehicles;
@@ -27,8 +28,9 @@ namespace TopSpeed.Race
             int nrOfLaps,
             int vehicle,
             string? vehicleFile,
-            IVibrationDevice? vibrationDevice)
-            : base(audio, speech, settings, input, track, automaticTransmission, nrOfLaps, vehicle, vehicleFile, vibrationDevice)
+            IVibrationDevice? vibrationDevice,
+            IFileDialogs fileDialogs)
+            : base(audio, speech, settings, input, track, automaticTransmission, nrOfLaps, vehicle, vehicleFile, vibrationDevice, fileDialogs)
         {
             _scores = ScoreStore.CreateDefault();
         }
@@ -110,5 +112,7 @@ namespace TopSpeed.Race
         }
     }
 }
+
+
 
 

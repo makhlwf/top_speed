@@ -1,5 +1,6 @@
 using TopSpeed.Physics.Powertrain;
 using TopSpeed.Physics.Torque;
+using TopSpeed.Vehicles;
 using Xunit;
 
 namespace TopSpeed.Tests.Physics
@@ -75,6 +76,95 @@ namespace TopSpeed.Tests.Physics
         }
 
         [Fact]
+        public void LongitudinalStep_DrivePath_MatchesDriveAccelIntegration()
+        {
+            var config = BuildConfiguration();
+            const float elapsed = 0.05f;
+            const float speedMps = 12f;
+            const float throttle = 0.75f;
+            const float grip = 0.92f;
+            const float traction = 1f;
+            const float coupling = 0.84f;
+
+            var expectedAccelMps2 = Calculator.DriveAccel(
+                config,
+                gear: 2,
+                speedMps: speedMps,
+                throttle: throttle,
+                surfaceTractionModifier: traction,
+                longitudinalGripFactor: grip) * coupling;
+            var expectedSpeedDeltaKph = expectedAccelMps2 * elapsed * 3.6f;
+
+            var result = LongitudinalStep.Compute(
+                new LongitudinalStepInput(
+                    config,
+                    elapsedSeconds: elapsed,
+                    speedMps: speedMps,
+                    throttle: throttle,
+                    brake: 0f,
+                    surfaceTractionModifier: traction,
+                    surfaceDecelerationModifier: 1f,
+                    longitudinalGripFactor: grip,
+                    gear: 2,
+                    inReverse: false,
+                    drivelineCouplingFactor: coupling,
+                    creepAccelerationMps2: 0f,
+                    currentEngineRpm: 2000f,
+                    requestDrive: true,
+                    requestBrake: false,
+                    applyEngineBraking: false));
+
+            Assert.Equal(expectedSpeedDeltaKph, result.SpeedDeltaKph, 4);
+            Assert.Equal(expectedAccelMps2, result.DriveAccelerationMps2, 4);
+            Assert.True(result.CoupledDriveRpm >= config.IdleRpm);
+        }
+
+        [Fact]
+        public void LongitudinalStep_CoastPath_MatchesCombinedDecelModel()
+        {
+            var config = BuildConfiguration();
+            const float elapsed = 0.05f;
+            const float speedMps = 50f / 3.6f;
+            var engineRpm = Calculator.RpmAtSpeed(config, speedMps, gear: 3);
+            var passiveDecel = Calculator.PassiveResistanceDecelKph(config, speedMps, 1f);
+            var chassisDecel = Calculator.ChassisCoastDecelKph(config, speedMps, 1f);
+            var engineBrakeDecel = Calculator.EngineBrakeDecelKph(
+                config,
+                gear: 3,
+                inReverse: false,
+                speedMps: speedMps,
+                surfaceDecelerationModifier: 1f,
+                currentEngineRpm: engineRpm);
+            var brakeDecel = Calculator.BrakeDecelKph(config, brakeInput: 0.35f, surfaceDecelerationModifier: 1f);
+            var expectedTotalDecel = passiveDecel + chassisDecel + engineBrakeDecel + brakeDecel;
+            var expectedSpeedDeltaKph = -expectedTotalDecel * elapsed;
+
+            var result = LongitudinalStep.Compute(
+                new LongitudinalStepInput(
+                    config,
+                    elapsedSeconds: elapsed,
+                    speedMps: speedMps,
+                    throttle: 0f,
+                    brake: 0.35f,
+                    surfaceTractionModifier: 1f,
+                    surfaceDecelerationModifier: 1f,
+                    longitudinalGripFactor: 1f,
+                    gear: 3,
+                    inReverse: false,
+                    drivelineCouplingFactor: 1f,
+                    creepAccelerationMps2: 0f,
+                    currentEngineRpm: engineRpm,
+                    requestDrive: false,
+                    requestBrake: true,
+                    applyEngineBraking: true));
+
+            Assert.Equal(expectedSpeedDeltaKph, result.SpeedDeltaKph, 4);
+            Assert.Equal(expectedTotalDecel, result.TotalDecelKph, 4);
+            Assert.Equal(brakeDecel, result.BrakeDecelKph, 4);
+            Assert.Equal(engineBrakeDecel, result.EngineBrakeDecelKph, 4);
+        }
+
+        [Fact]
         public void EngineBrakeDecel_RisesWithHigherEngineRpm()
         {
             var config = BuildConfiguration();
@@ -95,6 +185,209 @@ namespace TopSpeed.Tests.Physics
                 currentEngineRpm: 5200f);
 
             Assert.True(highRpmDecel > lowRpmDecel);
+        }
+
+        [Fact]
+        public void EngineBrakeDecel_HigherManualGears_StayAboveRoadLoadAtLowSpeed()
+        {
+            var config = BuildConfiguration();
+            var speedMps = 45f / 3.6f;
+
+            var firstGearDecel = Calculator.EngineBrakeDecelKph(
+                config,
+                gear: 1,
+                inReverse: false,
+                speedMps: speedMps,
+                surfaceDecelerationModifier: 1f,
+                currentEngineRpm: 1700f);
+            var thirdGearDecel = Calculator.EngineBrakeDecelKph(
+                config,
+                gear: 3,
+                inReverse: false,
+                speedMps: speedMps,
+                surfaceDecelerationModifier: 1f,
+                currentEngineRpm: 1200f);
+            var passiveDecel = (Calculator.ResistiveForce(config, speedMps) / config.MassKg) * 3.6f;
+
+            Assert.True(firstGearDecel > 0f);
+            Assert.True(firstGearDecel > thirdGearDecel);
+            Assert.True(
+                thirdGearDecel > passiveDecel * 1.25f,
+                $"Expected higher-gear coast braking to stay above road-load only decel. passive={passiveDecel:0.###}, gear3={thirdGearDecel:0.###}.");
+        }
+
+        [Fact]
+        public void ManualCoastSimulation_GearThree_DoesNotFreeRollAgainstRoadLoad()
+        {
+            var config = BuildConfiguration();
+            const float elapsed = 0.05f;
+            const float simulationSeconds = 2.5f;
+            var steps = (int)(simulationSeconds / elapsed);
+            var speedWithEngineBrakeKph = 50f;
+            var speedPassiveOnlyKph = 50f;
+
+            for (var i = 0; i < steps; i++)
+            {
+                var speedWithEngineBrakeMps = speedWithEngineBrakeKph / 3.6f;
+                var speedPassiveOnlyMps = speedPassiveOnlyKph / 3.6f;
+                var thirdGearRpm = Calculator.RpmAtSpeed(config, speedWithEngineBrakeMps, gear: 3);
+                var engineBrakeDecel = Calculator.EngineBrakeDecelKph(
+                    config,
+                    gear: 3,
+                    inReverse: false,
+                    speedMps: speedWithEngineBrakeMps,
+                    surfaceDecelerationModifier: 1f,
+                    currentEngineRpm: thirdGearRpm);
+                var passiveDecelWithEngine = (Calculator.ResistiveForce(config, speedWithEngineBrakeMps) / config.MassKg) * 3.6f;
+                var passiveDecelOnly = (Calculator.ResistiveForce(config, speedPassiveOnlyMps) / config.MassKg) * 3.6f;
+
+                speedWithEngineBrakeKph = System.Math.Max(0f, speedWithEngineBrakeKph - ((engineBrakeDecel + passiveDecelWithEngine) * elapsed));
+                speedPassiveOnlyKph = System.Math.Max(0f, speedPassiveOnlyKph - (passiveDecelOnly * elapsed));
+            }
+
+            var dropWithEngineBrake = 50f - speedWithEngineBrakeKph;
+            var dropPassiveOnly = 50f - speedPassiveOnlyKph;
+            Assert.True(
+                dropWithEngineBrake >= dropPassiveOnly + 3f,
+                $"Expected manual 3rd-gear coast to slow clearly more than passive road load only. withEngine={dropWithEngineBrake:0.###}, passiveOnly={dropPassiveOnly:0.###}.");
+        }
+
+        [Fact]
+        public void AutomaticMinimumCoupledRpm_NoThrottleAtStandstill_EqualsIdle()
+        {
+            var config = BuildConfiguration();
+
+            var minimumRpm = Calculator.AutomaticMinimumCoupledRpm(
+                config,
+                speedMps: 0f,
+                throttle: 0f,
+                couplingFactor: 0.25f);
+
+            Assert.Equal(config.IdleRpm, minimumRpm, 3);
+        }
+
+        [Fact]
+        public void AutomaticMinimumCoupledRpm_LaunchAssistFadesAsSpeedIncreases()
+        {
+            var config = BuildConfiguration();
+
+            var lowSpeedMinimum = Calculator.AutomaticMinimumCoupledRpm(
+                config,
+                speedMps: 2f / 3.6f,
+                throttle: 1f,
+                couplingFactor: 0.35f);
+            var highSpeedMinimum = Calculator.AutomaticMinimumCoupledRpm(
+                config,
+                speedMps: 24f / 3.6f,
+                throttle: 1f,
+                couplingFactor: 0.35f);
+
+            Assert.True(lowSpeedMinimum > config.IdleRpm);
+            Assert.True(highSpeedMinimum <= lowSpeedMinimum);
+            Assert.True(highSpeedMinimum >= config.IdleRpm);
+        }
+
+        [Fact]
+        public void AutomaticMinimumCoupledRpm_FullThrottle_HoldsLaunchBandBeforeFade()
+        {
+            var config = BuildConfiguration();
+
+            var earlyMinimum = Calculator.AutomaticMinimumCoupledRpm(
+                config,
+                speedMps: 2f / 3.6f,
+                throttle: 1f,
+                couplingFactor: 0.85f);
+            var launchBandMinimum = Calculator.AutomaticMinimumCoupledRpm(
+                config,
+                speedMps: 9f / 3.6f,
+                throttle: 1f,
+                couplingFactor: 0.85f);
+            var postFadeMinimum = Calculator.AutomaticMinimumCoupledRpm(
+                config,
+                speedMps: 22f / 3.6f,
+                throttle: 1f,
+                couplingFactor: 0.85f);
+
+            Assert.True(launchBandMinimum >= earlyMinimum - 5f);
+            Assert.True(postFadeMinimum < launchBandMinimum);
+        }
+
+        [Fact]
+        public void AutomaticLaunchSimulation_FullThrottle_AvoidsMidLaunchRpmDip()
+        {
+            var config = BuildConfiguration();
+            var tuning = AutomaticDrivelineTuning.Default;
+            var state = new AutomaticDrivelineState(couplingFactor: 0f, cvtRatio: 0f);
+            const float elapsed = 0.05f;
+            const float throttle = 1f;
+            var speedMps = 0f;
+            var previousMinimum = config.IdleRpm;
+            var minimumSeenInBand = float.MaxValue;
+            var maximumSeenBeforeBand = 0f;
+            var minimumAtLaunchEntry = float.MaxValue;
+
+            for (var i = 0; i < 220; i++)
+            {
+                var minimumCoupledRpm = Calculator.AutomaticMinimumCoupledRpm(
+                    config,
+                    speedMps,
+                    throttle,
+                    state.CouplingFactor);
+
+                var output = AutomaticDrivelineModel.Step(
+                    TransmissionType.Atc,
+                    tuning,
+                    new AutomaticDrivelineInput(
+                        elapsedSeconds: elapsed,
+                        speedMps: speedMps,
+                        throttle: throttle,
+                        brake: 0f,
+                        shifting: false,
+                        wheelCircumferenceM: config.WheelRadiusM * 2f * (float)System.Math.PI,
+                        finalDriveRatio: config.FinalDriveRatio,
+                        idleRpm: config.IdleRpm,
+                        revLimiter: config.RevLimiter,
+                        launchRpm: config.LaunchRpm,
+                        currentEngineRpm: previousMinimum),
+                    state);
+
+                state = new AutomaticDrivelineState(output.CouplingFactor, state.CvtRatio);
+                previousMinimum = minimumCoupledRpm;
+
+                var speedKph = speedMps * 3.6f;
+                if (speedKph >= 2f && speedKph <= 3f && minimumCoupledRpm < minimumAtLaunchEntry)
+                    minimumAtLaunchEntry = minimumCoupledRpm;
+                if (speedKph >= 2f && speedKph <= 10f)
+                {
+                    if (minimumCoupledRpm > maximumSeenBeforeBand)
+                        maximumSeenBeforeBand = minimumCoupledRpm;
+                }
+
+                if (speedKph >= 10f && speedKph <= 14f)
+                {
+                    if (minimumCoupledRpm < minimumSeenInBand)
+                        minimumSeenInBand = minimumCoupledRpm;
+                }
+
+                var accelMps2 = Calculator.DriveAccel(
+                    config,
+                    gear: 1,
+                    speedMps: speedMps,
+                    throttle: throttle,
+                    surfaceTractionModifier: 1f,
+                    longitudinalGripFactor: 1f);
+                accelMps2 *= output.CouplingFactor;
+                if (accelMps2 < 0f)
+                    accelMps2 = 0f;
+                speedMps += accelMps2 * elapsed;
+            }
+
+            Assert.True(maximumSeenBeforeBand > 0f);
+            Assert.True(minimumSeenInBand < float.MaxValue);
+            Assert.True(minimumAtLaunchEntry > config.IdleRpm + 40f);
+            Assert.True(
+                maximumSeenBeforeBand - minimumSeenInBand <= 260f,
+                $"Expected no deep RPM valley during launch band. maxBeforeBand={maximumSeenBeforeBand:0.##}, minInBand={minimumSeenInBand:0.##}.");
         }
 
         private static Config BuildConfiguration()
@@ -138,3 +431,4 @@ namespace TopSpeed.Tests.Physics
         }
     }
 }
+

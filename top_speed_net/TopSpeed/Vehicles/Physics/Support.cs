@@ -67,21 +67,6 @@ namespace TopSpeed.Vehicles
                 surfaceDecelMod);
         }
 
-        private float CalculateEngineBrakingDecel(float surfaceDecelMod)
-        {
-            if (IsNeutralGear() || _drivelineCouplingFactor <= 0.05f)
-                return 0f;
-
-            return Calculator.EngineBrakeDecelKph(
-                _powertrainConfiguration,
-                GetDriveGear(),
-                _gear == ReverseGear,
-                _speed / 3.6f,
-                surfaceDecelMod,
-                _engine.Rpm,
-                _effectiveDriveRatioOverride > 0f ? _effectiveDriveRatioOverride : (float?)null);
-        }
-
         private float GetLapStartPosition(float position)
         {
             var lapLength = _track.Length;
@@ -104,5 +89,6 @@ namespace TopSpeed.Vehicles
         }
     }
 }
+
 
 

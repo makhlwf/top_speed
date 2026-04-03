@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using SharpDX.DirectInput;
-using TopSpeed.Input.Devices.Joystick;
+using Key = TopSpeed.Input.InputKey;
+using TopSpeed.Input.Devices.Controller;
 using TopSpeed.Localization;
 
 namespace TopSpeed.Input
@@ -17,16 +17,16 @@ namespace TopSpeed.Input
                 string label,
                 InputScope scope,
                 TriggerMode keyboardMode,
-                TriggerMode joystickMode,
+                TriggerMode controllerMode,
                 Func<Key> getKey,
                 Action<Key> setKey,
-                Func<JoystickAxisOrButton> getAxis,
-                Action<JoystickAxisOrButton> setAxis,
+                Func<AxisOrButton> getAxis,
+                Action<AxisOrButton> setAxis,
                 bool allowNumpadEnterAlias = false)
             {
                 bindings[action] = new InputActionBinding(
                     label,
-                    new InputActionMeta(scope, keyboardMode, joystickMode, allowNumpadEnterAlias),
+                    new InputActionMeta(scope, keyboardMode, controllerMode, allowNumpadEnterAlias),
                     getKey,
                     setKey,
                     getAxis,
@@ -58,3 +58,5 @@ namespace TopSpeed.Input
         }
     }
 }
+
+

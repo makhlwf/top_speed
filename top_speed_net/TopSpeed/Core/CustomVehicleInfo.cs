@@ -16,3 +16,4 @@ namespace TopSpeed.Core
         public string Description { get; }
     }
 }
+

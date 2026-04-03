@@ -1,4 +1,4 @@
-using SharpDX.DirectInput;
+using Key = TopSpeed.Input.InputKey;
 using TopSpeed.Race;
 
 namespace TopSpeed.Game
@@ -53,4 +53,6 @@ namespace TopSpeed.Game
         }
     }
 }
+
+
 

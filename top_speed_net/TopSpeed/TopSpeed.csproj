@@ -1,13 +1,51 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net472</TargetFramework>
+    <UseCurrentRuntimeIdentifier>false</UseCurrentRuntimeIdentifier>
+    <TargetFramework Condition="'$(TargetFramework)' == '' and ('$(RuntimeIdentifier)' == 'linux-x64' or '$(RuntimeIdentifier)' == 'osx-x64')">net10.0</TargetFramework>
+    <TargetFramework Condition="'$(TargetFramework)' == '' and '$(RuntimeIdentifier)' == 'win-x64'">net10.0-windows</TargetFramework>
+    <TargetFramework Condition="'$(TargetFramework)' == '' and '$(RuntimeIdentifier)' == ''">net472</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <RootNamespace>TopSpeed</RootNamespace>
     <AssemblyName>TopSpeed</AssemblyName>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net472'">
+    <UseWindowsForms>true</UseWindowsForms>
     <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="('$(TargetFramework)' == 'net10.0' or '$(TargetFramework)' == 'net10.0-windows') and '$(RuntimeIdentifier)' != ''">
+    <SelfContained>true</SelfContained>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishSingleFile>false</PublishSingleFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0' and '$(RuntimeIdentifier)' == 'linux-x64'">
+    <PublishDir>bin\Publish\linux-x64\</PublishDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0' and '$(RuntimeIdentifier)' == 'osx-x64'">
+    <PublishDir>bin\Publish\osx-x64\</PublishDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows' and '$(RuntimeIdentifier)' == 'win-x64'">
+    <PublishDir>bin\Publish\win-x64\</PublishDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows' and '$(RuntimeIdentifier)' == 'win-x64'">
+    <OutputPath>bin\$(Configuration)\net10.0\$(RuntimeIdentifier)\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,13 +56,34 @@
     <PackageReference Include="SharpDX.XInput" Version="4.2.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\TS.Audio\TS.Audio.csproj" />
-    <ProjectReference Include="..\TopSpeed.Shared\TopSpeed.Shared.csproj" />
-    <ProjectReference Include="..\Updater\Updater.csproj" ReferenceOutputAssembly="false" />
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0' or '$(TargetFramework)' == 'net10.0-windows'">
+    <PackageReference Include="Eto.Forms" Version="2.8.3" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0' and '$(RuntimeIdentifier)' == 'linux-x64'">
+    <PackageReference Include="Eto.Platform.Gtk" Version="2.8.3" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0' and '$(RuntimeIdentifier)' == 'osx-x64'">
+    <PackageReference Include="Eto.Platform.Mac64" Version="2.8.3" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows' and '$(RuntimeIdentifier)' == 'win-x64'">
+    <PackageReference Include="Eto.Platform.Windows" Version="2.8.3" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CrossSpeak\CrossSpeak.csproj" />
+    <ProjectReference Include="..\TS.Audio\TS.Audio.csproj" />
+    <ProjectReference Include="..\TopSpeed.Shared\TopSpeed.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <ProjectReference Include="..\Updater\Updater.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <Compile Remove="Window\Eto\**\*.cs" />
     <Compile Remove="ThirdParty\Tolk\**\*.cs" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Net.Http" />
@@ -32,15 +91,63 @@
     <Reference Include="System.Speech" />
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
-  <ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0' or '$(TargetFramework)' == 'net10.0-windows'">
+    <Compile Remove="Window\WinForms\**\*.cs" />
+    <Compile Remove="Window\GameWindow.cs" />
+    <Compile Remove="Input\Devices\Keyboard\Backends\DirectInput\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472' or ('$(TargetFramework)' == 'net10.0-windows' and '$(RuntimeIdentifier)' == 'win-x64')">
+    <Content Include="..\CrossSpeak\lib\windows\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>lib\screen-reader-libs\windows\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+    </Content>
+    <Content Include="ThirdParty\win-x64\phonon.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>lib\phonon.dll</TargetPath>
+    </Content>
     <Content Include="..\MiniAudioExNET\runtimes\win-x64\native\miniaudioex.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>miniaudioex.dll</Link>
+      <TargetPath>lib\miniaudioex.dll</TargetPath>
     </Content>
-    <Content Include="ThirdParty\*.dll">
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0' and '$(RuntimeIdentifier)' == 'linux-x64'">
+    <Content Include="..\CrossSpeak\lib\linux\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>%(Filename)%(Extension)</Link>
+      <TargetPath>lib\screen-reader-libs\linux\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
     </Content>
+    <Content Include="ThirdParty\linux-x64\libphonon.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>lib\libphonon.so</TargetPath>
+    </Content>
+    <Content Include="..\MiniAudioExNET\runtimes\linux-x64\native\libminiaudioex.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>lib\libminiaudioex.so</TargetPath>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0' and '$(RuntimeIdentifier)' == 'osx-x64'">
+    <Content Include="..\CrossSpeak\lib\macos\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>lib\screen-reader-libs\macos\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+    </Content>
+    <Content Include="ThirdParty\osx\libphonon.dylib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>lib\libphonon.dylib</TargetPath>
+    </Content>
+    <Content Include="ThirdParty\osx\phonon.bundle\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>lib\phonon.bundle\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+    </Content>
+    <Content Include="..\MiniAudioExNET\runtimes\osx-x64\native\libminiaudioex.dylib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>lib\libminiaudioex.dylib</TargetPath>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Effects\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>Effects\%(RecursiveDir)%(Filename)%(Extension)</Link>
@@ -66,9 +173,19 @@
     <Exec Command="python &quot;$(MSBuildThisFileDirectory)..\..\docs\render_docs.py&quot;" ContinueOnError="WarnAndContinue" />
   </Target>
 
-  <Target Name="CopyUpdater" AfterTargets="Build">
+  <Target Name="CopyUpdater" AfterTargets="Build" Condition="'$(TargetFramework)' == 'net472'">
     <MSBuild Projects="..\Updater\Updater.csproj" Targets="Build" Properties="Configuration=$(Configuration);Platform=$(Platform)" />
     <Copy SourceFiles="..\Updater\bin\$(Configuration)\net472\Updater.exe" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
     <Copy SourceFiles="..\Updater\bin\$(Configuration)\net472\Updater.pdb" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" Condition="Exists('..\Updater\bin\$(Configuration)\net472\Updater.pdb')" />
   </Target>
+
+  <Target Name="ValidateNet10RuntimeIdentifier" BeforeTargets="Build;Publish" Condition="'$(TargetFramework)' == 'net10.0' and '$(RuntimeIdentifier)' == ''">
+    <Error Text="net10.0 must be built/published with a runtime identifier (linux-x64 or osx-x64)." />
+  </Target>
+
+  <Target Name="ValidateNet10WindowsRuntimeIdentifier" BeforeTargets="Build;Publish" Condition="'$(TargetFramework)' == 'net10.0-windows' and '$(RuntimeIdentifier)' == ''">
+    <Error Text="net10.0-windows must be built/published with runtime identifier win-x64." />
+  </Target>
+
+  <Target Name="MacCopyPublishFiles" Condition="'$(TargetFramework)' == 'net10.0' and '$(RuntimeIdentifier)' == 'osx-x64'" />
 </Project>

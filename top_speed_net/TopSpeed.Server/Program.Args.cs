@@ -11,7 +11,7 @@ namespace TopSpeed.Server
     {
         private static LogLevel ParseLogLevels(string[] args)
         {
-            var value = GetArgumentValue(args, "--log");
+            var value = GetFirstArgumentValue(args, "--log-level", "--log");
             if (string.IsNullOrWhiteSpace(value))
                 return LogLevel.Error | LogLevel.Warning | LogLevel.Info;
 
@@ -66,7 +66,8 @@ namespace TopSpeed.Server
             ConsoleSink.WriteLine(LocalizationService.Mark("  --port <number>         Server port (1-65535)."));
             ConsoleSink.WriteLine(LocalizationService.Mark("  --max-players <number>  Max connected players (1-255)."));
             ConsoleSink.WriteLine(LocalizationService.Mark("  --motd <text>           Message of the day."));
-            ConsoleSink.WriteLine(LocalizationService.Mark("  --log <levels>          Comma-separated levels: error,warning,info,debug,all."));
+            ConsoleSink.WriteLine(LocalizationService.Mark("  --log-level <levels>    Comma-separated levels: error,warning,info,debug,all."));
+            ConsoleSink.WriteLine(LocalizationService.Mark("  --log <levels>          Alias for --log-level."));
             ConsoleSink.WriteLine(LocalizationService.Mark("  --log-file <path>       Output log file path (e.g. log.txt)."));
             ConsoleSink.WriteLine(LocalizationService.Mark("  -h, --help              Show this help."));
         }
@@ -106,6 +107,21 @@ namespace TopSpeed.Server
 
                 if (arg.StartsWith(key + "=", StringComparison.OrdinalIgnoreCase))
                     return arg.Substring(key.Length + 1);
+            }
+
+            return null;
+        }
+
+        private static string? GetFirstArgumentValue(string[] args, params string[] keys)
+        {
+            if (keys == null || keys.Length == 0)
+                return null;
+
+            for (var i = 0; i < keys.Length; i++)
+            {
+                var value = GetArgumentValue(args, keys[i]);
+                if (!string.IsNullOrWhiteSpace(value))
+                    return value;
             }
 
             return null;

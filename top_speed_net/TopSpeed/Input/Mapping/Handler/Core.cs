@@ -1,14 +1,14 @@
 using System;
-using SharpDX.DirectInput;
+using Key = TopSpeed.Input.InputKey;
 using TopSpeed.Localization;
 using TopSpeed.Speech;
-using TopSpeed.Input.Devices.Joystick;
+using TopSpeed.Input.Devices.Controller;
 
 namespace TopSpeed.Input
 {
     internal sealed partial class InputMappingHandler
     {
-        private readonly InputManager _input;
+        private readonly IInputService _input;
         private readonly RaceInput _raceInput;
         private readonly RaceSettings _settings;
         private readonly SpeechService _speech;
@@ -18,11 +18,11 @@ namespace TopSpeed.Input
         private InputMappingMode _mappingMode;
         private InputAction _mappingAction;
         private bool _mappingNeedsInstruction;
-        private JoystickStateSnapshot _mappingPrevJoystick;
-        private bool _mappingHasPrevJoystick;
+        private State _mappingPrevController;
+        private bool _mappingHasPrevController;
 
         public InputMappingHandler(
-            InputManager input,
+            IInputService input,
             RaceInput raceInput,
             RaceSettings settings,
             SpeechService speech,
@@ -39,11 +39,11 @@ namespace TopSpeed.Input
 
         public void BeginMapping(InputMappingMode mode, InputAction action)
         {
-            if (mode == InputMappingMode.Joystick)
+            if (mode == InputMappingMode.Controller)
             {
                 if (_input.VibrationDevice == null || !_input.VibrationDevice.IsAvailable)
                 {
-                    _speech.Speak(LocalizationService.Mark("No joystick detected."));
+                    _speech.Speak(LocalizationService.Mark("No controller detected."));
                     return;
                 }
             }
@@ -51,7 +51,7 @@ namespace TopSpeed.Input
             _mappingActive = true;
             _mappingMode = mode;
             _mappingAction = action;
-            _mappingHasPrevJoystick = false;
+            _mappingHasPrevController = false;
             _mappingNeedsInstruction = true;
         }
 
@@ -77,7 +77,7 @@ namespace TopSpeed.Input
             if (_mappingMode == InputMappingMode.Keyboard)
                 TryCaptureKeyboardMapping();
             else
-                TryCaptureJoystickMapping();
+                TryCaptureControllerMapping();
         }
 
         public string FormatMappingValue(InputAction action, InputMappingMode mode)
@@ -88,3 +88,6 @@ namespace TopSpeed.Input
         }
     }
 }
+
+
+

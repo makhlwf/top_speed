@@ -1,5 +1,5 @@
 using System;
-using SharpDX.DirectInput;
+using Key = TopSpeed.Input.InputKey;
 using TopSpeed.Input;
 using TopSpeed.Shortcuts;
 
@@ -7,7 +7,7 @@ namespace TopSpeed.Menu
 {
     internal sealed partial class MenuManager
     {
-        public MenuAction Update(IGameInput input)
+        public MenuAction Update(IInputService input)
         {
             if (_stack.Count == 0)
                 return MenuAction.None;
@@ -46,7 +46,7 @@ namespace TopSpeed.Menu
             return item.Action;
         }
 
-        private bool TryHandleShortcut(IGameInput input, MenuScreen current)
+        private bool TryHandleShortcut(IInputService input, MenuScreen current)
         {
             var context = new ShortcutContext(current.Id, current.ActiveViewId);
             if (!_shortcutCatalog.TryResolveTriggeredAction(input, in context, out var action))
@@ -81,4 +81,7 @@ namespace TopSpeed.Menu
         }
     }
 }
+
+
+
 
