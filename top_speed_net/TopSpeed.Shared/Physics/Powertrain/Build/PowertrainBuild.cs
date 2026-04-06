@@ -7,8 +7,12 @@ namespace TopSpeed.Physics.Powertrain
         public static BuildResult Create(in BuildInput input)
         {
             var deceleration = Math.Max(0.01f, input.Deceleration);
-            var coastDragBaseMps2 = input.CoastDragBaseMps2 >= 0f ? input.CoastDragBaseMps2 : (deceleration * 6.5f);
-            var coastDragLinearPerMps = input.CoastDragLinearPerMps >= 0f ? input.CoastDragLinearPerMps : (deceleration * 0.08f);
+            var coastDragBaseMps2 = input.CoastDragBaseMps2 >= 0f
+                ? input.CoastDragBaseMps2
+                : Math.Min(0.18f, Math.Max(0.08f, deceleration * 0.50f));
+            var coastDragLinearPerMps = input.CoastDragLinearPerMps >= 0f
+                ? input.CoastDragLinearPerMps
+                : Math.Min(0.010f, Math.Max(0.003f, deceleration * 0.015f));
             var frictionLinearNmPerKrpm = input.FrictionLinearNmPerKrpm >= 0f ? input.FrictionLinearNmPerKrpm : 0f;
             var frictionQuadraticNmPerKrpm2 = input.FrictionQuadraticNmPerKrpm2 >= 0f ? input.FrictionQuadraticNmPerKrpm2 : 0f;
             var idleControlWindowRpm = input.IdleControlWindowRpm >= 0f ? input.IdleControlWindowRpm : 150f;

@@ -1,0 +1,1112 @@
+﻿[
+  [
+    {
+      Vehicle: Nissan GT-R Nismo,
+      FirstKphRpm: 1078.7,
+      MaxRpmBeforeBand: 2838.7,
+      MinRpmInBand: 2899.0,
+      Samples: [
+        {
+          SpeedKph: 0.34,
+          Rpm: 967.2,
+          Coupling: 0.94,
+          Gear: 1
+        },
+        {
+          Step: 20,
+          SpeedKph: 7.45,
+          Rpm: 2281.9,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 40,
+          SpeedKph: 14.67,
+          Rpm: 3232.7,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 60,
+          SpeedKph: 21.88,
+          Rpm: 3374.1,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 80,
+          SpeedKph: 30.02,
+          Rpm: 4315.2,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 100,
+          SpeedKph: 39.86,
+          Rpm: 5289.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 120,
+          SpeedKph: 49.19,
+          Rpm: 6214.4,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 140,
+          SpeedKph: 57.47,
+          Rpm: 7026.6,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 160,
+          SpeedKph: 64.68,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 180,
+          SpeedKph: 70.93,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 200,
+          SpeedKph: 76.96,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 220,
+          SpeedKph: 82.98,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 240,
+          SpeedKph: 88.98,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 260,
+          SpeedKph: 94.96,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 280,
+          SpeedKph: 100.92,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 300,
+          SpeedKph: 106.87,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 320,
+          SpeedKph: 112.78,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 340,
+          SpeedKph: 118.68,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 360,
+          SpeedKph: 124.55,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 380,
+          SpeedKph: 130.4,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 400,
+          SpeedKph: 136.22,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 420,
+          SpeedKph: 142.01,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 440,
+          SpeedKph: 147.77,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 460,
+          SpeedKph: 153.51,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 480,
+          SpeedKph: 159.21,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 500,
+          SpeedKph: 164.88,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 519,
+          SpeedKph: 170.24,
+          Rpm: 7600.0,
+          Coupling: 1.0,
+          Gear: 1
+        }
+      ]
+    },
+    {
+      Vehicle: Porsche 911 GT3 RS,
+      FirstKphRpm: 1086.6,
+      MaxRpmBeforeBand: 2780.5,
+      MinRpmInBand: 2821.1,
+      Samples: [
+        {
+          SpeedKph: 0.27,
+          Rpm: 993.2,
+          Coupling: 0.94,
+          Gear: 1
+        },
+        {
+          Step: 20,
+          SpeedKph: 5.87,
+          Rpm: 1877.2,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 40,
+          SpeedKph: 11.57,
+          Rpm: 2945.4,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 60,
+          SpeedKph: 17.26,
+          Rpm: 2783.2,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 80,
+          SpeedKph: 22.96,
+          Rpm: 3190.1,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 100,
+          SpeedKph: 29.01,
+          Rpm: 4025.1,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 120,
+          SpeedKph: 36.21,
+          Rpm: 5014.8,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 140,
+          SpeedKph: 44.81,
+          Rpm: 6186.9,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 160,
+          SpeedKph: 54.56,
+          Rpm: 7358.9,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 180,
+          SpeedKph: 63.01,
+          Rpm: 8307.2,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 200,
+          SpeedKph: 69.48,
+          Rpm: 8500.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 220,
+          SpeedKph: 75.5,
+          Rpm: 8500.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 240,
+          SpeedKph: 81.51,
+          Rpm: 8500.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 260,
+          SpeedKph: 87.49,
+          Rpm: 8500.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 280,
+          SpeedKph: 93.45,
+          Rpm: 8500.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 300,
+          SpeedKph: 99.39,
+          Rpm: 8500.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 320,
+          SpeedKph: 105.3,
+          Rpm: 8500.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 340,
+          SpeedKph: 111.19,
+          Rpm: 8500.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 360,
+          SpeedKph: 117.05,
+          Rpm: 8500.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 380,
+          SpeedKph: 122.88,
+          Rpm: 8500.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 400,
+          SpeedKph: 128.67,
+          Rpm: 8500.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 420,
+          SpeedKph: 134.44,
+          Rpm: 8500.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 440,
+          SpeedKph: 140.17,
+          Rpm: 8500.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 460,
+          SpeedKph: 145.87,
+          Rpm: 8500.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 480,
+          SpeedKph: 151.53,
+          Rpm: 8500.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 500,
+          SpeedKph: 157.16,
+          Rpm: 8500.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 519,
+          SpeedKph: 162.46,
+          Rpm: 8500.0,
+          Coupling: 1.0,
+          Gear: 1
+        }
+      ]
+    },
+    {
+      Vehicle: Toyota Camry,
+      FirstKphRpm: 901.3,
+      MaxRpmBeforeBand: 2121.4,
+      MinRpmInBand: 2130.0,
+      Samples: [
+        {
+          SpeedKph: 0.23,
+          Rpm: 730.0,
+          Coupling: 0.904,
+          Gear: 1
+        },
+        {
+          Step: 20,
+          SpeedKph: 2.35,
+          Rpm: 1212.9,
+          Coupling: 0.36,
+          Gear: 1
+        },
+        {
+          Step: 40,
+          SpeedKph: 4.15,
+          Rpm: 1511.9,
+          Coupling: 0.36,
+          Gear: 1
+        },
+        {
+          Step: 60,
+          SpeedKph: 6.12,
+          Rpm: 1779.3,
+          Coupling: 0.452,
+          Gear: 1
+        },
+        {
+          Step: 80,
+          SpeedKph: 8.75,
+          Rpm: 2036.5,
+          Coupling: 0.593,
+          Gear: 1
+        },
+        {
+          Step: 100,
+          SpeedKph: 11.85,
+          Rpm: 2349.1,
+          Coupling: 0.644,
+          Gear: 1
+        },
+        {
+          Step: 120,
+          SpeedKph: 15.83,
+          Rpm: 2960.8,
+          Coupling: 0.792,
+          Gear: 1
+        },
+        {
+          Step: 140,
+          SpeedKph: 22.0,
+          Rpm: 3949.5,
+          Coupling: 0.96,
+          Gear: 1
+        },
+        {
+          Step: 160,
+          SpeedKph: 29.23,
+          Rpm: 5000.0,
+          Coupling: 0.96,
+          Gear: 1
+        },
+        {
+          Step: 180,
+          SpeedKph: 36.01,
+          Rpm: 5000.0,
+          Coupling: 0.96,
+          Gear: 1
+        },
+        {
+          Step: 200,
+          SpeedKph: 42.98,
+          Rpm: 5000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 220,
+          SpeedKph: 50.02,
+          Rpm: 5000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 240,
+          SpeedKph: 57.05,
+          Rpm: 5000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 260,
+          SpeedKph: 64.06,
+          Rpm: 5000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 280,
+          SpeedKph: 71.05,
+          Rpm: 5000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 300,
+          SpeedKph: 78.02,
+          Rpm: 5000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 320,
+          SpeedKph: 84.97,
+          Rpm: 5000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 340,
+          SpeedKph: 91.89,
+          Rpm: 5000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 360,
+          SpeedKph: 98.78,
+          Rpm: 5000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 380,
+          SpeedKph: 105.65,
+          Rpm: 5000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 400,
+          SpeedKph: 112.49,
+          Rpm: 5000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 420,
+          SpeedKph: 119.29,
+          Rpm: 5000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 440,
+          SpeedKph: 126.06,
+          Rpm: 5000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 460,
+          SpeedKph: 132.79,
+          Rpm: 5000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 480,
+          SpeedKph: 139.49,
+          Rpm: 5000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 500,
+          SpeedKph: 146.14,
+          Rpm: 5000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 519,
+          SpeedKph: 152.43,
+          Rpm: 5000.0,
+          Coupling: 1.0,
+          Gear: 1
+        }
+      ]
+    },
+    {
+      Vehicle: BMW 3 Series,
+      FirstKphRpm: 899.6,
+      MaxRpmBeforeBand: 2571.1,
+      MinRpmInBand: 2595.5,
+      Samples: [
+        {
+          SpeedKph: 0.47,
+          Rpm: 792.8,
+          Coupling: 0.904,
+          Gear: 1
+        },
+        {
+          Step: 20,
+          SpeedKph: 6.27,
+          Rpm: 2301.2,
+          Coupling: 0.729,
+          Gear: 1
+        },
+        {
+          Step: 40,
+          SpeedKph: 13.78,
+          Rpm: 3089.2,
+          Coupling: 0.71,
+          Gear: 1
+        },
+        {
+          Step: 60,
+          SpeedKph: 22.74,
+          Rpm: 4130.2,
+          Coupling: 0.96,
+          Gear: 1
+        },
+        {
+          Step: 80,
+          SpeedKph: 31.97,
+          Rpm: 5543.6,
+          Coupling: 0.96,
+          Gear: 1
+        },
+        {
+          Step: 100,
+          SpeedKph: 39.6,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 120,
+          SpeedKph: 47.17,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 140,
+          SpeedKph: 54.73,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 160,
+          SpeedKph: 62.27,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 180,
+          SpeedKph: 69.79,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 200,
+          SpeedKph: 77.3,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 220,
+          SpeedKph: 84.78,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 240,
+          SpeedKph: 92.24,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 260,
+          SpeedKph: 99.67,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 280,
+          SpeedKph: 107.07,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 300,
+          SpeedKph: 114.44,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 320,
+          SpeedKph: 121.79,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 340,
+          SpeedKph: 129.09,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 360,
+          SpeedKph: 136.36,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 380,
+          SpeedKph: 143.59,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 400,
+          SpeedKph: 150.79,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 420,
+          SpeedKph: 157.94,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 440,
+          SpeedKph: 165.05,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 460,
+          SpeedKph: 172.11,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 480,
+          SpeedKph: 179.13,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 500,
+          SpeedKph: 186.09,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 519,
+          SpeedKph: 192.67,
+          Rpm: 6000.0,
+          Coupling: 1.0,
+          Gear: 1
+        }
+      ]
+    },
+    {
+      Vehicle: Mercedes Sprinter,
+      FirstKphRpm: 710.8,
+      MaxRpmBeforeBand: 2346.7,
+      MinRpmInBand: 2402.0,
+      Samples: [
+        {
+          SpeedKph: 0.41,
+          Rpm: 634.9,
+          Coupling: 0.904,
+          Gear: 1
+        },
+        {
+          Step: 20,
+          SpeedKph: 5.14,
+          Rpm: 1868.1,
+          Coupling: 0.661,
+          Gear: 1
+        },
+        {
+          Step: 40,
+          SpeedKph: 12.05,
+          Rpm: 2795.2,
+          Coupling: 0.696,
+          Gear: 1
+        },
+        {
+          Step: 60,
+          SpeedKph: 18.24,
+          Rpm: 3769.2,
+          Coupling: 0.894,
+          Gear: 1
+        },
+        {
+          Step: 80,
+          SpeedKph: 23.89,
+          Rpm: 4000.0,
+          Coupling: 0.96,
+          Gear: 1
+        },
+        {
+          Step: 100,
+          SpeedKph: 29.37,
+          Rpm: 4000.0,
+          Coupling: 0.96,
+          Gear: 1
+        },
+        {
+          Step: 120,
+          SpeedKph: 34.85,
+          Rpm: 4000.0,
+          Coupling: 0.96,
+          Gear: 1
+        },
+        {
+          Step: 140,
+          SpeedKph: 40.31,
+          Rpm: 4000.0,
+          Coupling: 0.96,
+          Gear: 1
+        },
+        {
+          Step: 160,
+          SpeedKph: 45.84,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 180,
+          SpeedKph: 51.51,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 200,
+          SpeedKph: 57.16,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 220,
+          SpeedKph: 62.8,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 240,
+          SpeedKph: 68.42,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 260,
+          SpeedKph: 74.03,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 280,
+          SpeedKph: 79.61,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 300,
+          SpeedKph: 85.17,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 320,
+          SpeedKph: 90.71,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 340,
+          SpeedKph: 96.22,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 360,
+          SpeedKph: 101.71,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 380,
+          SpeedKph: 107.16,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 400,
+          SpeedKph: 112.59,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 420,
+          SpeedKph: 117.99,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 440,
+          SpeedKph: 123.36,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 460,
+          SpeedKph: 128.7,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 480,
+          SpeedKph: 134.0,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 500,
+          SpeedKph: 139.27,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        },
+        {
+          Step: 519,
+          SpeedKph: 144.24,
+          Rpm: 4000.0,
+          Coupling: 1.0,
+          Gear: 1
+        }
+      ]
+    }
+  ],
+  {
+    Scenario: DisengagedRevBlip,
+    Samples: [
+      {
+        Rpm: 1110.9,
+        Horsepower: 16.52
+      },
+      {
+        Step: 4,
+        Rpm: 2559.2,
+        Horsepower: 87.44
+      },
+      {
+        Step: 8,
+        Rpm: 5557.1,
+        Horsepower: 308.64
+      },
+      {
+        Step: 12,
+        Rpm: 7600.0,
+        Horsepower: 257.94
+      },
+      {
+        Step: 16,
+        Rpm: 7381.2
+      },
+      {
+        Step: 20,
+        Rpm: 6543.2
+      },
+      {
+        Step: 24,
+        Rpm: 5761.9
+      },
+      {
+        Step: 28,
+        Rpm: 5033.5
+      },
+      {
+        Step: 32,
+        Rpm: 4354.4
+      },
+      {
+        Step: 36,
+        Rpm: 3721.3
+      },
+      {
+        Step: 40,
+        Rpm: 3131.1
+      },
+      {
+        Step: 44,
+        Rpm: 2580.8
+      },
+      {
+        Step: 48,
+        Rpm: 2067.7
+      },
+      {
+        Step: 52,
+        Rpm: 1589.4
+      }
+    ]
+  },
+  {
+    Scenario: FreeRevShutdown,
+    Samples: [
+      {
+        Rpm: 1110.9,
+        Horsepower: 16.52
+      },
+      {
+        Step: 4,
+        Rpm: 2559.2,
+        Horsepower: 87.44
+      },
+      {
+        Step: 8,
+        Rpm: 5557.1,
+        Horsepower: 308.64
+      },
+      {
+        Step: 12,
+        Rpm: 7600.0,
+        Horsepower: 257.94
+      },
+      {
+        Step: 16,
+        Rpm: 7381.2
+      },
+      {
+        Step: 24,
+        Rpm: 5761.9
+      },
+      {
+        Step: 32,
+        Rpm: 4354.4
+      },
+      {
+        Step: 40,
+        Rpm: 3131.1
+      },
+      {
+        Step: 48,
+        Rpm: 2067.7
+      },
+      {
+        Step: 56,
+        Rpm: 1143.5
+      },
+      {
+        Step: 64,
+        Rpm: 316.7
+      },
+      {
+        Step: 68
+      }
+    ]
+  },
+  {
+    Scenario: BackDrivenCombustionOff,
+    Samples: [
+      {
+        Rpm: 1945.1,
+        DistanceMeters: 0.62
+      }
+    ]
+  }
+]

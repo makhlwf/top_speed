@@ -1,0 +1,32 @@
+﻿[
+  {
+    PlayWin: true,
+    Dialog: {
+      Title: Congratulations! You have made it to the first position.,
+      Caption: The following are the details of all players.,
+      Items: [
+        {
+          Text: Alice: position 1, time 1 minute and 1 second.
+        },
+        {
+          Text: Bob: position 2, time 1 minute and 4 seconds.
+        }
+      ]
+    }
+  },
+  {
+    PlayWin: false,
+    Dialog: {
+      Title: Time trial complete.,
+      Caption: Summary of this run and your previous best:,
+      Items: [
+        {
+          Text: Your time: 1 minute and 1 second.
+        },
+        {
+          Text: Your previous best record was: 1 minute and 12 seconds.
+        }
+      ]
+    }
+  }
+]

@@ -7,7 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FluentAssertions" Version="8.8.0" />
+    <PackageReference Include="FsCheck.Xunit" Version="3.3.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="Verify.Xunit" Version="26.4.0" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
       <PrivateAssets>all</PrivateAssets>
@@ -26,9 +29,15 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
     <ProjectReference Include="..\TopSpeed\TopSpeed.csproj" />
     <Compile Remove="Shared\**\*.cs" />
+    <Compile Remove="Behavior\Shared\**\*.cs" />
+    <Compile Remove="Invariants\**\*.cs" />
+    <Compile Remove="Regression\Shared\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <Compile Remove="Game\**\*.cs" />
+    <Compile Remove="Behavior\Client\**\*.cs" />
+    <Compile Remove="Harness\Client\**\*.cs" />
+    <Compile Remove="Regression\Client\**\*.cs" />
   </ItemGroup>
 </Project>

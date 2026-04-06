@@ -1,0 +1,44 @@
+﻿[
+  {
+    Scenario: FullRange,
+    Samples: [
+      {
+        RawZ: 100,
+        RawRz: 100,
+        RawSlider1: 100
+      },
+      {
+        Step: 1,
+        RawZ: -100,
+        RawRz: -100,
+        RawSlider1: -100,
+        Throttle: 100,
+        Brake: -100,
+        Clutch: 100
+      },
+      {
+        Step: 2,
+        Throttle: 50,
+        Brake: -50,
+        Clutch: 50
+      }
+    ]
+  },
+  {
+    Scenario: PartialRange,
+    Samples: [
+      {
+        RawRz: 31
+      },
+      {
+        Step: 1,
+        RawRz: -31,
+        Throttle: 100
+      },
+      {
+        Step: 2,
+        Throttle: 50
+      }
+    ]
+  }
+]

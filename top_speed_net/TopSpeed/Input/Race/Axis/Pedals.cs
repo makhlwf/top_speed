@@ -23,7 +23,7 @@ namespace TopSpeed.Input
             var rest = _pedalRestValues[index];
             var min = _pedalMinValues[index];
             var max = _pedalMaxValues[index];
-            var directionPositive = ResolvePedalDirectionPositive(mode, mappedPositive, rest);
+            var directionPositive = ResolvePedalDirectionPositive(mode, mappedPositive, rest, min, max);
             return ResolvePedalValue(current, rest, min, max, directionPositive);
         }
 
@@ -64,7 +64,7 @@ namespace TopSpeed.Input
             return value;
         }
 
-        private static bool ResolvePedalDirectionPositive(PedalInvertMode mode, bool mappedPositive, int baseline)
+        private static bool ResolvePedalDirectionPositive(PedalInvertMode mode, bool mappedPositive, int rest, int min, int max)
         {
             switch (mode)
             {
@@ -73,8 +73,8 @@ namespace TopSpeed.Input
                 case PedalInvertMode.Inverted:
                     return !mappedPositive;
                 default:
-                    if (IsReliablePedalRest(baseline))
-                        return baseline < 0;
+                    if (TryResolveAutoPedalDirection(rest, min, max, out var directionPositive))
+                        return directionPositive;
                     return mappedPositive;
             }
         }
@@ -115,21 +115,44 @@ namespace TopSpeed.Input
         {
             var currentAbs = System.Math.Abs(currentRest);
             var candidateAbs = System.Math.Abs(candidate);
-            if (candidateAbs < 60)
+            if (candidateAbs <= currentAbs + 2)
                 return false;
 
-            if (currentAbs < 60)
-                return candidateAbs > currentAbs;
+            if (currentAbs < 20)
+                return true;
 
             if (System.Math.Sign(candidate) != System.Math.Sign(currentRest))
                 return false;
 
-            return candidateAbs > currentAbs;
+            return true;
         }
 
-        private static bool IsReliablePedalRest(int value)
+        private static bool TryResolveAutoPedalDirection(int rest, int min, int max, out bool directionPositive)
         {
-            return value >= 60 || value <= -60;
+            var span = max - min;
+            if (span < 20)
+            {
+                directionPositive = false;
+                return false;
+            }
+
+            var distanceToMin = rest - min;
+            var distanceToMax = max - rest;
+            var edgeThreshold = System.Math.Max(4, span / 4);
+            if (distanceToMin <= edgeThreshold && distanceToMax > edgeThreshold)
+            {
+                directionPositive = true;
+                return true;
+            }
+
+            if (distanceToMax <= edgeThreshold && distanceToMin > edgeThreshold)
+            {
+                directionPositive = false;
+                return true;
+            }
+
+            directionPositive = false;
+            return false;
         }
     }
 }

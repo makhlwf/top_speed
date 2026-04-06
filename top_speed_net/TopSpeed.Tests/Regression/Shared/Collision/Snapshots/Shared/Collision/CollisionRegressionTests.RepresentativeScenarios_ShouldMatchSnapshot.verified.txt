@@ -1,0 +1,58 @@
+﻿[
+  {
+    Scenario: RearEnd,
+    Collided: true,
+    Response: {
+      ContactType: RearEnd,
+      ImpactSeverity: 0.75,
+      RelativeSpeedKph: 30.0,
+      First: {
+        BumpX: 0.564,
+        BumpY: -1.467,
+        SpeedDeltaKph: -9.127
+      },
+      Second: {
+        BumpX: -0.564,
+        BumpY: 1.467,
+        SpeedDeltaKph: 6.25
+      }
+    }
+  },
+  {
+    Scenario: SideSwipe,
+    Collided: true,
+    Response: {
+      ContactType: SideSwipe,
+      ImpactSeverity: 0.75,
+      First: {
+        BumpX: 0.32,
+        BumpY: 0.787,
+        SpeedDeltaKph: -0.734
+      },
+      Second: {
+        BumpX: -0.32,
+        BumpY: -0.787,
+        SpeedDeltaKph: -0.734
+      }
+    }
+  },
+  {
+    Scenario: HeavyFront,
+    Collided: true,
+    Response: {
+      ContactType: RearEnd,
+      ImpactSeverity: 0.75,
+      RelativeSpeedKph: 30.0,
+      First: {
+        BumpX: 0.752,
+        BumpY: -1.957,
+        SpeedDeltaKph: -12.17
+      },
+      Second: {
+        BumpX: -0.376,
+        BumpY: 0.978,
+        SpeedDeltaKph: 4.167
+      }
+    }
+  }
+]

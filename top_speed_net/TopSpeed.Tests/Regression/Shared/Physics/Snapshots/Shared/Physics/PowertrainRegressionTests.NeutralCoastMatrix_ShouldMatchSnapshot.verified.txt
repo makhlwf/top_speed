@@ -1,0 +1,734 @@
+﻿[
+  {
+    Vehicle: Nissan GT-R Nismo,
+    StartSpeedKph: 100.0,
+    FinalSpeedKph: 78.95,
+    Samples: [
+      {
+        TimeSeconds: 0.05,
+        SpeedKph: 99.86,
+        PassiveDecelKph: 1.003,
+        ChassisDecelKph: 1.856
+      },
+      {
+        TimeSeconds: 1.05,
+        SpeedKph: 97.03,
+        PassiveDecelKph: 0.972,
+        ChassisDecelKph: 1.825
+      },
+      {
+        TimeSeconds: 2.05,
+        SpeedKph: 94.27,
+        PassiveDecelKph: 0.943,
+        ChassisDecelKph: 1.794
+      },
+      {
+        TimeSeconds: 3.05,
+        SpeedKph: 91.56,
+        PassiveDecelKph: 0.916,
+        ChassisDecelKph: 1.765
+      },
+      {
+        TimeSeconds: 4.05,
+        SpeedKph: 88.91,
+        PassiveDecelKph: 0.89,
+        ChassisDecelKph: 1.735
+      },
+      {
+        TimeSeconds: 5.05,
+        SpeedKph: 86.31,
+        PassiveDecelKph: 0.865,
+        ChassisDecelKph: 1.707
+      },
+      {
+        TimeSeconds: 6.05,
+        SpeedKph: 83.76,
+        PassiveDecelKph: 0.842,
+        ChassisDecelKph: 1.679
+      },
+      {
+        TimeSeconds: 7.05,
+        SpeedKph: 81.27,
+        PassiveDecelKph: 0.819,
+        ChassisDecelKph: 1.651
+      },
+      {
+        TimeSeconds: 8.0,
+        SpeedKph: 78.95,
+        PassiveDecelKph: 0.799,
+        ChassisDecelKph: 1.626
+      }
+    ]
+  },
+  {
+    Vehicle: Porsche 911 GT3 RS,
+    StartSpeedKph: 100.0,
+    FinalSpeedKph: 78.72,
+    Samples: [
+      {
+        TimeSeconds: 0.05,
+        SpeedKph: 99.85,
+        PassiveDecelKph: 1.133,
+        ChassisDecelKph: 1.784
+      },
+      {
+        TimeSeconds: 1.05,
+        SpeedKph: 96.97,
+        PassiveDecelKph: 1.094,
+        ChassisDecelKph: 1.752
+      },
+      {
+        TimeSeconds: 2.05,
+        SpeedKph: 94.16,
+        PassiveDecelKph: 1.058,
+        ChassisDecelKph: 1.721
+      },
+      {
+        TimeSeconds: 3.05,
+        SpeedKph: 91.42,
+        PassiveDecelKph: 1.024,
+        ChassisDecelKph: 1.691
+      },
+      {
+        TimeSeconds: 4.05,
+        SpeedKph: 88.74,
+        PassiveDecelKph: 0.991,
+        ChassisDecelKph: 1.662
+      },
+      {
+        TimeSeconds: 5.05,
+        SpeedKph: 86.12,
+        PassiveDecelKph: 0.96,
+        ChassisDecelKph: 1.633
+      },
+      {
+        TimeSeconds: 6.05,
+        SpeedKph: 83.55,
+        PassiveDecelKph: 0.931,
+        ChassisDecelKph: 1.604
+      },
+      {
+        TimeSeconds: 7.05,
+        SpeedKph: 81.05,
+        PassiveDecelKph: 0.903,
+        ChassisDecelKph: 1.577
+      },
+      {
+        TimeSeconds: 8.0,
+        SpeedKph: 78.72,
+        PassiveDecelKph: 0.878,
+        ChassisDecelKph: 1.551
+      }
+    ]
+  },
+  {
+    Vehicle: Fiat 500,
+    StartSpeedKph: 100.0,
+    FinalSpeedKph: 81.43,
+    Samples: [
+      {
+        TimeSeconds: 0.05,
+        SpeedKph: 99.87,
+        PassiveDecelKph: 1.628,
+        ChassisDecelKph: 0.96
+      },
+      {
+        TimeSeconds: 1.05,
+        SpeedKph: 97.32,
+        PassiveDecelKph: 1.569,
+        ChassisDecelKph: 0.945
+      },
+      {
+        TimeSeconds: 2.05,
+        SpeedKph: 94.84,
+        PassiveDecelKph: 1.514,
+        ChassisDecelKph: 0.93
+      },
+      {
+        TimeSeconds: 3.05,
+        SpeedKph: 92.44,
+        PassiveDecelKph: 1.461,
+        ChassisDecelKph: 0.915
+      },
+      {
+        TimeSeconds: 4.05,
+        SpeedKph: 90.1,
+        PassiveDecelKph: 1.411,
+        ChassisDecelKph: 0.901
+      },
+      {
+        TimeSeconds: 5.05,
+        SpeedKph: 87.82,
+        PassiveDecelKph: 1.363,
+        ChassisDecelKph: 0.888
+      },
+      {
+        TimeSeconds: 6.05,
+        SpeedKph: 85.6,
+        PassiveDecelKph: 1.318,
+        ChassisDecelKph: 0.874
+      },
+      {
+        TimeSeconds: 7.05,
+        SpeedKph: 83.43,
+        PassiveDecelKph: 1.275,
+        ChassisDecelKph: 0.861
+      },
+      {
+        TimeSeconds: 8.0,
+        SpeedKph: 81.43,
+        PassiveDecelKph: 1.236,
+        ChassisDecelKph: 0.849
+      }
+    ]
+  },
+  {
+    Vehicle: Mini Cooper S,
+    StartSpeedKph: 100.0,
+    FinalSpeedKph: 82.48,
+    Samples: [
+      {
+        TimeSeconds: 0.05,
+        SpeedKph: 99.88,
+        PassiveDecelKph: 1.298,
+        ChassisDecelKph: 1.096
+      },
+      {
+        TimeSeconds: 1.05,
+        SpeedKph: 97.52,
+        PassiveDecelKph: 1.259,
+        ChassisDecelKph: 1.079
+      },
+      {
+        TimeSeconds: 2.05,
+        SpeedKph: 95.21,
+        PassiveDecelKph: 1.221,
+        ChassisDecelKph: 1.063
+      },
+      {
+        TimeSeconds: 3.05,
+        SpeedKph: 92.95,
+        PassiveDecelKph: 1.186,
+        ChassisDecelKph: 1.047
+      },
+      {
+        TimeSeconds: 4.05,
+        SpeedKph: 90.74,
+        PassiveDecelKph: 1.152,
+        ChassisDecelKph: 1.032
+      },
+      {
+        TimeSeconds: 5.05,
+        SpeedKph: 88.58,
+        PassiveDecelKph: 1.119,
+        ChassisDecelKph: 1.017
+      },
+      {
+        TimeSeconds: 6.05,
+        SpeedKph: 86.47,
+        PassiveDecelKph: 1.088,
+        ChassisDecelKph: 1.002
+      },
+      {
+        TimeSeconds: 7.05,
+        SpeedKph: 84.4,
+        PassiveDecelKph: 1.058,
+        ChassisDecelKph: 0.988
+      },
+      {
+        TimeSeconds: 8.0,
+        SpeedKph: 82.48,
+        PassiveDecelKph: 1.031,
+        ChassisDecelKph: 0.974
+      }
+    ]
+  },
+  {
+    Vehicle: Ford Mustang 1969,
+    StartSpeedKph: 100.0,
+    FinalSpeedKph: 79.86,
+    Samples: [
+      {
+        TimeSeconds: 0.05,
+        SpeedKph: 99.86,
+        PassiveDecelKph: 1.676,
+        ChassisDecelKph: 1.132
+      },
+      {
+        TimeSeconds: 1.05,
+        SpeedKph: 97.09,
+        PassiveDecelKph: 1.614,
+        ChassisDecelKph: 1.113
+      },
+      {
+        TimeSeconds: 2.05,
+        SpeedKph: 94.41,
+        PassiveDecelKph: 1.556,
+        ChassisDecelKph: 1.094
+      },
+      {
+        TimeSeconds: 3.05,
+        SpeedKph: 91.8,
+        PassiveDecelKph: 1.501,
+        ChassisDecelKph: 1.075
+      },
+      {
+        TimeSeconds: 4.05,
+        SpeedKph: 89.26,
+        PassiveDecelKph: 1.449,
+        ChassisDecelKph: 1.058
+      },
+      {
+        TimeSeconds: 5.05,
+        SpeedKph: 86.79,
+        PassiveDecelKph: 1.4,
+        ChassisDecelKph: 1.04
+      },
+      {
+        TimeSeconds: 6.05,
+        SpeedKph: 84.38,
+        PassiveDecelKph: 1.353,
+        ChassisDecelKph: 1.023
+      },
+      {
+        TimeSeconds: 7.05,
+        SpeedKph: 82.03,
+        PassiveDecelKph: 1.309,
+        ChassisDecelKph: 1.007
+      },
+      {
+        TimeSeconds: 8.0,
+        SpeedKph: 79.86,
+        PassiveDecelKph: 1.269,
+        ChassisDecelKph: 0.992
+      }
+    ]
+  },
+  {
+    Vehicle: Toyota Camry,
+    StartSpeedKph: 100.0,
+    FinalSpeedKph: 78.0,
+    Samples: [
+      {
+        TimeSeconds: 0.05,
+        SpeedKph: 99.85,
+        PassiveDecelKph: 1.103,
+        ChassisDecelKph: 1.92
+      },
+      {
+        TimeSeconds: 1.05,
+        SpeedKph: 96.87,
+        PassiveDecelKph: 1.064,
+        ChassisDecelKph: 1.884
+      },
+      {
+        TimeSeconds: 2.05,
+        SpeedKph: 93.95,
+        PassiveDecelKph: 1.027,
+        ChassisDecelKph: 1.849
+      },
+      {
+        TimeSeconds: 3.05,
+        SpeedKph: 91.11,
+        PassiveDecelKph: 0.993,
+        ChassisDecelKph: 1.815
+      },
+      {
+        TimeSeconds: 4.05,
+        SpeedKph: 88.34,
+        PassiveDecelKph: 0.96,
+        ChassisDecelKph: 1.782
+      },
+      {
+        TimeSeconds: 5.05,
+        SpeedKph: 85.63,
+        PassiveDecelKph: 0.928,
+        ChassisDecelKph: 1.749
+      },
+      {
+        TimeSeconds: 6.05,
+        SpeedKph: 82.99,
+        PassiveDecelKph: 0.899,
+        ChassisDecelKph: 1.717
+      },
+      {
+        TimeSeconds: 7.05,
+        SpeedKph: 80.4,
+        PassiveDecelKph: 0.871,
+        ChassisDecelKph: 1.686
+      },
+      {
+        TimeSeconds: 8.0,
+        SpeedKph: 78.0,
+        PassiveDecelKph: 0.845,
+        ChassisDecelKph: 1.658
+      }
+    ]
+  },
+  {
+    Vehicle: Lamborghini Aventador,
+    StartSpeedKph: 100.0,
+    FinalSpeedKph: 77.71,
+    Samples: [
+      {
+        TimeSeconds: 0.05,
+        SpeedKph: 99.85,
+        PassiveDecelKph: 1.099,
+        ChassisDecelKph: 1.956
+      },
+      {
+        TimeSeconds: 1.05,
+        SpeedKph: 96.83,
+        PassiveDecelKph: 1.062,
+        ChassisDecelKph: 1.92
+      },
+      {
+        TimeSeconds: 2.05,
+        SpeedKph: 93.89,
+        PassiveDecelKph: 1.027,
+        ChassisDecelKph: 1.884
+      },
+      {
+        TimeSeconds: 3.05,
+        SpeedKph: 91.01,
+        PassiveDecelKph: 0.994,
+        ChassisDecelKph: 1.85
+      },
+      {
+        TimeSeconds: 4.05,
+        SpeedKph: 88.2,
+        PassiveDecelKph: 0.962,
+        ChassisDecelKph: 1.816
+      },
+      {
+        TimeSeconds: 5.05,
+        SpeedKph: 85.46,
+        PassiveDecelKph: 0.933,
+        ChassisDecelKph: 1.783
+      },
+      {
+        TimeSeconds: 6.05,
+        SpeedKph: 82.77,
+        PassiveDecelKph: 0.904,
+        ChassisDecelKph: 1.751
+      },
+      {
+        TimeSeconds: 7.05,
+        SpeedKph: 80.15,
+        PassiveDecelKph: 0.878,
+        ChassisDecelKph: 1.719
+      },
+      {
+        TimeSeconds: 8.0,
+        SpeedKph: 77.71,
+        PassiveDecelKph: 0.854,
+        ChassisDecelKph: 1.69
+      }
+    ]
+  },
+  {
+    Vehicle: BMW 3 Series,
+    StartSpeedKph: 100.0,
+    FinalSpeedKph: 79.01,
+    Samples: [
+      {
+        TimeSeconds: 0.05,
+        SpeedKph: 99.86,
+        PassiveDecelKph: 1.041,
+        ChassisDecelKph: 1.82
+      },
+      {
+        TimeSeconds: 1.05,
+        SpeedKph: 97.03,
+        PassiveDecelKph: 1.008,
+        ChassisDecelKph: 1.789
+      },
+      {
+        TimeSeconds: 2.05,
+        SpeedKph: 94.27,
+        PassiveDecelKph: 0.976,
+        ChassisDecelKph: 1.758
+      },
+      {
+        TimeSeconds: 3.05,
+        SpeedKph: 91.56,
+        PassiveDecelKph: 0.946,
+        ChassisDecelKph: 1.729
+      },
+      {
+        TimeSeconds: 4.05,
+        SpeedKph: 88.92,
+        PassiveDecelKph: 0.917,
+        ChassisDecelKph: 1.7
+      },
+      {
+        TimeSeconds: 5.05,
+        SpeedKph: 86.33,
+        PassiveDecelKph: 0.89,
+        ChassisDecelKph: 1.671
+      },
+      {
+        TimeSeconds: 6.05,
+        SpeedKph: 83.8,
+        PassiveDecelKph: 0.864,
+        ChassisDecelKph: 1.643
+      },
+      {
+        TimeSeconds: 7.05,
+        SpeedKph: 81.32,
+        PassiveDecelKph: 0.839,
+        ChassisDecelKph: 1.616
+      },
+      {
+        TimeSeconds: 8.0,
+        SpeedKph: 79.01,
+        PassiveDecelKph: 0.817,
+        ChassisDecelKph: 1.59
+      }
+    ]
+  },
+  {
+    Vehicle: Mercedes Sprinter,
+    StartSpeedKph: 100.0,
+    FinalSpeedKph: 74.43,
+    Samples: [
+      {
+        TimeSeconds: 0.05,
+        SpeedKph: 99.82,
+        PassiveDecelKph: 1.303,
+        ChassisDecelKph: 2.264
+      },
+      {
+        TimeSeconds: 1.05,
+        SpeedKph: 96.31,
+        PassiveDecelKph: 1.25,
+        ChassisDecelKph: 2.215
+      },
+      {
+        TimeSeconds: 2.05,
+        SpeedKph: 92.9,
+        PassiveDecelKph: 1.2,
+        ChassisDecelKph: 2.167
+      },
+      {
+        TimeSeconds: 3.05,
+        SpeedKph: 89.58,
+        PassiveDecelKph: 1.153,
+        ChassisDecelKph: 2.12
+      },
+      {
+        TimeSeconds: 4.05,
+        SpeedKph: 86.35,
+        PassiveDecelKph: 1.109,
+        ChassisDecelKph: 2.075
+      },
+      {
+        TimeSeconds: 5.05,
+        SpeedKph: 83.21,
+        PassiveDecelKph: 1.067,
+        ChassisDecelKph: 2.031
+      },
+      {
+        TimeSeconds: 6.05,
+        SpeedKph: 80.16,
+        PassiveDecelKph: 1.029,
+        ChassisDecelKph: 1.988
+      },
+      {
+        TimeSeconds: 7.05,
+        SpeedKph: 77.18,
+        PassiveDecelKph: 0.992,
+        ChassisDecelKph: 1.947
+      },
+      {
+        TimeSeconds: 8.0,
+        SpeedKph: 74.43,
+        PassiveDecelKph: 0.96,
+        ChassisDecelKph: 1.908
+      }
+    ]
+  },
+  {
+    Vehicle: Kawasaki Ninja ZX-10R,
+    StartSpeedKph: 100.0,
+    FinalSpeedKph: 72.25,
+    Samples: [
+      {
+        TimeSeconds: 0.05,
+        SpeedKph: 99.79,
+        PassiveDecelKph: 2.496,
+        ChassisDecelKph: 1.648
+      },
+      {
+        TimeSeconds: 1.05,
+        SpeedKph: 95.75,
+        PassiveDecelKph: 2.338,
+        ChassisDecelKph: 1.608
+      },
+      {
+        TimeSeconds: 2.05,
+        SpeedKph: 91.91,
+        PassiveDecelKph: 2.192,
+        ChassisDecelKph: 1.569
+      },
+      {
+        TimeSeconds: 3.05,
+        SpeedKph: 88.24,
+        PassiveDecelKph: 2.059,
+        ChassisDecelKph: 1.532
+      },
+      {
+        TimeSeconds: 4.05,
+        SpeedKph: 84.73,
+        PassiveDecelKph: 1.937,
+        ChassisDecelKph: 1.497
+      },
+      {
+        TimeSeconds: 5.05,
+        SpeedKph: 81.37,
+        PassiveDecelKph: 1.825,
+        ChassisDecelKph: 1.463
+      },
+      {
+        TimeSeconds: 6.05,
+        SpeedKph: 78.15,
+        PassiveDecelKph: 1.722,
+        ChassisDecelKph: 1.431
+      },
+      {
+        TimeSeconds: 7.05,
+        SpeedKph: 75.07,
+        PassiveDecelKph: 1.627,
+        ChassisDecelKph: 1.4
+      },
+      {
+        TimeSeconds: 8.0,
+        SpeedKph: 72.25,
+        PassiveDecelKph: 1.544,
+        ChassisDecelKph: 1.372
+      }
+    ]
+  },
+  {
+    Vehicle: Ducati Panigale V4,
+    StartSpeedKph: 100.0,
+    FinalSpeedKph: 73.1,
+    Samples: [
+      {
+        TimeSeconds: 0.05,
+        SpeedKph: 99.8,
+        PassiveDecelKph: 2.49,
+        ChassisDecelKph: 1.512
+      },
+      {
+        TimeSeconds: 1.05,
+        SpeedKph: 95.9,
+        PassiveDecelKph: 2.337,
+        ChassisDecelKph: 1.477
+      },
+      {
+        TimeSeconds: 2.05,
+        SpeedKph: 92.18,
+        PassiveDecelKph: 2.196,
+        ChassisDecelKph: 1.443
+      },
+      {
+        TimeSeconds: 3.05,
+        SpeedKph: 88.62,
+        PassiveDecelKph: 2.068,
+        ChassisDecelKph: 1.411
+      },
+      {
+        TimeSeconds: 4.05,
+        SpeedKph: 85.22,
+        PassiveDecelKph: 1.949,
+        ChassisDecelKph: 1.381
+      },
+      {
+        TimeSeconds: 5.05,
+        SpeedKph: 81.97,
+        PassiveDecelKph: 1.84,
+        ChassisDecelKph: 1.351
+      },
+      {
+        TimeSeconds: 6.05,
+        SpeedKph: 78.84,
+        PassiveDecelKph: 1.739,
+        ChassisDecelKph: 1.323
+      },
+      {
+        TimeSeconds: 7.05,
+        SpeedKph: 75.85,
+        PassiveDecelKph: 1.647,
+        ChassisDecelKph: 1.296
+      },
+      {
+        TimeSeconds: 8.0,
+        SpeedKph: 73.1,
+        PassiveDecelKph: 1.565,
+        ChassisDecelKph: 1.271
+      }
+    ]
+  },
+  {
+    Vehicle: Yamaha YZF-R1,
+    StartSpeedKph: 100.0,
+    FinalSpeedKph: 72.37,
+    Samples: [
+      {
+        TimeSeconds: 0.05,
+        SpeedKph: 99.79,
+        PassiveDecelKph: 2.472,
+        ChassisDecelKph: 1.648
+      },
+      {
+        TimeSeconds: 1.05,
+        SpeedKph: 95.78,
+        PassiveDecelKph: 2.316,
+        ChassisDecelKph: 1.608
+      },
+      {
+        TimeSeconds: 2.05,
+        SpeedKph: 91.95,
+        PassiveDecelKph: 2.174,
+        ChassisDecelKph: 1.569
+      },
+      {
+        TimeSeconds: 3.05,
+        SpeedKph: 88.3,
+        PassiveDecelKph: 2.043,
+        ChassisDecelKph: 1.533
+      },
+      {
+        TimeSeconds: 4.05,
+        SpeedKph: 84.8,
+        PassiveDecelKph: 1.923,
+        ChassisDecelKph: 1.498
+      },
+      {
+        TimeSeconds: 5.05,
+        SpeedKph: 81.46,
+        PassiveDecelKph: 1.812,
+        ChassisDecelKph: 1.464
+      },
+      {
+        TimeSeconds: 6.05,
+        SpeedKph: 78.25,
+        PassiveDecelKph: 1.71,
+        ChassisDecelKph: 1.432
+      },
+      {
+        TimeSeconds: 7.05,
+        SpeedKph: 75.18,
+        PassiveDecelKph: 1.617,
+        ChassisDecelKph: 1.401
+      },
+      {
+        TimeSeconds: 8.0,
+        SpeedKph: 72.37,
+        PassiveDecelKph: 1.534,
+        ChassisDecelKph: 1.373
+      }
+    ]
+  }
+]

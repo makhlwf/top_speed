@@ -39,12 +39,13 @@ namespace TopSpeed.Vehicles
                 : 1.0f;
             var longitudinalGripFactor = 1.0f;
             var drivelineCouplingFactor = UpdateDriveline(elapsed, speedMpsCurrent, throttle, inReverse, clutchInput);
+            var canApplyThrottleDrive = CanApplyThrottleDrive(drivelineCouplingFactor);
 
             if (_engineStalled)
             {
                 ApplyStalledDecel(elapsed);
             }
-            else if (_thrust > 10f)
+            else if (canApplyThrottleDrive)
             {
                 ApplyThrottleDrive(
                     elapsed,
@@ -110,6 +111,20 @@ namespace TopSpeed.Vehicles
             UpdateSoundRoad();
             if (_speed <= 0f)
                 StopSurfaceLoops();
+        }
+
+        private bool CanApplyThrottleDrive(float drivelineCouplingFactor)
+        {
+            if (_thrust <= 10f)
+                return false;
+
+            if (!_manualTransmission)
+                return true;
+
+            if (IsNeutralGear())
+                return false;
+
+            return drivelineCouplingFactor > 0.05f;
         }
     }
 }
