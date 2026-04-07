@@ -103,13 +103,13 @@
 
   <Target Name="CopyUpdaterToServerOutput" AfterTargets="Build" Condition="'$(RuntimeIdentifier)' != '' and '$(RuntimeIdentifier)' != 'linux-x86'">
     <PropertyGroup>
-      <_ServerUpdaterProjectPath>$(MSBuildThisFileDirectory)..\Updater\Updater.csproj</_ServerUpdaterProjectPath>
+      <_ServerUpdaterProjectPath>$(MSBuildThisFileDirectory)../Updater/Updater.csproj</_ServerUpdaterProjectPath>
       <_ServerUpdaterTargetFramework Condition="'$(RuntimeIdentifier)' == 'win-x64'">net472</_ServerUpdaterTargetFramework>
       <_ServerUpdaterTargetFramework Condition="'$(_ServerUpdaterTargetFramework)' == ''">net10.0</_ServerUpdaterTargetFramework>
       <_ServerUpdaterBinaryName Condition="'$(RuntimeIdentifier)' == 'win-x64'">Updater.exe</_ServerUpdaterBinaryName>
       <_ServerUpdaterBinaryName Condition="'$(_ServerUpdaterBinaryName)' == ''">Updater</_ServerUpdaterBinaryName>
-      <_ServerUpdaterPublishDir Condition="'$(_ServerUpdaterTargetFramework)' == 'net10.0'">$(MSBuildThisFileDirectory)..\Updater\bin\$(Configuration)\net10.0\$(RuntimeIdentifier)\publish\</_ServerUpdaterPublishDir>
-      <_ServerUpdaterBuildDir Condition="'$(_ServerUpdaterTargetFramework)' == 'net472'">$(MSBuildThisFileDirectory)..\Updater\bin\$(Configuration)\net472\</_ServerUpdaterBuildDir>
+      <_ServerUpdaterPublishDir Condition="'$(_ServerUpdaterTargetFramework)' == 'net10.0'">$(MSBuildThisFileDirectory)../Updater/bin/$(Configuration)/net10.0/$(RuntimeIdentifier)/publish/</_ServerUpdaterPublishDir>
+      <_ServerUpdaterBuildDir Condition="'$(_ServerUpdaterTargetFramework)' == 'net472'">$(MSBuildThisFileDirectory)../Updater/bin/$(Configuration)/net472/</_ServerUpdaterBuildDir>
     </PropertyGroup>
     <MSBuild Projects="$(_ServerUpdaterProjectPath)" Targets="Restore;Build" Properties="Configuration=$(Configuration);TargetFramework=net472" Condition="'$(_ServerUpdaterTargetFramework)' == 'net472'" />
     <MSBuild Projects="$(_ServerUpdaterProjectPath)" Targets="Restore;Publish" Properties="Configuration=$(Configuration);TargetFramework=net10.0;RuntimeIdentifier=$(RuntimeIdentifier);UseNativeAotUpdater=$(UseNativeAotUpdater);UseTrimmedUpdater=$(UseTrimmedUpdater)" Condition="'$(_ServerUpdaterTargetFramework)' == 'net10.0'" />
@@ -121,13 +121,13 @@
 
   <Target Name="CopyUpdaterToServerPublish" AfterTargets="Publish" Condition="'$(PublishDir)' != '' and '$(RuntimeIdentifier)' != '' and '$(RuntimeIdentifier)' != 'linux-x86'">
     <PropertyGroup>
-      <_ServerUpdaterProjectPath>$(MSBuildThisFileDirectory)..\Updater\Updater.csproj</_ServerUpdaterProjectPath>
+      <_ServerUpdaterProjectPath>$(MSBuildThisFileDirectory)../Updater/Updater.csproj</_ServerUpdaterProjectPath>
       <_ServerUpdaterTargetFramework Condition="'$(RuntimeIdentifier)' == 'win-x64'">net472</_ServerUpdaterTargetFramework>
       <_ServerUpdaterTargetFramework Condition="'$(_ServerUpdaterTargetFramework)' == ''">net10.0</_ServerUpdaterTargetFramework>
       <_ServerUpdaterBinaryName Condition="'$(RuntimeIdentifier)' == 'win-x64'">Updater.exe</_ServerUpdaterBinaryName>
       <_ServerUpdaterBinaryName Condition="'$(_ServerUpdaterBinaryName)' == ''">Updater</_ServerUpdaterBinaryName>
-      <_ServerUpdaterPublishDir Condition="'$(_ServerUpdaterTargetFramework)' == 'net10.0'">$(MSBuildThisFileDirectory)..\Updater\bin\$(Configuration)\net10.0\$(RuntimeIdentifier)\publish\</_ServerUpdaterPublishDir>
-      <_ServerUpdaterBuildDir Condition="'$(_ServerUpdaterTargetFramework)' == 'net472'">$(MSBuildThisFileDirectory)..\Updater\bin\$(Configuration)\net472\</_ServerUpdaterBuildDir>
+      <_ServerUpdaterPublishDir Condition="'$(_ServerUpdaterTargetFramework)' == 'net10.0'">$(MSBuildThisFileDirectory)../Updater/bin/$(Configuration)/net10.0/$(RuntimeIdentifier)/publish/</_ServerUpdaterPublishDir>
+      <_ServerUpdaterBuildDir Condition="'$(_ServerUpdaterTargetFramework)' == 'net472'">$(MSBuildThisFileDirectory)../Updater/bin/$(Configuration)/net472/</_ServerUpdaterBuildDir>
     </PropertyGroup>
     <MSBuild Projects="$(_ServerUpdaterProjectPath)" Targets="Restore;Build" Properties="Configuration=$(Configuration);TargetFramework=net472" Condition="'$(_ServerUpdaterTargetFramework)' == 'net472'" />
     <MSBuild Projects="$(_ServerUpdaterProjectPath)" Targets="Restore;Publish" Properties="Configuration=$(Configuration);TargetFramework=net10.0;RuntimeIdentifier=$(RuntimeIdentifier);UseNativeAotUpdater=$(UseNativeAotUpdater);UseTrimmedUpdater=$(UseTrimmedUpdater)" Condition="'$(_ServerUpdaterTargetFramework)' == 'net10.0'" />

@@ -197,8 +197,8 @@
 
   <Target Name="CopyUpdater" AfterTargets="Build" Condition="'$(TargetFramework)' == 'net472'">
     <PropertyGroup>
-      <_UpdaterProjectPath>$(MSBuildThisFileDirectory)..\Updater\Updater.csproj</_UpdaterProjectPath>
-      <_UpdaterBuildDir>$(MSBuildThisFileDirectory)..\Updater\bin\$(Configuration)\net472\</_UpdaterBuildDir>
+      <_UpdaterProjectPath>$(MSBuildThisFileDirectory)../Updater/Updater.csproj</_UpdaterProjectPath>
+      <_UpdaterBuildDir>$(MSBuildThisFileDirectory)../Updater/bin/$(Configuration)/net472/</_UpdaterBuildDir>
     </PropertyGroup>
     <MSBuild Projects="$(_UpdaterProjectPath)" Targets="Build" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetFramework=net472" />
     <Copy SourceFiles="$(_UpdaterBuildDir)Updater.exe" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
@@ -207,10 +207,10 @@
 
   <Target Name="CopyUpdaterNet10" AfterTargets="Build" Condition="('$(TargetFramework)' == 'net10.0' or '$(TargetFramework)' == 'net10.0-windows') and '$(RuntimeIdentifier)' != ''">
     <PropertyGroup>
-      <_UpdaterProjectPath>$(MSBuildThisFileDirectory)..\Updater\Updater.csproj</_UpdaterProjectPath>
+      <_UpdaterProjectPath>$(MSBuildThisFileDirectory)../Updater/Updater.csproj</_UpdaterProjectPath>
       <_UpdaterBinaryName Condition="'$(RuntimeIdentifier)' == 'win-x64'">Updater.exe</_UpdaterBinaryName>
       <_UpdaterBinaryName Condition="'$(_UpdaterBinaryName)' == ''">Updater</_UpdaterBinaryName>
-      <_UpdaterPublishDir>$(MSBuildThisFileDirectory)..\Updater\bin\$(Configuration)\net10.0\$(RuntimeIdentifier)\publish\</_UpdaterPublishDir>
+      <_UpdaterPublishDir>$(MSBuildThisFileDirectory)../Updater/bin/$(Configuration)/net10.0/$(RuntimeIdentifier)/publish/</_UpdaterPublishDir>
     </PropertyGroup>
     <MSBuild Projects="$(_UpdaterProjectPath)" Targets="Restore;Publish" Properties="Configuration=$(Configuration);TargetFramework=net10.0;RuntimeIdentifier=$(RuntimeIdentifier);UseNativeAotUpdater=$(UseNativeAotUpdater);UseTrimmedUpdater=$(UseTrimmedUpdater)" />
     <Copy SourceFiles="$(_UpdaterPublishDir)$(_UpdaterBinaryName)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
