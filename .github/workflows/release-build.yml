@@ -111,7 +111,6 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.x'
-        cache: 'pip'
 
     - name: Install Python dependencies
       shell: pwsh
@@ -176,7 +175,6 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.x'
-        cache: 'pip'
 
     - name: Install Python dependencies
       run: |
@@ -277,7 +275,6 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.x'
-        cache: 'pip'
 
     - name: Install Python dependencies
       run: |
