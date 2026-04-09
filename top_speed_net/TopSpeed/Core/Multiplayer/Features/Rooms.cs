@@ -12,6 +12,8 @@ namespace TopSpeed.Core.Multiplayer
         }
 
         public bool IsInRoom => _owner.IsInRoomCore;
+        public bool IsCurrentRoomHost => _owner.IsCurrentRoomHost;
+        public bool IsCurrentRacePaused => _owner.IsCurrentRacePaused;
 
         public void ConfigureMenuCloseHandlers()
         {

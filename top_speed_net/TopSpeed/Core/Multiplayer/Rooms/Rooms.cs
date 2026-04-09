@@ -9,6 +9,8 @@ namespace TopSpeed.Core.Multiplayer
     {
         public bool IsInRoom => _roomsFlow.IsInRoom;
         internal bool IsInRoomCore => _state.Rooms.CurrentRoom.InRoom;
+        public bool IsCurrentRoomHost => _state.Rooms.CurrentRoom.InRoom && _state.Rooms.CurrentRoom.IsHost;
+        public bool IsCurrentRacePaused => _state.Rooms.CurrentRoom.InRoom && _state.Rooms.CurrentRoom.RacePaused;
 
         private const string MultiplayerPingShortcutActionId = "multiplayer_ping";
         private const string MultiplayerChatShortcutActionId = "multiplayer_chat";

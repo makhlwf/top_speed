@@ -128,6 +128,16 @@ namespace TopSpeed.Network
         {
             return WriteGeneral(Command.RoomPlayerWithdraw);
         }
+
+        public static byte[] WriteRoomRaceControl(RoomRaceControlAction action)
+        {
+            var buffer = WritePacketHeader(Command.RoomRaceControl, 1);
+            var writer = new PacketWriter(buffer);
+            writer.WriteByte(ProtocolConstants.Version);
+            writer.WriteByte((byte)Command.RoomRaceControl);
+            writer.WriteByte((byte)action);
+            return buffer;
+        }
     }
 }
 

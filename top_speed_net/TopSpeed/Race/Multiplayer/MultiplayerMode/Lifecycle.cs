@@ -27,6 +27,7 @@ namespace TopSpeed.Race
             _hasSnapshotTickNow = false;
             _sendFailureAnnounced = false;
             _liveFailureAnnounced = false;
+            _hostPaused = false;
             Array.Clear(_disconnectedPlayerSlots, 0, _disconnectedPlayerSlots.Length);
             _remoteLiveStates.Clear();
             _liveTx.Resume();
@@ -61,6 +62,7 @@ namespace TopSpeed.Race
             _remoteLiveStates.Clear();
             _snapshotFrames.Clear();
             _liveTx.Dispose();
+            _hostPaused = false;
 
             DisposePositionSounds(
                 _soundPlayerNr,
@@ -75,22 +77,12 @@ namespace TopSpeed.Race
 
         public void Pause()
         {
-            _liveTx.Pause();
-            PauseCore(() =>
-            {
-                foreach (var remote in _remotePlayers.Values)
-                    remote.Player.Pause();
-            });
+            SetHostPaused(true);
         }
 
         public void Unpause()
         {
-            _liveTx.Resume();
-            UnpauseCore(() =>
-            {
-                foreach (var remote in _remotePlayers.Values)
-                    remote.Player.Unpause();
-            });
+            SetHostPaused(false);
         }
 
         protected override void OnLocalRadioMediaLoaded(uint mediaId, string mediaPath)

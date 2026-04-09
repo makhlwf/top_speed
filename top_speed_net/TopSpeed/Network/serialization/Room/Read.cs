@@ -57,7 +57,7 @@ namespace TopSpeed.Network
         public static bool TryReadRoomState(byte[] data, out PacketRoomState packet)
         {
             packet = new PacketRoomState();
-            if (data.Length < 2 + 4 + 4 + 4 + 4 + ProtocolConstants.MaxRoomNameLength + 1 + 1 + 1 + 1 + 1 + 12 + 1 + 4 + 1)
+            if (data.Length < 2 + 4 + 4 + 4 + 4 + ProtocolConstants.MaxRoomNameLength + 1 + 1 + 1 + 1 + 1 + 1 + 12 + 1 + 4 + 1)
                 return false;
             if (data[0] != ProtocolConstants.Version || data[1] != (byte)Command.RoomState)
                 return false;
@@ -74,12 +74,13 @@ namespace TopSpeed.Network
             packet.RaceState = (RoomRaceState)reader.ReadByte();
             packet.InRoom = reader.ReadBool();
             packet.IsHost = reader.ReadBool();
+            packet.RacePaused = reader.ReadBool();
             packet.TrackName = reader.ReadFixedString(12);
             packet.Laps = reader.ReadByte();
             packet.GameRulesFlags = reader.ReadUInt32();
             var count = reader.ReadByte();
             var stride = 4 + 1 + 1 + ProtocolConstants.MaxPlayerNameLength;
-            var available = Math.Max(0, (data.Length - (2 + 4 + 4 + 4 + 4 + ProtocolConstants.MaxRoomNameLength + 1 + 1 + 1 + 1 + 1 + 12 + 1 + 4 + 1)) / stride);
+            var available = Math.Max(0, (data.Length - (2 + 4 + 4 + 4 + 4 + ProtocolConstants.MaxRoomNameLength + 1 + 1 + 1 + 1 + 1 + 1 + 12 + 1 + 4 + 1)) / stride);
             var actualCount = Math.Min(count, available);
             var players = new PacketRoomPlayer[actualCount];
             for (var i = 0; i < actualCount; i++)
@@ -129,7 +130,7 @@ namespace TopSpeed.Network
         public static bool TryReadRoomGet(byte[] data, out PacketRoomGet packet)
         {
             packet = new PacketRoomGet();
-            if (data.Length < 2 + 1 + 4 + 4 + 4 + 4 + ProtocolConstants.MaxRoomNameLength + 1 + 1 + 1 + 12 + 1 + 4 + 1)
+            if (data.Length < 2 + 1 + 4 + 4 + 4 + 4 + ProtocolConstants.MaxRoomNameLength + 1 + 1 + 1 + 1 + 12 + 1 + 4 + 1)
                 return false;
             if (data[0] != ProtocolConstants.Version || data[1] != (byte)Command.RoomGet)
                 return false;
@@ -146,12 +147,13 @@ namespace TopSpeed.Network
             packet.RoomType = (GameRoomType)reader.ReadByte();
             packet.PlayersToStart = reader.ReadByte();
             packet.RaceState = (RoomRaceState)reader.ReadByte();
+            packet.RacePaused = reader.ReadBool();
             packet.TrackName = reader.ReadFixedString(12);
             packet.Laps = reader.ReadByte();
             packet.GameRulesFlags = reader.ReadUInt32();
             var count = reader.ReadByte();
             var stride = 4 + 1 + 1 + ProtocolConstants.MaxPlayerNameLength;
-            var available = Math.Max(0, (data.Length - (2 + 1 + 4 + 4 + 4 + 4 + ProtocolConstants.MaxRoomNameLength + 1 + 1 + 1 + 12 + 1 + 4 + 1)) / stride);
+            var available = Math.Max(0, (data.Length - (2 + 1 + 4 + 4 + 4 + 4 + ProtocolConstants.MaxRoomNameLength + 1 + 1 + 1 + 1 + 12 + 1 + 4 + 1)) / stride);
             var actualCount = Math.Min(count, available);
             var players = new PacketRoomPlayer[actualCount];
             for (var i = 0; i < actualCount; i++)
@@ -253,6 +255,20 @@ namespace TopSpeed.Network
             packet.RoomVersion = reader.ReadUInt32();
             packet.RaceInstanceId = reader.ReadUInt32();
             packet.Reason = (RoomRaceAbortReason)reader.ReadByte();
+            return true;
+        }
+
+        public static bool TryReadRoomRaceControl(byte[] data, out PacketRoomRaceControl packet)
+        {
+            packet = new PacketRoomRaceControl();
+            if (data.Length < 2 + 1)
+                return false;
+            if (data[0] != ProtocolConstants.Version || data[1] != (byte)Command.RoomRaceControl)
+                return false;
+            var reader = new PacketReader(data);
+            reader.ReadByte();
+            reader.ReadByte();
+            packet.Action = (RoomRaceControlAction)reader.ReadByte();
             return true;
         }
 

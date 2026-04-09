@@ -104,6 +104,18 @@ namespace TopSpeed.Server.Protocol
             return true;
         }
 
+        public static bool TryReadRoomRaceControl(byte[] data, out PacketRoomRaceControl packet)
+        {
+            packet = new PacketRoomRaceControl();
+            if (data.Length < 2 + 1)
+                return false;
+            var reader = new PacketReader(data);
+            reader.ReadByte();
+            reader.ReadByte();
+            packet.Action = (RoomRaceControlAction)reader.ReadByte();
+            return true;
+        }
+
         public static bool TryReadRoomEvent(byte[] data, out PacketRoomEvent packet)
         {
             packet = new PacketRoomEvent();

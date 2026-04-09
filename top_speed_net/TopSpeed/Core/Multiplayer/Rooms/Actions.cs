@@ -13,6 +13,8 @@ namespace TopSpeed.Core.Multiplayer
     {
         private const int QuitLoadoutQuestionYesId = 2001;
         private const int QuitLoadoutQuestionNoId = 2002;
+        private const int CancelGameQuestionYesId = 2003;
+        private const int CancelGameQuestionNoId = 2004;
 
         private void OpenLeaveRoomConfirmation()
         {
@@ -185,12 +187,51 @@ namespace TopSpeed.Core.Multiplayer
             if (_questions.IsQuestionMenu(_menu.CurrentId))
                 return;
 
+            if (_state.Rooms.CurrentRoom.InRoom
+                && _state.Rooms.CurrentRoom.IsHost
+                && _state.Rooms.CurrentRoom.RaceState == RoomRaceState.Preparing)
+            {
+                _questions.Show(new Question(LocalizationService.Mark("Cancel current game?"),
+                    LocalizationService.Mark("If you leave race preparation now, the current game will be canceled for everyone in this room."),
+                    CancelGameQuestionNoId,
+                    HandleCancelGameQuestionResult,
+                    new QuestionButton(CancelGameQuestionYesId, LocalizationService.Mark("Yes, cancel the current game")),
+                    new QuestionButton(CancelGameQuestionNoId, LocalizationService.Mark("No, continue preparing"), flags: QuestionButtonFlags.Default)));
+                return;
+            }
+
             _questions.Show(new Question(LocalizationService.Mark("Quit race preparation?"),
                 LocalizationService.Mark("Do you want to quit race preparation and stay in this game room?"),
                 QuitLoadoutQuestionNoId,
                 HandleQuitLoadoutQuestionResult,
                 new QuestionButton(QuitLoadoutQuestionYesId, LocalizationService.Mark("Yes, quit race preparation")),
                 new QuestionButton(QuitLoadoutQuestionNoId, LocalizationService.Mark("No, continue preparing"), flags: QuestionButtonFlags.Default)));
+        }
+
+        private void HandleCancelGameQuestionResult(int resultId)
+        {
+            if (resultId == CancelGameQuestionYesId)
+                ConfirmCancelCurrentGame();
+            else
+                _menu.ShowRoot(MultiplayerMenuKeys.LoadoutVehicle);
+        }
+
+        private void ConfirmCancelCurrentGame()
+        {
+            var session = SessionOrNull();
+            if (session == null)
+            {
+                _speech.Speak(LocalizationService.Mark("Not connected to a server."));
+                return;
+            }
+
+            if (!_state.Rooms.CurrentRoom.InRoom || !_state.Rooms.CurrentRoom.IsHost)
+            {
+                _speech.Speak(LocalizationService.Mark("Only the host can cancel the current game."));
+                return;
+            }
+
+            TrySend(session.SendRoomRaceControl(RoomRaceControlAction.CancelPrepare), "game cancel request");
         }
 
         private void HandleQuitLoadoutQuestionResult(int resultId)

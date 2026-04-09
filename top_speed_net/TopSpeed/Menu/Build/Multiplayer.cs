@@ -65,7 +65,7 @@ namespace TopSpeed.Menu
                 "room_controls_main",
                 EmptyItems,
                 LocalizationService.Mark("Room controls"),
-                viewSpec: ScreenSpec.BackSilent);
+                viewSpec: ScreenSpec.Silent);
         }
 
         private MenuScreen BuildMultiplayerRoomPlayersMenu()
@@ -80,7 +80,7 @@ namespace TopSpeed.Menu
 
         private MenuScreen BuildMultiplayerRoomOptionsMenu()
         {
-            return EmptyBackMenu("multiplayer_room_options", string.Empty);
+            return EmptyMenu("multiplayer_room_options");
         }
 
         private MenuScreen BuildMultiplayerRoomGameRulesMenu()

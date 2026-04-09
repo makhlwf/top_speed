@@ -4,8 +4,8 @@ using TopSpeed.Common;
 using TopSpeed.Data;
 using TopSpeed.Menu;
 using TopSpeed.Protocol;
-
 using TopSpeed.Localization;
+
 namespace TopSpeed.Core.Multiplayer
 {
     internal sealed partial class MultiplayerCoordinator
@@ -35,13 +35,13 @@ namespace TopSpeed.Core.Multiplayer
             }
 
             if (_state.Rooms.CurrentRoom.IsHost)
-                items.Add(new MenuItem(LocalizationService.Mark("Start this game now"), MenuAction.None, onActivate: StartGame));
+                items.Add(new MenuItem(LocalizationService.Mark("Start the game"), MenuAction.None, onActivate: StartGame));
             if (_state.Rooms.CurrentRoom.IsHost)
                 items.Add(new MenuItem(LocalizationService.Mark("Change game options"), MenuAction.None, onActivate: OpenRoomOptionsMenu));
             if (_state.Rooms.CurrentRoom.IsHost && _state.Rooms.CurrentRoom.RoomType == GameRoomType.BotsRace)
-                items.Add(new MenuItem(LocalizationService.Mark("Add a bot to this game room"), MenuAction.None, onActivate: AddBotToRoom));
+                items.Add(new MenuItem(LocalizationService.Mark("Add a bot"), MenuAction.None, onActivate: AddBotToRoom));
             if (_state.Rooms.CurrentRoom.IsHost && _state.Rooms.CurrentRoom.RoomType == GameRoomType.BotsRace)
-                items.Add(new MenuItem(LocalizationService.Mark("Remove the last bot that was added"), MenuAction.None, onActivate: RemoveLastBotFromRoom));
+                items.Add(new MenuItem(LocalizationService.Mark("Remove a bot"), MenuAction.None, onActivate: RemoveLastBotFromRoom));
             items.Add(new MenuItem(LocalizationService.Mark("View game rules"), MenuAction.None, onActivate: AnnounceCurrentRoomGameRules));
             items.Add(new MenuItem(LocalizationService.Mark("Who is currently present in this game room"), MenuAction.None, onActivate: OpenRoomPlayersMenu));
             items.Add(new MenuItem(LocalizationService.Mark("Leave this game room"), MenuAction.None, flags: MenuItemFlags.Close));
@@ -71,7 +71,7 @@ namespace TopSpeed.Core.Multiplayer
                 () => GetRoomOptionsTrackText(),
                 MenuAction.None,
                 onActivate: OpenRoomTrackTypeMenu,
-                hint: LocalizationService.Mark("Press ENTER to choose race tracks, street adventure tracks, or a random track.")));
+                hint: LocalizationService.Mark("Press ENTER to change the track used during the race.")));
 
             items.Add(new RadioButton(LocalizationService.Mark("Number of laps"),
                 LapCountOptions,
@@ -83,7 +83,7 @@ namespace TopSpeed.Core.Multiplayer
                 RoomCapacityOptions,
                 GetRoomOptionsPlayersToStartIndex,
                 value => SetRoomOptionsPlayersToStart((byte)(value + 2)),
-                hint: LocalizationService.Mark("Select the player capacity for this room. The host can start with fewer players. Use LEFT or RIGHT to change."))
+                hint: LocalizationService.Mark("Select the player capacity for this room. The host can start with fewer players than the specified maximum players, so this is not a hard requirement. Use LEFT or RIGHT to change."))
             {
                 Hidden = _state.Rooms.CurrentRoom.RoomType == GameRoomType.OneOnOne
             };

@@ -52,6 +52,7 @@ namespace TopSpeed.Server.Network
                 if (GetRoomParticipantCount(room) < minimumParticipants)
                 {
                     TransitionState(room, RoomRaceState.Lobby);
+                    room.RacePaused = false;
                     room.PendingLoadouts.Clear();
                     room.PrepareSkips.Clear();
                     _owner.SendProtocolMessageToRoom(room, LocalizationService.Mark("Race start cancelled because there are not enough players."));
@@ -83,6 +84,7 @@ namespace TopSpeed.Server.Network
                 if (activeParticipants < minimumParticipants)
                 {
                     TransitionState(room, RoomRaceState.Lobby);
+                    room.RacePaused = false;
                     room.PendingLoadouts.Clear();
                     room.PrepareSkips.Clear();
                     _owner.SendProtocolMessageToRoom(room, LocalizationService.Mark("Race start cancelled because there are not enough ready players."));
@@ -126,6 +128,7 @@ namespace TopSpeed.Server.Network
                 room.ActiveRaceParticipantIds.Clear();
                 room.PendingLoadouts.Clear();
                 room.PrepareSkips.Clear();
+                room.RacePaused = false;
                 room.RaceStopPending = false;
                 room.RaceStopDelaySeconds = 0f;
                 room.RaceStartedUtc = default(DateTime);
@@ -155,6 +158,7 @@ namespace TopSpeed.Server.Network
 
                 room.RaceInstanceId++;
                 TransitionState(room, RoomRaceState.Racing);
+                room.RacePaused = false;
                 room.ActiveRaceParticipantIds.Clear();
                 room.RaceResults.Clear();
                 room.RaceFinishTimesMs.Clear();
@@ -250,6 +254,7 @@ namespace TopSpeed.Server.Network
                     room.RaceParticipantResults.Count));
                 FinalizeUnresolvedParticipantsAsDnf(room);
                 TransitionState(room, RoomRaceState.Completed);
+                room.RacePaused = false;
                 room.PendingLoadouts.Clear();
                 room.PrepareSkips.Clear();
                 room.ActiveBumpPairs.Clear();

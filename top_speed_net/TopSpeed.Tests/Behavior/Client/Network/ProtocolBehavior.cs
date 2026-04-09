@@ -113,4 +113,17 @@ public sealed class ProtocolBehaviorTests
         parsed.SubjectPlayerId.Should().Be(roomEvent.SubjectPlayerId);
         parsed.SubjectPlayerNumber.Should().Be(roomEvent.SubjectPlayerNumber);
     }
+
+    [Fact]
+    public void WriteRoomRaceControl_Encodes_Action()
+    {
+        var payload = ClientPacketSerializer.WriteRoomRaceControl(RoomRaceControlAction.Stop);
+
+        payload.Length.Should().Be(3);
+
+        var reader = new PacketReader(payload);
+        reader.ReadByte().Should().Be(ProtocolConstants.Version);
+        reader.ReadByte().Should().Be((byte)Command.RoomRaceControl);
+        reader.ReadByte().Should().Be((byte)RoomRaceControlAction.Stop);
+    }
 }

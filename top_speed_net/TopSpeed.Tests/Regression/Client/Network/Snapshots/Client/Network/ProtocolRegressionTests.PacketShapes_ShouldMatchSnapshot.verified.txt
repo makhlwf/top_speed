@@ -297,5 +297,13 @@
       SubjectPlayerState: AwaitingStart,
       SubjectPlayerName: alice
     }
+  },
+  RoomRaceControl: {
+    Bytes: [
+      32,
+      57,
+      2
+    ],
+    Parsed: Pause
   }
 }

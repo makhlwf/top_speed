@@ -108,7 +108,8 @@ namespace TopSpeed.Protocol
         RoomRaceStateChanged = 53,
         RoomRacePlayerFinished = 54,
         RoomRaceCompleted = 55,
-        RoomRaceAborted = 56
+        RoomRaceAborted = 56,
+        RoomRaceControl = 57
     }
 
     public enum ProtocolMessageCode : byte
@@ -180,6 +181,15 @@ namespace TopSpeed.Protocol
         None = 0,
         InvalidTrack = 1,
         InternalError = 2
+    }
+
+    public enum RoomRaceControlAction : byte
+    {
+        None = 0,
+        CancelPrepare = 1,
+        Pause = 2,
+        Resume = 3,
+        Stop = 4
     }
 
     public enum ProtocolCompatStatus : byte

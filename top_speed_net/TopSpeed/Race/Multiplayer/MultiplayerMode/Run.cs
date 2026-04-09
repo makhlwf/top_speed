@@ -11,6 +11,9 @@ namespace TopSpeed.Race
         {
             BeginFrame();
 
+            if (!_hostPaused && _currentState == PlayerState.AwaitingStart && _car.EngineRunning && _car.State == CarState.Running)
+                _currentState = PlayerState.Racing;
+
             ApplyBufferedRaceSnapshots(elapsed);
             UpdatePositions();
             RunPlayerVehicleStep(elapsed, afterTrackUpdate: () =>
@@ -75,7 +78,7 @@ namespace TopSpeed.Race
                 var state = _currentState;
                 if (_sentFinish)
                     state = PlayerState.Finished;
-                else if (_started)
+                else if (_started && !_hostPaused && _currentState != PlayerState.AwaitingStart)
                     state = PlayerState.Racing;
 
                 var raceData = new PlayerRaceData
@@ -93,10 +96,10 @@ namespace TopSpeed.Race
                     _car.EngineRunning,
                     _car.Braking,
                     _car.Horning,
-                _car.Backfiring(),
-                LocalMediaLoaded,
-                LocalMediaPlaying,
-                LocalMediaId));
+                    _car.Backfiring(),
+                    LocalMediaLoaded,
+                    LocalMediaPlaying,
+                    LocalMediaId));
             }
 
             if (CompleteFrame(elapsed))

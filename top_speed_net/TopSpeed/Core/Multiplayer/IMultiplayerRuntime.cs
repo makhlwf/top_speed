@@ -7,6 +7,8 @@ namespace TopSpeed.Core.Multiplayer
     {
         QuestionDialog Questions { get; }
         bool IsInRoom { get; }
+        bool IsCurrentRoomHost { get; }
+        bool IsCurrentRacePaused { get; }
 
         void ConfigureMenuCloseHandlers();
         void ShowMultiplayerMenuAfterRace();

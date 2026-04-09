@@ -31,6 +31,15 @@ namespace TopSpeed.Server.Network
                     _owner._authorityDropsPlayerState++;
                     player.State = PlayerState.AwaitingStart;
                 }
+                if (room.RacePaused && player.State != PlayerState.Finished)
+                {
+                    player.State = PlayerState.AwaitingStart;
+                    player.Speed = 0;
+                    player.EngineRunning = false;
+                    player.Braking = false;
+                    player.Horning = false;
+                    player.Backfiring = false;
+                }
                 if (player.State == PlayerState.Finished && raceDistance > 0f && player.PositionY < raceDistance)
                     player.PositionY = raceDistance;
                 if (previousState == PlayerState.Finished && player.State != PlayerState.Finished)
@@ -109,6 +118,15 @@ namespace TopSpeed.Server.Network
                     _owner._authorityDropsPlayerData++;
                     nextState = player.State;
                 }
+                if (room.RacePaused && nextState != PlayerState.Finished)
+                {
+                    nextState = PlayerState.AwaitingStart;
+                    player.Speed = 0;
+                    player.EngineRunning = false;
+                    player.Braking = false;
+                    player.Horning = false;
+                    player.Backfiring = false;
+                }
                 if (previousState == PlayerState.Finished && nextState != PlayerState.Finished)
                 {
                     _owner._authorityDropsPlayerData++;
@@ -139,6 +157,11 @@ namespace TopSpeed.Server.Network
                 if (!ValidatePacket(room, player, started.RaceInstanceId, started.PlayerId, started.PlayerNumber, ref _owner._authorityDropsPlayerStarted, nameof(Command.PlayerStarted)))
                     return;
                 if (!room.RaceStarted)
+                {
+                    _owner._authorityDropsPlayerStarted++;
+                    return;
+                }
+                if (room.RacePaused)
                 {
                     _owner._authorityDropsPlayerStarted++;
                     return;

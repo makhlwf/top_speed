@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using TopSpeed.Data;
 using TopSpeed.Localization;
 using TopSpeed.Menu;
+using TopSpeed.Protocol;
 using TopSpeed.Race;
 
 namespace TopSpeed.Game
@@ -10,6 +12,10 @@ namespace TopSpeed.Game
     {
         private sealed class MultiplayerRaceRuntime
         {
+            private const int HostRacePauseChoiceId = 3001;
+            private const int HostRaceStopChoiceId = 3002;
+            private const int HostRaceQuitChoiceId = 3003;
+
             private readonly Game _owner;
             private readonly MultiplayerRaceBinding _binding;
             private MultiplayerMode? _mode;
@@ -47,6 +53,7 @@ namespace TopSpeed.Game
             public void ApplyRoomState(TopSpeed.Protocol.PacketRoomState roomState)
             {
                 _binding.ApplyRoomState(roomState);
+                _mode?.SetHostPaused(roomState.RacePaused);
             }
 
             public void ApplyRaceState(TopSpeed.Protocol.PacketRoomRaceStateChanged changed)
@@ -182,6 +189,14 @@ namespace TopSpeed.Game
                     return;
                 if (_owner._multiplayerCoordinator.Questions.IsQuestionMenu(_owner._menu.CurrentId))
                     return;
+                if (_owner._choices.HasActiveChoiceDialog)
+                    return;
+
+                if (_owner._multiplayerCoordinator.IsCurrentRoomHost)
+                {
+                    OpenHostRaceActionDialog();
+                    return;
+                }
 
                 _quitConfirmActive = true;
 
@@ -195,6 +210,66 @@ namespace TopSpeed.Game
                     OpenAsOverlay = true
                 };
                 _owner._multiplayerCoordinator.Questions.Show(question);
+            }
+
+            private void OpenHostRaceActionDialog()
+            {
+                _quitConfirmActive = true;
+                var pauseLabel = _owner._multiplayerCoordinator.IsCurrentRacePaused
+                    ? LocalizationService.Mark("Resume the game")
+                    : LocalizationService.Mark("Pause the game");
+                var items = new Dictionary<int, string>
+                {
+                    [HostRacePauseChoiceId] = pauseLabel,
+                    [HostRaceStopChoiceId] = LocalizationService.Mark("Stop the game"),
+                    [HostRaceQuitChoiceId] = LocalizationService.Mark("Quit the race")
+                };
+
+                var dialog = new ChoiceDialog(
+                    LocalizationService.Mark("What would you like to do?"),
+                    LocalizationService.Mark("Choose how to proceed with the current game."),
+                    items,
+                    HandleHostRaceActionResult,
+                    ChoiceDialogFlags.Cancelable,
+                    cancelLabel: LocalizationService.Mark("Go back"))
+                {
+                    OpenAsOverlay = true
+                };
+                _owner._choices.Show(dialog);
+            }
+
+            private void HandleHostRaceActionResult(ChoiceDialogResult result)
+            {
+                if (result.IsCanceled)
+                {
+                    CancelQuitConfirmation();
+                    return;
+                }
+
+                switch (result.ChoiceId)
+                {
+                    case HostRacePauseChoiceId:
+                        SendHostRaceControl(
+                            _owner._multiplayerCoordinator.IsCurrentRacePaused
+                                ? RoomRaceControlAction.Resume
+                                : RoomRaceControlAction.Pause,
+                            _owner._multiplayerCoordinator.IsCurrentRacePaused
+                                ? "race resume request"
+                                : "race pause request");
+                        break;
+
+                    case HostRaceStopChoiceId:
+                        SendHostRaceControl(RoomRaceControlAction.Stop, "race stop request");
+                        break;
+
+                    case HostRaceQuitChoiceId:
+                        ConfirmQuit();
+                        break;
+
+                    default:
+                        CancelQuitConfirmation();
+                        break;
+                }
             }
 
             public void HandleQuitQuestionResult(int resultId)
@@ -227,6 +302,14 @@ namespace TopSpeed.Game
                 _binding.ResetPending();
                 _owner._state = AppState.Menu;
                 _owner._menu.ShowRoot("multiplayer_lobby");
+            }
+
+            private void SendHostRaceControl(RoomRaceControlAction action, string requestName)
+            {
+                CancelQuitConfirmation();
+                if (_owner._session == null)
+                    return;
+                _owner.TrySendSession(_owner._session.SendRoomRaceControl(action), requestName);
             }
 
             private void DisposeMode()

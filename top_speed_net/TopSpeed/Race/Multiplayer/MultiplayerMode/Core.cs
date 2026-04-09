@@ -62,6 +62,7 @@ namespace TopSpeed.Race
         private bool _hasSnapshotTickNow;
         private bool _sendFailureAnnounced;
         private bool _liveFailureAnnounced;
+        private bool _hostPaused;
         private byte LocalPlayerNumber => _session.PlayerNumber;
 
         public MultiplayerMode(

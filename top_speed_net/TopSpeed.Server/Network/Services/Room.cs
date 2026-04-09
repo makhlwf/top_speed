@@ -81,6 +81,13 @@ namespace TopSpeed.Server.Network
                         _owner.PacketFail(endPoint, Command.RoomPlayerReady);
                 });
                 registry.Add("room", Command.RoomPlayerWithdraw, (player, _, _) => PlayerWithdraw(player));
+                registry.Add("room", Command.RoomRaceControl, (player, payload, endPoint) =>
+                {
+                    if (PacketSerializer.TryReadRoomRaceControl(payload, out var control))
+                        ControlRace(player, control);
+                    else
+                        _owner.PacketFail(endPoint, Command.RoomRaceControl);
+                });
             }
         }
     }

@@ -63,6 +63,13 @@ namespace TopSpeed.Core.Multiplayer
             {
                 switch (roomEvent.Kind)
                 {
+                    case RoomEventKind.PrepareCancelled:
+                    case RoomEventKind.RaceStopped:
+                        var roomText = HistoryText.FromRoomEvent(roomEvent);
+                        if (!string.IsNullOrWhiteSpace(roomText))
+                            effects.Add(PacketEffect.Speak(roomText));
+                        break;
+
                     case RoomEventKind.ParticipantJoined:
                         if (roomEvent.SubjectPlayerId != 0 && roomEvent.SubjectPlayerId != localPlayerId)
                         {

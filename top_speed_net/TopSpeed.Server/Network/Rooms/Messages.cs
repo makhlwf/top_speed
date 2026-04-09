@@ -35,6 +35,20 @@ namespace TopSpeed.Server.Network
             SendToRoomOnStream(room, payload, PacketStream.Chat);
         }
 
+        private void SendProtocolMessageToRoomExcept(RaceRoom room, uint exceptPlayerId, string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+
+            var payload = PacketSerializer.WriteProtocolMessage(new PacketProtocolMessage
+            {
+                Code = ProtocolMessageCode.Ok,
+                Message = text
+            });
+
+            SendToRoomExceptOnStream(room, exceptPlayerId, payload, PacketStream.Chat);
+        }
+
         private void BroadcastLobbyAnnouncement(string text)
         {
             if (string.IsNullOrWhiteSpace(text))

@@ -88,6 +88,11 @@ namespace TopSpeed.Network
         {
             return _sender.TrySend(ClientPacketSerializer.WriteRoomPlayerWithdraw(), PacketStream.Room);
         }
+
+        public bool SendRoomRaceControl(RoomRaceControlAction action)
+        {
+            return _sender.TrySend(ClientPacketSerializer.WriteRoomRaceControl(action), PacketStream.Room);
+        }
     }
 }
 

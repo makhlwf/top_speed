@@ -12,6 +12,8 @@ namespace TopSpeed.Server.Network
             {
                 if (!room.RaceStarted)
                     continue;
+                if (room.RacePaused)
+                    continue;
                 if (room.TrackData == null)
                     continue;
 

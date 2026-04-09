@@ -40,6 +40,12 @@ namespace TopSpeed.Core.Multiplayer.Chat
         {
             switch (roomEvent.Kind)
             {
+                case RoomEventKind.PrepareCancelled:
+                    return LocalizationService.Mark("The host canceled the current game.");
+
+                case RoomEventKind.RaceStopped:
+                    return LocalizationService.Mark("The host stopped the current game.");
+
                 default:
                     return string.Empty;
             }

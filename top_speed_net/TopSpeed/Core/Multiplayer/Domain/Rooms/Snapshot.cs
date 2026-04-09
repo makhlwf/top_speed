@@ -13,6 +13,7 @@ namespace TopSpeed.Core.Multiplayer
         public GameRoomType RoomType;
         public byte PlayersToStart;
         public RoomRaceState RaceState;
+        public bool RacePaused;
         public bool InRoom;
         public bool IsHost;
         public string TrackName = string.Empty;

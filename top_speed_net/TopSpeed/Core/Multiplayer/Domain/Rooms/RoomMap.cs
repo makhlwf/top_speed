@@ -44,6 +44,7 @@ namespace TopSpeed.Core.Multiplayer
                 RoomType = packet.RoomType,
                 PlayersToStart = packet.PlayersToStart,
                 RaceState = packet.RaceState,
+                RacePaused = packet.RacePaused,
                 InRoom = packet.InRoom,
                 IsHost = packet.IsHost,
                 TrackName = packet.TrackName ?? string.Empty,

@@ -66,7 +66,7 @@ namespace TopSpeed.Race
         protected readonly AudioSourceHandle[] _soundNumbers;
         protected readonly AudioSourceHandle?[][] _randomSounds;
         protected readonly int[] _totalRandomSounds;
-        private readonly ICarController _finishLockController;
+        protected readonly ICarController _finishLockController;
         private readonly SoundQueue _soundQueue;
         private readonly List<RaceEvent> _dueEvents;
         private readonly VehicleRadioController _localRadio;

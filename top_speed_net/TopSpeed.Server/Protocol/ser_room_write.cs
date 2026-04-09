@@ -137,7 +137,7 @@ namespace TopSpeed.Server.Protocol
         public static byte[] WriteRoomState(PacketRoomState state)
         {
             var count = Math.Min(state.Players.Length, ProtocolConstants.MaxPlayers);
-            var payload = 4 + 4 + 4 + 4 + ProtocolConstants.MaxRoomNameLength + 1 + 1 + 1 + 1 + 1 + 12 + 1 + 4 + 1 +
+            var payload = 4 + 4 + 4 + 4 + ProtocolConstants.MaxRoomNameLength + 1 + 1 + 1 + 1 + 1 + 1 + 12 + 1 + 4 + 1 +
                 (count * (4 + 1 + 1 + ProtocolConstants.MaxPlayerNameLength));
             var buffer = WritePacketHeader(Command.RoomState, payload);
             var writer = new PacketWriter(buffer);
@@ -153,6 +153,7 @@ namespace TopSpeed.Server.Protocol
             writer.WriteByte((byte)state.RaceState);
             writer.WriteBool(state.InRoom);
             writer.WriteBool(state.IsHost);
+            writer.WriteBool(state.RacePaused);
             writer.WriteFixedString(state.TrackName ?? string.Empty, 12);
             writer.WriteByte(state.Laps);
             writer.WriteUInt32(state.GameRulesFlags);
@@ -171,7 +172,7 @@ namespace TopSpeed.Server.Protocol
         public static byte[] WriteRoomGet(PacketRoomGet packet)
         {
             var count = Math.Min(packet.Players.Length, ProtocolConstants.MaxPlayers);
-            var payload = 1 + 4 + 4 + 4 + 4 + ProtocolConstants.MaxRoomNameLength + 1 + 1 + 1 + 12 + 1 + 4 + 1 +
+            var payload = 1 + 4 + 4 + 4 + 4 + ProtocolConstants.MaxRoomNameLength + 1 + 1 + 1 + 1 + 12 + 1 + 4 + 1 +
                 (count * (4 + 1 + 1 + ProtocolConstants.MaxPlayerNameLength));
             var buffer = WritePacketHeader(Command.RoomGet, payload);
             var writer = new PacketWriter(buffer);
@@ -186,6 +187,7 @@ namespace TopSpeed.Server.Protocol
             writer.WriteByte((byte)packet.RoomType);
             writer.WriteByte(packet.PlayersToStart);
             writer.WriteByte((byte)packet.RaceState);
+            writer.WriteBool(packet.RacePaused);
             writer.WriteFixedString(packet.TrackName ?? string.Empty, 12);
             writer.WriteByte(packet.Laps);
             writer.WriteUInt32(packet.GameRulesFlags);

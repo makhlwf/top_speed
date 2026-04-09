@@ -41,6 +41,7 @@ namespace TopSpeed.Server.Network
         public Dictionary<uint, PlayerLoadout> PendingLoadouts { get; } = new Dictionary<uint, PlayerLoadout>();
         public HashSet<uint> PrepareSkips { get; } = new HashSet<uint>();
         public RoomRaceState RaceState { get; set; } = RoomRaceState.Lobby;
+        public bool RacePaused { get; set; }
         public bool PreparingRace => RaceState == RoomRaceState.Preparing;
         public bool RaceStarted => RaceState == RoomRaceState.Racing;
         public bool TrackSelected { get; set; }

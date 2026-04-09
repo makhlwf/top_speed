@@ -93,12 +93,16 @@ namespace TopSpeed.Game
                             roomState.RaceState == RoomRaceState.Preparing || roomState.RaceState == RoomRaceState.Racing))
                         {
                             if (roomState.RaceState == RoomRaceState.Racing)
+                            {
+                                _owner._multiplayerRaceRuntime.Mode.SetHostPaused(roomState.RacePaused);
                                 _owner._multiplayerRaceRuntime.Mode.SyncParticipants(roomState);
-                            else if (roomState.RaceState == RoomRaceState.Aborted)
+                            }
+                            else if (roomState.RaceState == RoomRaceState.Aborted || roomState.RaceState == RoomRaceState.Lobby)
                                 _owner._multiplayerRaceRuntime.Mode.HandleServerRaceAborted();
                         }
                         else if (roomState.RaceState == RoomRaceState.Racing && roomState.RaceInstanceId == 0)
                         {
+                            _owner._multiplayerRaceRuntime.Mode.SetHostPaused(roomState.RacePaused);
                             _owner._multiplayerRaceRuntime.Mode.SyncParticipants(roomState);
                         }
                     }
@@ -117,7 +121,7 @@ namespace TopSpeed.Game
 
                     if (_owner._multiplayerRaceRuntime.Mode != null
                         && _owner._multiplayerRaceRuntime.MatchesContext(changed.RoomId, changed.RaceInstanceId, allowBindRaceInstance: true)
-                        && changed.State == RoomRaceState.Aborted)
+                        && (changed.State == RoomRaceState.Aborted || changed.State == RoomRaceState.Lobby))
                     {
                         _owner._multiplayerRaceRuntime.Mode.HandleServerRaceAborted();
                     }

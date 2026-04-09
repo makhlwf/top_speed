@@ -59,6 +59,8 @@ internal static class ProtocolHarness
 
         var roomEventPayload = ClientPacketSerializer.WriteRoomEvent(roomEvent);
         ClientPacketSerializer.TryReadRoomEvent(roomEventPayload, out var parsedRoomEvent);
+        var roomRaceControlPayload = ClientPacketSerializer.WriteRoomRaceControl(RoomRaceControlAction.Pause);
+        ClientPacketSerializer.TryReadRoomRaceControl(roomRaceControlPayload, out var parsedRoomRaceControl);
 
         return new
         {
@@ -91,6 +93,11 @@ internal static class ProtocolHarness
                     parsedRoomEvent.SubjectPlayerState,
                     parsedRoomEvent.SubjectPlayerName
                 }
+            },
+            RoomRaceControl = new
+            {
+                Bytes = roomRaceControlPayload.Select(x => (int)x).ToArray(),
+                Parsed = parsedRoomRaceControl.Action
             }
         };
     }

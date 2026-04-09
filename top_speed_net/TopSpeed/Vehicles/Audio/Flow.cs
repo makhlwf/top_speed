@@ -78,7 +78,7 @@ namespace TopSpeed.Vehicles.Audio
 
         public void UpdateHorn(AudioSourceHandle soundHorn, CarState state, bool horning)
         {
-            if (horning && state != CarState.Stopped && state != CarState.Crashing)
+            if (horning && state != CarState.Crashing)
             {
                 if (!soundHorn.IsPlaying)
                     soundHorn.Play(loop: true);

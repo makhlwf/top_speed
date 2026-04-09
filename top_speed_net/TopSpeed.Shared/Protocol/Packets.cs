@@ -228,6 +228,11 @@ namespace TopSpeed.Protocol
         public bool AutomaticTransmission;
     }
 
+    public sealed class PacketRoomRaceControl
+    {
+        public RoomRaceControlAction Action;
+    }
+
     public sealed class PacketRoomPlayer
     {
         public uint PlayerId;
@@ -248,6 +253,7 @@ namespace TopSpeed.Protocol
         public RoomRaceState RaceState;
         public bool InRoom;
         public bool IsHost;
+        public bool RacePaused;
         public string TrackName = string.Empty;
         public byte Laps;
         public uint GameRulesFlags;
@@ -265,6 +271,7 @@ namespace TopSpeed.Protocol
         public GameRoomType RoomType;
         public byte PlayersToStart;
         public RoomRaceState RaceState;
+        public bool RacePaused;
         public string TrackName = string.Empty;
         public byte Laps;
         public uint GameRulesFlags;
