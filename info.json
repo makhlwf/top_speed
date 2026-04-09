@@ -1,12 +1,16 @@
 {
-  "version": "2026.4.9.1",
-  "serverVersion": "2026.4.9.1",
+  "version": "2026.4.9.2",
+  "serverVersion": "2026.4.9.2",
   "changes": [
+    "The results summary for time trial now displays other info such as the best and average lap time during this run.",
+    "The legacy cfg score loading has been removed and replaced with a better model.",
+    "Fixed some updater issues.",
     "Added the ability for the host to stop or pause the current game if it is in progress.",
     "When a host trys to quit the race preparation, the game will no longer be stuck. The game will be canceled for all participents and the room will return to it's normal state.",
-    "The horn can now be used even if the vehicle is stopped.",
+    "The horn can now be used even if the vehicle is stopped."
   ],
   "serverChanges": [
+    "Fixed an issue with parsing the JSON response for the update.",
     "Updated the server to accept new events when a player cancels or stops a game that is in progress."
   ]
 }

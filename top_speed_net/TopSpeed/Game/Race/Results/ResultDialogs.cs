@@ -60,19 +60,9 @@ namespace TopSpeed.Game
             var title = _pick.One(beatRecord ? ResultCatalog.TimeTrialRecordTitles : ResultCatalog.TimeTrialNoRecordTitles);
             var caption = _pick.One(beatRecord ? ResultCatalog.TimeTrialRecordCaptions : ResultCatalog.TimeTrialNoRecordCaptions);
 
-            var items = new List<DialogItem>
-            {
-                new DialogItem(LocalizationService.Format(
-                    _pick.One(ResultCatalog.TimeTrialCurrentLineTemplates),
-                    _fmt.Time(summary.TimeTrialCurrentTimeMs)))
-            };
-
-            if (!beatRecord && summary.TimeTrialPreviousBestTimeMs > 0)
-            {
-                items.Add(new DialogItem(LocalizationService.Format(
-                    _pick.One(ResultCatalog.TimeTrialPreviousBestLineTemplates),
-                    _fmt.Time(summary.TimeTrialPreviousBestTimeMs))));
-            }
+            var items = new List<DialogItem>();
+            AppendTimeTrialRunSummary(items, summary);
+            AppendTimeTrialLapSummary(items, summary);
 
             var dialog = new Dialog(
                 title,
@@ -83,6 +73,59 @@ namespace TopSpeed.Game
                 new DialogButton(QuestionId.Close, LocalizationService.Mark("Close")));
 
             return new ResultPlan(dialog, playWin: beatRecord);
+        }
+
+        private void AppendTimeTrialRunSummary(List<DialogItem> items, RaceResultSummary summary)
+        {
+            items.Add(new DialogItem(LocalizationService.Format(
+                _pick.One(ResultCatalog.TimeTrialCurrentLineTemplates),
+                _fmt.Time(summary.TimeTrialCurrentRunMs))));
+
+            if (summary.TimeTrialBestRunMs > 0)
+            {
+                items.Add(new DialogItem(LocalizationService.Format(
+                    _pick.One(ResultCatalog.TimeTrialBestRunLineTemplates),
+                    _fmt.Time(summary.TimeTrialBestRunMs))));
+            }
+
+            if (summary.TimeTrialAverageRunMs > 0 && summary.TimeTrialLapCount > 0)
+            {
+                items.Add(new DialogItem(LocalizationService.Format(
+                    _pick.One(ResultCatalog.TimeTrialAverageRunLineTemplates),
+                    summary.TimeTrialLapCount,
+                    _fmt.Time(summary.TimeTrialAverageRunMs))));
+            }
+        }
+
+        private void AppendTimeTrialLapSummary(List<DialogItem> items, RaceResultSummary summary)
+        {
+            var lapItems = new List<DialogItem>();
+            if (summary.TimeTrialBestLapThisRunMs > 0)
+            {
+                lapItems.Add(new DialogItem(LocalizationService.Format(
+                    _pick.One(ResultCatalog.TimeTrialRunBestLapLineTemplates),
+                    _fmt.Time(summary.TimeTrialBestLapThisRunMs))));
+            }
+
+            if (summary.TimeTrialBestLapMs > 0)
+            {
+                lapItems.Add(new DialogItem(LocalizationService.Format(
+                    _pick.One(ResultCatalog.TimeTrialBestLapLineTemplates),
+                    _fmt.Time(summary.TimeTrialBestLapMs))));
+            }
+
+            if (summary.TimeTrialAverageLapMs > 0)
+            {
+                lapItems.Add(new DialogItem(LocalizationService.Format(
+                    _pick.One(ResultCatalog.TimeTrialAverageLapLineTemplates),
+                    _fmt.Time(summary.TimeTrialAverageLapMs))));
+            }
+
+            if (lapItems.Count == 0)
+                return;
+
+            items.Add(new DialogItem(_pick.One(ResultCatalog.TimeTrialLapSummaryTitles)));
+            items.AddRange(lapItems);
         }
     }
 }

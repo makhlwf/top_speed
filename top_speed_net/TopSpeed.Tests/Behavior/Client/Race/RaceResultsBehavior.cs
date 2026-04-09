@@ -65,8 +65,13 @@ public sealed class RaceResultsBehaviorTests
         {
             Mode = RaceResultMode.TimeTrial,
             TimeTrialBeatRecord = false,
-            TimeTrialCurrentTimeMs = 61000,
-            TimeTrialPreviousBestTimeMs = 72000
+            TimeTrialLapCount = 3,
+            TimeTrialCurrentRunMs = 61000,
+            TimeTrialBestRunMs = 72000,
+            TimeTrialAverageRunMs = 66500,
+            TimeTrialBestLapThisRunMs = 20000,
+            TimeTrialBestLapMs = 19500,
+            TimeTrialAverageLapMs = 20750
         };
 
         var plan = dialogs.Build(summary);
@@ -74,9 +79,31 @@ public sealed class RaceResultsBehaviorTests
         plan.PlayWin.Should().BeFalse();
         plan.Dialog.Title.Should().Be("Time trial complete.");
         plan.Dialog.Caption.Should().Be("Summary of this run and your previous best:");
-        plan.Dialog.Items.Should().HaveCount(2);
+        plan.Dialog.Items.Should().HaveCount(7);
         plan.Dialog.Items[0].Text.Should().Be("Your time: 1 minute and 1 second.");
-        plan.Dialog.Items[1].Text.Should().Be("Your previous best record was: 1 minute and 12 seconds.");
+        plan.Dialog.Items[1].Text.Should().Be("Best time so far: 1 minute and 12 seconds.");
+        plan.Dialog.Items[2].Text.Should().Be("Average 3-lap time for this track: 1 minute and 6 seconds.");
+        plan.Dialog.Items[3].Text.Should().Be("Lap summary:");
+        plan.Dialog.Items[4].Text.Should().Be("Best lap this run: 20 seconds.");
+        plan.Dialog.Items[5].Text.Should().Be("Best lap for this track: 19 seconds.");
+        plan.Dialog.Items[6].Text.Should().Be("Average lap time for this track: 20 seconds.");
+    }
+
+    [Fact]
+    public void Build_TimeTrial_Omits_Unavailable_Lines()
+    {
+        var dialogs = new ResultDialogs(new Pick(_ => 0), new ResultFmt(new Pick(_ => 0)));
+        var summary = new RaceResultSummary
+        {
+            Mode = RaceResultMode.TimeTrial,
+            TimeTrialBeatRecord = true,
+            TimeTrialCurrentRunMs = 61000
+        };
+
+        var plan = dialogs.Build(summary);
+
+        plan.Dialog.Items.Should().HaveCount(1);
+        plan.Dialog.Items[0].Text.Should().Be("Your time: 1 minute and 1 second.");
     }
 
     [Fact]
@@ -105,7 +132,7 @@ public sealed class RaceResultsBehaviorTests
         {
             Mode = RaceResultMode.TimeTrial,
             TimeTrialBeatRecord = true,
-            TimeTrialCurrentTimeMs = 61000
+            TimeTrialCurrentRunMs = 61000
         });
         show.Show(null);
 

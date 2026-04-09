@@ -14,8 +14,13 @@ namespace TopSpeed.Race
         public bool IsMultiplayer { get; set; }
         public int LocalPosition { get; set; }
         public bool TimeTrialBeatRecord { get; set; }
-        public int TimeTrialCurrentTimeMs { get; set; }
-        public int TimeTrialPreviousBestTimeMs { get; set; }
+        public int TimeTrialLapCount { get; set; }
+        public int TimeTrialCurrentRunMs { get; set; }
+        public int TimeTrialBestRunMs { get; set; }
+        public int TimeTrialAverageRunMs { get; set; }
+        public int TimeTrialBestLapThisRunMs { get; set; }
+        public int TimeTrialBestLapMs { get; set; }
+        public int TimeTrialAverageLapMs { get; set; }
         public RaceResultEntry[] Entries { get; set; } = Array.Empty<RaceResultEntry>();
     }
 

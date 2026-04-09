@@ -222,6 +222,7 @@
     </PropertyGroup>
     <MSBuild Projects="$(_UpdaterProjectPath)" Targets="Build" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetFramework=net472" />
     <Copy SourceFiles="$(_UpdaterBuildDir)Updater.exe" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(_UpdaterBuildDir)Updater.exe.config" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" Condition="Exists('$(_UpdaterBuildDir)Updater.exe.config')" />
     <Copy SourceFiles="$(_UpdaterBuildDir)Updater.pdb" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" Condition="Exists('$(_UpdaterBuildDir)Updater.pdb')" />
   </Target>
 

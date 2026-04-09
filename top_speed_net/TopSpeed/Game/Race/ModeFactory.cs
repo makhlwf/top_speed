@@ -15,6 +15,7 @@ namespace TopSpeed.Game
     {
         TimeTrialMode CreateTimeTrial(
             string track,
+            string trackId,
             bool automaticTransmission,
             int laps,
             int vehicleIndex,
@@ -68,6 +69,7 @@ namespace TopSpeed.Game
 
         public TimeTrialMode CreateTimeTrial(
             string track,
+            string trackId,
             bool automaticTransmission,
             int laps,
             int vehicleIndex,
@@ -80,6 +82,7 @@ namespace TopSpeed.Game
                 _settings,
                 _raceInput,
                 track,
+                trackId,
                 automaticTransmission,
                 laps,
                 vehicleIndex,

@@ -23,7 +23,9 @@ namespace TopSpeed.Server.Updates
             _http.Timeout = TimeSpan.FromSeconds(25);
             _jsonOptions = new JsonSerializerOptions
             {
-                PropertyNameCaseInsensitive = true
+                PropertyNameCaseInsensitive = true,
+                AllowTrailingCommas = true,
+                ReadCommentHandling = JsonCommentHandling.Skip
             };
         }
 

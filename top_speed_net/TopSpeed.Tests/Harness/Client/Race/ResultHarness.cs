@@ -36,8 +36,13 @@ internal static class ResultHarness
             {
                 Mode = RaceResultMode.TimeTrial,
                 TimeTrialBeatRecord = false,
-                TimeTrialCurrentTimeMs = 61000,
-                TimeTrialPreviousBestTimeMs = 72000
+                TimeTrialLapCount = 3,
+                TimeTrialCurrentRunMs = 61000,
+                TimeTrialBestRunMs = 72000,
+                TimeTrialAverageRunMs = 66500,
+                TimeTrialBestLapThisRunMs = 20000,
+                TimeTrialBestLapMs = 19500,
+                TimeTrialAverageLapMs = 20750
             }))
         };
     }

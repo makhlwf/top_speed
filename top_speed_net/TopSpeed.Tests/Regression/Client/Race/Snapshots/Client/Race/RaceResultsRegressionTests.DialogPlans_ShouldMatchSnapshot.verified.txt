@@ -24,7 +24,22 @@
           Text: Your time: 1 minute and 1 second.
         },
         {
-          Text: Your previous best record was: 1 minute and 12 seconds.
+          Text: Best time so far: 1 minute and 12 seconds.
+        },
+        {
+          Text: Average 3-lap time for this track: 1 minute and 6 seconds.
+        },
+        {
+          Text: Lap summary:
+        },
+        {
+          Text: Best lap this run: 20 seconds.
+        },
+        {
+          Text: Best lap for this track: 19 seconds.
+        },
+        {
+          Text: Average lap time for this track: 20 seconds.
         }
       ]
     }

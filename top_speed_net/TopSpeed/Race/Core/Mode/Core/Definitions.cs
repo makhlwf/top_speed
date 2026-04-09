@@ -119,6 +119,8 @@ namespace TopSpeed.Race
         protected bool PauseRequested { get; set; }
         private bool _exitWhenQueueIdle;
         private bool _requirePostFinishStopBeforeExit;
+
+        protected int RaceClockMs => (int)(_stopwatch.ElapsedMilliseconds - _stopwatchDiffMs);
     }
 }
 

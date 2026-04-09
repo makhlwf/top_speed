@@ -62,6 +62,10 @@ namespace TopSpeed.Race
             if (currentLap <= _lap)
                 return false;
 
+            var completedLap = currentLap - 1;
+            if (completedLap >= 1 && completedLap <= _nrOfLaps)
+                OnPlayerLapCompleted(completedLap, RaceClockMs);
+
             _lap = currentLap;
             if (_lap > _nrOfLaps)
             {
@@ -79,6 +83,10 @@ namespace TopSpeed.Race
             }
 
             return false;
+        }
+
+        protected virtual void OnPlayerLapCompleted(int lapNumber, int raceTimeMs)
+        {
         }
     }
 }

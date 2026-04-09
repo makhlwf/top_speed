@@ -11,6 +11,7 @@ namespace TopSpeed.Game
         private void LaunchUpdaterAndExit()
         {
             var root = AppContext.BaseDirectory;
+            var updaterDir = TrimTrailingDirectorySeparator(root);
             var updaterPath = ResolveExecutablePath(root, _updateConfig.UpdaterEntryName);
             if (!File.Exists(updaterPath))
             {
@@ -40,7 +41,7 @@ namespace TopSpeed.Game
             {
                 var currentProcess = Process.GetCurrentProcess();
                 var args =
-                    $"--pid {currentProcess.Id} --zip \"{_updateZipPath}\" --dir \"{root}\" --game \"{_updateConfig.GameEntryName}\" --skip \"{_updateConfig.UpdaterEntryName}\"";
+                    $"--pid {currentProcess.Id} --zip \"{_updateZipPath}\" --dir \"{updaterDir}\" --game \"{_updateConfig.GameEntryName}\" --skip \"{_updateConfig.UpdaterEntryName}\"";
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = updaterPath,
@@ -76,6 +77,19 @@ namespace TopSpeed.Game
 
             Array.Sort(matches, StringComparer.OrdinalIgnoreCase);
             return matches[0];
+        }
+
+        private static string TrimTrailingDirectorySeparator(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return string.Empty;
+
+            var fullPath = Path.GetFullPath(path);
+            var root = Path.GetPathRoot(fullPath) ?? string.Empty;
+            if (string.Equals(fullPath, root, StringComparison.OrdinalIgnoreCase))
+                return fullPath;
+
+            return fullPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         }
     }
 }

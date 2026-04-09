@@ -3,23 +3,39 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace TopSpeed.Updater
 {
     internal static class Program
     {
+        private const int ExtractRetryCount = 24;
+        private const int ExtractRetryDelayMs = 250;
+
         private static int Main(string[] args)
         {
+            var safeArgs = args ?? Array.Empty<string>();
+            var enableLog = HasLogFlag(safeArgs);
+            var logPath = enableLog ? ResolveLogPath(safeArgs) : string.Empty;
+            Log(enableLog, logPath, "Updater entry.");
+            Log(enableLog, logPath, "Args: " + string.Join(" ", safeArgs));
             try
             {
-                var options = ParseArgs(args);
+                var options = ParseArgs(safeArgs);
+                enableLog = options.EnableLog;
+                logPath = enableLog ? Path.Combine(Path.GetFullPath(options.TargetDir), "updater.log") : string.Empty;
+                Log(enableLog, logPath, $"Parsed args. pid={options.ProcessId}, zip={options.ZipPath}, dir={options.TargetDir}, game={options.GameExeName}, skip={options.SkipFileName}");
                 WaitForProcessExit(options.ProcessId);
-                InstallZip(options);
-                StartGame(options);
+                Log(enableLog, logPath, "Waited for game process exit.");
+                InstallZip(options, enableLog, logPath);
+                Log(enableLog, logPath, "Zip install complete.");
+                StartGame(options, enableLog, logPath);
+                Log(enableLog, logPath, "Game restart requested successfully.");
                 return 0;
             }
             catch (Exception ex)
             {
+                Log(enableLog, logPath, "Updater failed: " + ex);
                 Console.Error.WriteLine(ex.Message);
                 return 1;
             }
@@ -31,6 +47,12 @@ namespace TopSpeed.Updater
             for (var i = 0; i < args.Length; i++)
             {
                 var key = args[i] ?? string.Empty;
+                if (string.Equals(key, "--log", StringComparison.OrdinalIgnoreCase))
+                {
+                    options.EnableLog = true;
+                    continue;
+                }
+
                 var value = i + 1 < args.Length ? (args[i + 1] ?? string.Empty) : string.Empty;
                 if (string.IsNullOrWhiteSpace(value))
                     continue;
@@ -81,6 +103,7 @@ namespace TopSpeed.Updater
             {
                 var process = Process.GetProcessById(processId);
                 process.WaitForExit();
+                Thread.Sleep(ExtractRetryDelayMs);
             }
             catch (ArgumentException)
             {
@@ -88,10 +111,11 @@ namespace TopSpeed.Updater
             }
         }
 
-        private static void InstallZip(UpdaterOptions options)
+        private static void InstallZip(UpdaterOptions options, bool enableLog, string logPath)
         {
             var zipPath = Path.GetFullPath(options.ZipPath);
             var targetDir = Path.GetFullPath(options.TargetDir);
+            Log(enableLog, logPath, $"InstallZip start. zip={zipPath}");
             if (!File.Exists(zipPath))
                 throw new FileNotFoundException("Update zip was not found.", zipPath);
             if (!Directory.Exists(targetDir))
@@ -100,6 +124,8 @@ namespace TopSpeed.Updater
             using (var archive = ZipFile.OpenRead(zipPath))
             {
                 var bundlePayloadPrefix = ResolveBundlePayloadPrefix(options, archive, targetDir);
+                Log(enableLog, logPath, $"Archive opened. entries={archive.Entries.Count}, bundlePrefix={bundlePayloadPrefix}");
+                var extractedCount = 0;
                 for (var i = 0; i < archive.Entries.Count; i++)
                 {
                     var entry = archive.Entries[i];
@@ -114,6 +140,7 @@ namespace TopSpeed.Updater
 
                     if (ShouldSkipEntry(options.SkipFileName, entry.Name))
                     {
+                        Log(enableLog, logPath, $"Skipped entry: {entry.FullName}");
                         continue;
                     }
 
@@ -125,11 +152,15 @@ namespace TopSpeed.Updater
                     if (!string.IsNullOrWhiteSpace(parent))
                         Directory.CreateDirectory(parent);
 
-                    entry.ExtractToFile(destination, overwrite: true);
+                    ExtractEntryWithRetry(entry, destination, enableLog, logPath);
+                    extractedCount++;
                 }
+
+                Log(enableLog, logPath, $"Archive extraction finished. extracted={extractedCount}");
             }
 
             File.Delete(zipPath);
+            Log(enableLog, logPath, "Deleted update zip.");
         }
 
         private static string ResolveBundlePayloadPrefix(UpdaterOptions options, ZipArchive archive, string targetDir)
@@ -180,9 +211,10 @@ namespace TopSpeed.Updater
             return (path ?? string.Empty).Replace('\\', '/');
         }
 
-        private static void StartGame(UpdaterOptions options)
+        private static void StartGame(UpdaterOptions options, bool enableLog, string logPath)
         {
             var gamePath = ResolveGamePath(options.TargetDir, options.GameExeName);
+            Log(enableLog, logPath, $"Resolved game path: {gamePath}");
             if (string.IsNullOrWhiteSpace(gamePath) || !File.Exists(gamePath))
                 throw new FileNotFoundException(
                     "Updated game executable was not found.",
@@ -192,12 +224,46 @@ namespace TopSpeed.Updater
             if (string.IsNullOrWhiteSpace(workingDirectory))
                 workingDirectory = options.TargetDir;
 
-            Process.Start(new ProcessStartInfo
+            var process = Process.Start(new ProcessStartInfo
             {
                 FileName = gamePath,
                 WorkingDirectory = workingDirectory,
                 UseShellExecute = true
             });
+            Log(enableLog, logPath, process == null
+                ? "Process.Start returned null for game restart."
+                : $"Game restart process started. pid={process.Id}");
+        }
+
+        private static void ExtractEntryWithRetry(ZipArchiveEntry entry, string destination, bool enableLog, string logPath)
+        {
+            Exception? lastError = null;
+            for (var attempt = 1; attempt <= ExtractRetryCount; attempt++)
+            {
+                try
+                {
+                    entry.ExtractToFile(destination, overwrite: true);
+                    if (attempt > 1)
+                        Log(enableLog, logPath, $"Extract retry succeeded for {destination} on attempt {attempt}.");
+                    return;
+                }
+                catch (IOException ex)
+                {
+                    lastError = ex;
+                    Log(enableLog, logPath, $"Extract retry {attempt}/{ExtractRetryCount} failed for {destination}: {ex.Message}");
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    lastError = ex;
+                    Log(enableLog, logPath, $"Extract retry {attempt}/{ExtractRetryCount} failed for {destination}: {ex.Message}");
+                }
+
+                Thread.Sleep(ExtractRetryDelayMs);
+            }
+
+            throw new IOException(
+                $"Failed to extract '{entry.FullName}' to '{destination}' after {ExtractRetryCount} attempts.",
+                lastError);
         }
 
         private static string ResolveGamePath(string targetDir, string gameExeName)
@@ -267,6 +333,68 @@ namespace TopSpeed.Updater
                 : stem;
         }
 
+        private static bool HasLogFlag(string[] args)
+        {
+            if (args == null || args.Length == 0)
+                return false;
+
+            for (var i = 0; i < args.Length; i++)
+            {
+                if (string.Equals(args[i], "--log", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static string ResolveLogPath(string[] args)
+        {
+            try
+            {
+                for (var i = 0; i < args.Length - 1; i++)
+                {
+                    if (!string.Equals(args[i], "--dir", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var dir = args[i + 1];
+                    if (string.IsNullOrWhiteSpace(dir))
+                        break;
+
+                    return Path.Combine(Path.GetFullPath(dir), "updater.log");
+                }
+            }
+            catch
+            {
+            }
+
+            return Path.Combine(Path.GetTempPath(), "topspeed_updater.log");
+        }
+
+        private static void Log(bool enabled, string path, string message)
+        {
+            if (!enabled)
+                return;
+
+            WriteLog(path, message);
+        }
+
+        private static void WriteLog(string path, string message)
+        {
+            try
+            {
+                var directory = Path.GetDirectoryName(path);
+                if (!string.IsNullOrWhiteSpace(directory))
+                    Directory.CreateDirectory(directory);
+
+                var line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] {message}{Environment.NewLine}";
+                File.AppendAllText(path, line);
+            }
+            catch
+            {
+                // Ignore logging failures.
+            }
+        }
+
 
         private sealed class UpdaterOptions
         {
@@ -275,6 +403,7 @@ namespace TopSpeed.Updater
             public string TargetDir { get; set; } = string.Empty;
             public string GameExeName { get; set; } = string.Empty;
             public string SkipFileName { get; set; } = string.Empty;
+            public bool EnableLog { get; set; }
         }
     }
 }

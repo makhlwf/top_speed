@@ -48,6 +48,7 @@ namespace TopSpeed.Game
             var track = string.IsNullOrWhiteSpace(_setup.TrackNameOrFile)
                 ? TrackList.RaceTracks[0].Key
                 : _setup.TrackNameOrFile!;
+            var trackId = TrackId.FromSelection(track);
             var vehicleIndex = _setup.VehicleIndex ?? 0;
             var vehicleFile = _setup.VehicleFile;
             var automaticRequested = _setup.Transmission == TransmissionMode.Automatic;
@@ -73,6 +74,7 @@ namespace TopSpeed.Game
 
                         var timeTrial = _raceModeFactory.CreateTimeTrial(
                             track,
+                            trackId,
                             automatic,
                             _settings.NrOfLaps,
                             vehicleIndex,

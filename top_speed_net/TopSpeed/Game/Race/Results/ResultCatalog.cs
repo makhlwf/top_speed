@@ -80,10 +80,40 @@ namespace TopSpeed.Game
             LocalizationService.Mark("You finished in {0}.")
         };
 
-        public static readonly string[] TimeTrialPreviousBestLineTemplates =
+        public static readonly string[] TimeTrialBestRunLineTemplates =
         {
-            LocalizationService.Mark("Your previous best record was: {0}."),
-            LocalizationService.Mark("Previous best time: {0}.")
+            LocalizationService.Mark("Best time so far: {0}."),
+            LocalizationService.Mark("Best recorded run: {0}.")
+        };
+
+        public static readonly string[] TimeTrialAverageRunLineTemplates =
+        {
+            LocalizationService.Mark("Average {0}-lap time for this track: {1}."),
+            LocalizationService.Mark("Average time for this track over {0} laps: {1}.")
+        };
+
+        public static readonly string[] TimeTrialLapSummaryTitles =
+        {
+            LocalizationService.Mark("Lap summary:"),
+            LocalizationService.Mark("Lap statistics:")
+        };
+
+        public static readonly string[] TimeTrialRunBestLapLineTemplates =
+        {
+            LocalizationService.Mark("Best lap this run: {0}."),
+            LocalizationService.Mark("Your quickest lap this run: {0}.")
+        };
+
+        public static readonly string[] TimeTrialBestLapLineTemplates =
+        {
+            LocalizationService.Mark("Best lap for this track: {0}."),
+            LocalizationService.Mark("Fastest recorded lap on this track: {0}.")
+        };
+
+        public static readonly string[] TimeTrialAverageLapLineTemplates =
+        {
+            LocalizationService.Mark("Average lap time for this track: {0}."),
+            LocalizationService.Mark("Track lap average: {0}.")
         };
     }
 }
