@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-09 17:13+0200\n"
+"POT-Creation-Date: 2026-04-12 15:10+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -379,12 +379,12 @@ msgstr ""
 msgid "Failed to start transport on port {0}."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:232
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:214
 #, csharp-format
 msgid "Finish ignored: room={0}, player={1}, number={2}, state={3}."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:213
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:195
 #, csharp-format
 msgid ""
 "Finish recorded: room={0}, player={1}, number={2}, place={3}, timeMs={4}."
@@ -654,12 +654,12 @@ msgid ""
 "Player ready: room={0}, player={1}, car={2}, automatic={3}, ready={4}/{5}."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:143
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:125
 #, csharp-format
 msgid "Player state transition from data: room={0}, player={1}, {2} -> {3}."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:53
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:44
 #, csharp-format
 msgid "Player state transition: room={0}, player={1}, {2} -> {3} (packet={4})."
 msgstr ""
@@ -670,7 +670,7 @@ msgstr ""
 #: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Rooms\Online.cs:89
 #: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\admin.cs:78
 #: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Notify\Room.cs:194
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:69
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:60
 #: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Room\Membership.cs:195
 #: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Room\Membership.cs:199
 #: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Room\Numbering.cs:72
@@ -727,7 +727,7 @@ msgstr ""
 msgid "Protocol version: {0}"
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:223
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:205
 #, csharp-format
 msgid "Race completion pending: room={0}, finished={1}/{2}."
 msgstr ""
@@ -1470,12 +1470,12 @@ msgstr ""
 msgid "{0} left race preparation."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Control.cs:105
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Control.cs:60
 #, csharp-format
 msgid "{0} paused the current game."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:265
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:247
 #, csharp-format
 msgid ""
 "{0} payload mismatch: room={1}, connectionPlayer={2}/{3}, payload={4}/{5}."
@@ -1486,14 +1486,14 @@ msgstr ""
 msgid "{0} players are connected:"
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:279
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:261
 #, csharp-format
 msgid ""
 "{0} race instance mismatch: room={1}, connectionPlayer={2}/{3}, "
 "payloadRaceInstance={4}, roomRaceInstance={5}."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Control.cs:106
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Control.cs:61
 #, csharp-format
 msgid "{0} resumed the current game."
 msgstr ""
@@ -1503,7 +1503,7 @@ msgstr ""
 msgid "{0} says: {1}"
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Control.cs:170
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Control.cs:125
 #, csharp-format
 msgid "{0} stopped the current game."
 msgstr ""

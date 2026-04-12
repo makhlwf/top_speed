@@ -13,9 +13,13 @@ namespace TopSpeed.Audio
                 return;
 
             var sampleRate = _engine.PrimaryOutput.SampleRate > 0 ? _engine.PrimaryOutput.SampleRate : 44100;
+            var samplesPerCycle = Math.Max(1, (int)Math.Round(sampleRate / frequencyHz));
             var totalFrames = (int)((sampleRate * durationMs) / 1000.0);
             if (totalFrames <= 0)
                 return;
+            var remainder = totalFrames % samplesPerCycle;
+            if (remainder != 0)
+                totalFrames += samplesPerCycle - remainder;
 
             var frameCursor = 0;
             Source? source = null;
@@ -27,10 +31,22 @@ namespace TopSpeed.Audio
                         float sample = 0f;
                         if (frameCursor < totalFrames)
                         {
-                            var t = (double)frameCursor / sampleRate;
-                            var cycle = (t * frequencyHz) % 1.0d;
-                            var tri = 1.0d - (4.0d * Math.Abs(cycle - 0.5d));
-                            sample = (float)(tri * 0.65d);
+                            var phase = (double)(frameCursor % samplesPerCycle) / samplesPerCycle;
+                            double triangle;
+                            if (phase < 0.25d)
+                            {
+                                triangle = phase * 4.0d;
+                            }
+                            else if (phase < 0.75d)
+                            {
+                                triangle = 2.0d - (phase * 4.0d);
+                            }
+                            else
+                            {
+                                triangle = (phase * 4.0d) - 4.0d;
+                            }
+
+                            sample = (float)(triangle * 0.65d);
                             frameCursor++;
                         }
 
@@ -50,7 +66,8 @@ namespace TopSpeed.Audio
             {
                 try
                 {
-                    Thread.Sleep(durationMs + 30);
+                    var alignedDurationMs = (int)Math.Ceiling((totalFrames * 1000.0d) / sampleRate);
+                    Thread.Sleep(alignedDurationMs + 30);
                     source.Stop();
                     source.Dispose();
                 }

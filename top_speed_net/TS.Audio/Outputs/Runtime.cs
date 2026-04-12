@@ -1,14 +1,20 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Threading;
 using MiniAudioEx.Native;
 
 namespace TS.Audio
 {
     internal sealed class OutputRuntime : IDisposable
     {
+        private static readonly object RuntimeMapLock = new object();
+        private static readonly Dictionary<IntPtr, OutputRuntime> RuntimeByEngineHandle = new Dictionary<IntPtr, OutputRuntime>();
         private readonly ma_device_data_proc _deviceDataProc;
         private readonly GCHandle _selfHandle;
         private readonly IntPtr _contextHandle;
+        private float _masterVolume = 1f;
+        private float _limiterGain = 1f;
 
         public AudioOutputConfig Config { get; }
         public IntPtr ContextHandle => _contextHandle;
@@ -41,6 +47,7 @@ namespace TS.Audio
 
             _selfHandle = GCHandle.Alloc(this);
             InitializeListener();
+            MiniAudioExNative.ma_ex_context_set_master_volume(_contextHandle, 1f);
 
             var engineSampleRate = MiniAudioNative.ma_engine_get_sample_rate(EngineHandle);
             if (engineSampleRate > 0)
@@ -49,16 +56,19 @@ namespace TS.Audio
             var engineChannels = MiniAudioNative.ma_engine_get_channels(EngineHandle);
             if (engineChannels > 0)
                 Config.Channels = engineChannels;
+
+            lock (RuntimeMapLock)
+                RuntimeByEngineHandle[EngineHandle.pointer] = this;
         }
 
         public void SetMasterVolume(float volume)
         {
-            MiniAudioExNative.ma_ex_context_set_master_volume(_contextHandle, Clamp01(volume));
+            Volatile.Write(ref _masterVolume, Clamp01(volume));
         }
 
         public float GetMasterVolume()
         {
-            return MiniAudioExNative.ma_ex_context_get_master_volume(_contextHandle);
+            return Volatile.Read(ref _masterVolume);
         }
 
         public void UpdateListener(ma_vec3f position, ma_vec3f direction, ma_vec3f worldUp, ma_vec3f velocity)
@@ -72,6 +82,9 @@ namespace TS.Audio
 
         public void Dispose()
         {
+            lock (RuntimeMapLock)
+                RuntimeByEngineHandle.Remove(EngineHandle.pointer);
+
             if (_selfHandle.IsAllocated)
                 _selfHandle.Free();
 
@@ -116,6 +129,65 @@ namespace TS.Audio
                 return;
 
             MiniAudioExNative.ma_engine_read_pcm_frames(engine, pOutput, frameCount, out _);
+
+            OutputRuntime? runtime;
+            lock (RuntimeMapLock)
+                RuntimeByEngineHandle.TryGetValue(engine, out runtime);
+
+            runtime?.ApplyMasterLimiter(pOutput, frameCount);
+        }
+
+        private unsafe void ApplyMasterLimiter(IntPtr pOutput, uint frameCount)
+        {
+            if (pOutput == IntPtr.Zero || frameCount == 0)
+                return;
+
+            var channels = Config.Channels > 0 ? Config.Channels : 2u;
+            var sampleCountLong = (long)frameCount * channels;
+            if (sampleCountLong <= 0 || sampleCountLong > int.MaxValue)
+                return;
+
+            var samples = (float*)pOutput;
+            var sampleCount = (int)sampleCountLong;
+            var master = Volatile.Read(ref _masterVolume);
+            if (master < 0f)
+                master = 0f;
+            else if (master > 1f)
+                master = 1f;
+
+            var peak = 0f;
+            for (var i = 0; i < sampleCount; i++)
+            {
+                var abs = Math.Abs(samples[i] * master);
+                if (abs > peak)
+                    peak = abs;
+            }
+
+            var targetLimiterGain = peak > 1f ? 1f / peak : 1f;
+            var limiterGain = _limiterGain;
+            if (targetLimiterGain < limiterGain)
+            {
+                limiterGain = targetLimiterGain;
+            }
+            else
+            {
+                limiterGain += (targetLimiterGain - limiterGain) * 0.05f;
+                if (limiterGain > 1f)
+                    limiterGain = 1f;
+            }
+
+            _limiterGain = limiterGain;
+
+            var gain = master * limiterGain;
+            for (var i = 0; i < sampleCount; i++)
+            {
+                var value = samples[i] * gain;
+                if (value > 1f)
+                    value = 1f;
+                else if (value < -1f)
+                    value = -1f;
+                samples[i] = value;
+            }
         }
     }
 }
