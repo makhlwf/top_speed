@@ -1,7 +1,8 @@
 {
-  "version": "2026.4.11.1",
-  "serverVersion": "2026.4.11.1",
+  "version": "2026.4.12.1",
+  "serverVersion": "2026.4.12.1",
   "changes": [
+    "Fixed a few bugs that were reported for single and time trial modes.",
     "The SAPI speech backend is now much faster and does not lag or freeze during navigation.",
     "Fixed a few audio issues that were reported, such as skipping or audio clicking during transitions. This required me to modify the native C library of MiniAudioEx and updating it too.",
     "The game's audio engine was rewritten from scratch with better code readability and better structure.",
@@ -9,6 +10,6 @@
     "Major code refactoring across game systems such as audio and race. Expect bugs in this version."
   ],
   "serverChanges": [
-    "Fixed some issues when the game is paused by the host."
+    "The server for Linux now correctly includes the updater."
   ]
 }
