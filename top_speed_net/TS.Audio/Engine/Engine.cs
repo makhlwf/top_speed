@@ -18,6 +18,7 @@ namespace TS.Audio
 
         public AssetLibrary Assets { get; }
         public AudioSystem System => _system;
+        public AudioDiagnostics Diagnostics => _system.Diagnostics;
         public AudioOutput PrimaryOutput => _primaryOutput;
         public AudioOutput SpeechOutput => _speechOutput;
         public IReadOnlyDictionary<string, AudioBus> Buses => _buses;
@@ -165,6 +166,36 @@ namespace TS.Audio
             DrainRetiredVoices();
             _system.Update();
             DrainRetiredVoices();
+        }
+
+        public void ConfigureDiagnostics(AudioDiagnosticConfig config)
+        {
+            Diagnostics.Configure(config);
+        }
+
+        public AudioDiagnosticSubscription SubscribeDiagnostics(Action<AudioDiagnosticEvent> handler, AudioDiagnosticFilter? filter = null)
+        {
+            return Diagnostics.Subscribe(handler, filter);
+        }
+
+        public void AddDiagnosticsSink(IAudioDiagnosticSink sink, AudioDiagnosticFilter? filter = null)
+        {
+            Diagnostics.AddSink(sink, filter);
+        }
+
+        public bool RemoveDiagnosticsSink(IAudioDiagnosticSink sink)
+        {
+            return Diagnostics.RemoveSink(sink);
+        }
+
+        public IReadOnlyList<AudioDiagnosticEvent> GetDiagnosticsHistory(AudioDiagnosticFilter? filter = null)
+        {
+            return Diagnostics.GetHistory(filter);
+        }
+
+        public void ClearDiagnosticsHistory()
+        {
+            Diagnostics.ClearHistory();
         }
 
         public AudioEngineSnapshot CaptureSnapshot()

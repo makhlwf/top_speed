@@ -10,10 +10,17 @@ namespace TS.Audio
             if (_disposeRequested || _disposed)
                 return;
 
+            var snapshot = CaptureSnapshot();
             _disposeRequested = true;
             CancelFade();
             MiniAudioExNative.ma_ex_audio_source_stop(_sourceHandle);
             _output.RetireSource(this);
+            Emit(
+                AudioDiagnosticLevel.Debug,
+                AudioDiagnosticKind.SourceDisposed,
+                "Audio source disposal requested.",
+                null,
+                new AudioDiagnosticSnapshot(source: snapshot));
         }
 
         internal void DisposeNative()

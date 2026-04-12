@@ -36,5 +36,13 @@ namespace TS.Audio
         {
             return (float)Math.Pow(2.0, semitones / 12.0);
         }
+
+        public static float GainToDecibels(float gain, float silenceFloorDb = -144f)
+        {
+            if (gain <= 0f)
+                return silenceFloorDb;
+
+            return (float)(20.0 * Math.Log10(gain));
+        }
     }
 }

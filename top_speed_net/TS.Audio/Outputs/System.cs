@@ -9,8 +9,10 @@ namespace TS.Audio
         private readonly AudioSystemConfig _config;
         private readonly Dictionary<string, AudioOutput> _outputs;
         private DateTime _lastUpdate;
+        private readonly AudioDiagnostics _diagnostics;
 
         public IReadOnlyDictionary<string, AudioOutput> Outputs => _outputs;
+        public AudioDiagnostics Diagnostics => _diagnostics;
         public bool IsInitialized => _outputs.Count > 0;
         public bool IsHrtfActive
         {
@@ -25,11 +27,12 @@ namespace TS.Audio
             }
         }
 
-        public AudioSystem(AudioSystemConfig config)
+        public AudioSystem(AudioSystemConfig config, AudioDiagnostics? diagnostics = null)
         {
             _config = config ?? new AudioSystemConfig();
             _outputs = new Dictionary<string, AudioOutput>(StringComparer.OrdinalIgnoreCase);
             _lastUpdate = DateTime.Now;
+            _diagnostics = diagnostics ?? new AudioDiagnostics();
         }
 
         public AudioOutput CreateOutput(AudioOutputConfig outputConfig)
@@ -47,8 +50,24 @@ namespace TS.Audio
             if (outputConfig.PeriodSizeInFrames == 0)
                 outputConfig.PeriodSizeInFrames = _config.PeriodSizeInFrames;
 
-            var output = new AudioOutput(outputConfig, _config);
+            var output = new AudioOutput(outputConfig, _config, _diagnostics);
             _outputs.Add(outputConfig.Name, output);
+            _diagnostics.Emit(
+                AudioDiagnosticLevel.Info,
+                AudioDiagnosticKind.OutputCreated,
+                AudioDiagnosticEntityType.Output,
+                output.Name,
+                null,
+                null,
+                "Audio output created.",
+                new Dictionary<string, object?>
+                {
+                    ["sampleRate"] = output.SampleRate,
+                    ["channels"] = output.Channels,
+                    ["periodSizeInFrames"] = output.PeriodSizeInFrames,
+                    ["hrtfActive"] = output.IsHrtfActive
+                },
+                new AudioDiagnosticSnapshot(output: output.CaptureSnapshot()));
             return output;
         }
 

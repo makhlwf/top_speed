@@ -11,6 +11,7 @@ namespace TS.Audio
         private readonly bool _trueStereoHrtf;
         private readonly HrtfDownmixMode _downmixMode;
         private readonly OutputRuntime _runtime;
+        private readonly AudioDiagnostics _diagnostics;
         private readonly List<AudioSourceHandle> _sources;
         private readonly List<TrackStream> _streams;
         private readonly List<RetiredSource> _retired;
@@ -34,6 +35,7 @@ namespace TS.Audio
         public HrtfDownmixMode DownmixMode => _downmixMode;
         public bool IsHrtfActive => _steamAudio != null;
         public AudioBus MainBus => _mainBus;
+        internal AudioDiagnostics Diagnostics => _diagnostics;
 
         private sealed class RetiredSource
         {
@@ -59,10 +61,11 @@ namespace TS.Audio
             }
         }
 
-        public AudioOutput(AudioOutputConfig config, AudioSystemConfig systemConfig)
+        public AudioOutput(AudioOutputConfig config, AudioSystemConfig systemConfig, AudioDiagnostics diagnostics)
         {
             _config = config ?? throw new ArgumentNullException(nameof(config));
             _systemConfig = systemConfig ?? throw new ArgumentNullException(nameof(systemConfig));
+            _diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
             _sources = new List<AudioSourceHandle>();
             _streams = new List<TrackStream>();
             _retired = new List<RetiredSource>();
@@ -80,7 +83,9 @@ namespace TS.Audio
                 _config.PeriodSizeInFrames = _systemConfig.PeriodSizeInFrames;
 
             _runtime = new OutputRuntime(_config);
+            _runtime.BindOwner(this);
             _mainBus = CreateBusInternal("main", null, null);
+            _mainBus.AddEffect(_runtime.ProcessMasterLimiter, "master");
 
             _steamAudio = _systemConfig.UseHrtf
                 ? new SteamAudioContext((int)_config.SampleRate, (int)_config.PeriodSizeInFrames, _systemConfig.HrtfSofaPath)
@@ -90,6 +95,24 @@ namespace TS.Audio
         public void SetMasterVolume(float volume)
         {
             _runtime.SetMasterVolume(volume);
+            _diagnostics.Emit(
+                AudioDiagnosticLevel.Debug,
+                AudioDiagnosticKind.OutputMasterVolumeChanged,
+                AudioDiagnosticEntityType.Output,
+                Name,
+                null,
+                null,
+                "Audio output master volume changed.",
+                new Dictionary<string, object?>
+                {
+                    ["masterVolume"] = _runtime.GetMasterVolume(),
+                    ["masterVolumeDb"] = AudioMath.GainToDecibels(_runtime.GetMasterVolume()),
+                    ["lastPreLimiterPeak"] = _runtime.GetLastPreLimiterPeak(),
+                    ["lastPreLimiterPeakDbfs"] = AudioMath.GainToDecibels(_runtime.GetLastPreLimiterPeak()),
+                    ["lastPostLimiterPeak"] = _runtime.GetLastPostLimiterPeak(),
+                    ["lastPostLimiterPeakDbfs"] = AudioMath.GainToDecibels(_runtime.GetLastPostLimiterPeak())
+                },
+                new AudioDiagnosticSnapshot(output: CaptureSnapshot()));
         }
 
         public float GetMasterVolume()

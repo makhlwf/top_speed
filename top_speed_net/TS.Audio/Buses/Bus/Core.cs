@@ -49,6 +49,21 @@ namespace TS.Audio
             parent?._children.Add(this);
             RecalculateMix();
             RebuildEffectChain();
+            _output.Diagnostics.Emit(
+                AudioDiagnosticLevel.Info,
+                AudioDiagnosticKind.BusCreated,
+                AudioDiagnosticEntityType.Bus,
+                _output.Name,
+                Name,
+                null,
+                "Audio bus created.",
+                new Dictionary<string, object?>
+                {
+                    ["parentName"] = _parent?.Name,
+                    ["defaultsSpatialize"] = _defaults.Spatialize,
+                    ["defaultsUseHrtf"] = _defaults.UseHrtf
+                },
+                new AudioDiagnosticSnapshot(bus: CaptureSnapshot()));
         }
 
         public Source CreateSource(SoundAsset asset, bool? spatialize = null, bool? useHrtf = null)
@@ -184,6 +199,22 @@ namespace TS.Audio
         {
             _localVolume = Clamp01(volume);
             RecalculateMix();
+            _output.Diagnostics.Emit(
+                AudioDiagnosticLevel.Debug,
+                AudioDiagnosticKind.BusVolumeChanged,
+                AudioDiagnosticEntityType.Bus,
+                _output.Name,
+                Name,
+                null,
+                "Audio bus volume changed.",
+                new Dictionary<string, object?>
+                {
+                    ["localVolume"] = _localVolume,
+                    ["localVolumeDb"] = AudioMath.GainToDecibels(_localVolume),
+                    ["effectiveVolume"] = _effectiveVolume,
+                    ["effectiveVolumeDb"] = AudioMath.GainToDecibels(_effectiveVolume)
+                },
+                new AudioDiagnosticSnapshot(bus: CaptureSnapshot()));
         }
 
         public float GetVolume()
@@ -200,6 +231,21 @@ namespace TS.Audio
         {
             _muted = muted;
             RecalculateMix();
+            _output.Diagnostics.Emit(
+                AudioDiagnosticLevel.Debug,
+                AudioDiagnosticKind.BusMuteChanged,
+                AudioDiagnosticEntityType.Bus,
+                _output.Name,
+                Name,
+                null,
+                muted ? "Audio bus muted." : "Audio bus unmuted.",
+                new Dictionary<string, object?>
+                {
+                    ["muted"] = _muted,
+                    ["effectiveVolume"] = _effectiveVolume,
+                    ["effectiveVolumeDb"] = AudioMath.GainToDecibels(_effectiveVolume)
+                },
+                new AudioDiagnosticSnapshot(bus: CaptureSnapshot()));
         }
 
         public AudioBus CreateChild(string name)
@@ -219,7 +265,19 @@ namespace TS.Audio
                 var names = new List<string>(_effects.Count);
                 for (var i = 0; i < _effects.Count; i++)
                     names.Add(_effects[i].Name);
-                return new AudioBusSnapshot(Name, _parent?.Name, _localVolume, _effectiveVolume, _muted, _children.Count, _effectsEnabled, _effects.Count, names);
+                return new AudioBusSnapshot(
+                    Name,
+                    _parent?.Name,
+                    _localVolume,
+                    AudioMath.GainToDecibels(_localVolume),
+                    _effectiveVolume,
+                    AudioMath.GainToDecibels(_effectiveVolume),
+                    _muted,
+                    _children.Count,
+                    _effectsEnabled,
+                    _effects.Count,
+                    names,
+                    CaptureGainStages());
             }
         }
 
@@ -228,12 +286,23 @@ namespace TS.Audio
             if (_disposed)
                 return;
 
+            var snapshot = CaptureSnapshot();
             _disposed = true;
             ClearEffects();
             _parent?._children.Remove(this);
             MiniAudioNative.ma_node_detach_all_output_buses(NodeHandle);
             MiniAudioNative.ma_sound_group_uninit(_group);
             _group.Free();
+            _output.Diagnostics.Emit(
+                AudioDiagnosticLevel.Info,
+                AudioDiagnosticKind.BusDisposed,
+                AudioDiagnosticEntityType.Bus,
+                _output.Name,
+                Name,
+                null,
+                "Audio bus disposed.",
+                null,
+                new AudioDiagnosticSnapshot(bus: snapshot));
         }
 
         private void ConfigureSource(Source source, ResolvedSourceOptions options)
@@ -275,6 +344,23 @@ namespace TS.Audio
 
             for (var i = 0; i < _children.Count; i++)
                 _children[i].RecalculateMix();
+        }
+
+        internal IReadOnlyList<AudioGainStageSnapshot> CaptureGainStages()
+        {
+            var chain = new Stack<AudioBus>();
+            for (var cursor = this; cursor != null; cursor = cursor._parent)
+                chain.Push(cursor);
+
+            var stages = new List<AudioGainStageSnapshot>(chain.Count);
+            while (chain.Count > 0)
+            {
+                var bus = chain.Pop();
+                var linear = bus._muted ? 0f : Clamp01(bus._localVolume);
+                stages.Add(new AudioGainStageSnapshot(bus.Name, linear, AudioMath.GainToDecibels(linear)));
+            }
+
+            return stages;
         }
 
         private void ThrowIfDisposed()

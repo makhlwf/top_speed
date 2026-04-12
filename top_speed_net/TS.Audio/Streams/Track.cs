@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace TS.Audio
 {
@@ -36,11 +37,36 @@ namespace TS.Audio
 
             _source.SetOnEnd(OnTrackEnded);
             _source.Play(ShouldLoopIndex(_currentIndex));
+            _output.Diagnostics.Emit(
+                AudioDiagnosticLevel.Debug,
+                AudioDiagnosticKind.StreamPlayRequested,
+                AudioDiagnosticEntityType.Stream,
+                _output.Name,
+                _bus.Name,
+                null,
+                "Audio stream playback requested.",
+                new Dictionary<string, object?>
+                {
+                    ["loop"] = loop,
+                    ["index"] = _currentIndex
+                });
         }
 
         public void Stop()
         {
             _source?.Stop();
+            _output.Diagnostics.Emit(
+                AudioDiagnosticLevel.Debug,
+                AudioDiagnosticKind.StreamStopped,
+                AudioDiagnosticEntityType.Stream,
+                _output.Name,
+                _bus.Name,
+                null,
+                "Audio stream stopped.",
+                new Dictionary<string, object?>
+                {
+                    ["index"] = _currentIndex
+                });
         }
 
         public void SetVolume(float volume)

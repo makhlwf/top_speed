@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
 using MiniAudioEx.Native;
@@ -22,6 +23,17 @@ namespace TS.Audio
                 var mapped = ToMaVec3(position);
                 MiniAudioNative.ma_sound_group_set_position(_group, mapped.x, mapped.y, mapped.z);
             }
+
+            Emit(
+                AudioDiagnosticLevel.Trace,
+                AudioDiagnosticKind.SourcePositionChanged,
+                "Audio source position changed.",
+                new Dictionary<string, object?>
+                {
+                    ["x"] = position.X,
+                    ["y"] = position.Y,
+                    ["z"] = position.Z
+                });
         }
 
         public void SetVelocity(Vector3 velocity)
@@ -39,6 +51,17 @@ namespace TS.Audio
                 var mapped = ToMaVec3(velocity);
                 MiniAudioNative.ma_sound_group_set_velocity(_group, mapped.x, mapped.y, mapped.z);
             }
+
+            Emit(
+                AudioDiagnosticLevel.Trace,
+                AudioDiagnosticKind.SourceVelocityChanged,
+                "Audio source velocity changed.",
+                new Dictionary<string, object?>
+                {
+                    ["x"] = velocity.X,
+                    ["y"] = velocity.Y,
+                    ["z"] = velocity.Z
+                });
         }
 
         public void SetDistanceModel(DistanceModel model, float refDistance, float maxDistance, float rolloff)
@@ -63,6 +86,17 @@ namespace TS.Audio
             MiniAudioNative.ma_sound_group_set_max_distance(_group, maxDistance);
             MiniAudioNative.ma_sound_group_set_rolloff(_group, rolloff);
             MiniAudioNative.ma_sound_group_set_attenuation_model(_group, ToMaAttenuationModel(model));
+            Emit(
+                AudioDiagnosticLevel.Debug,
+                AudioDiagnosticKind.SourceDistanceModelChanged,
+                "Audio source distance model changed.",
+                new Dictionary<string, object?>
+                {
+                    ["model"] = model.ToString(),
+                    ["refDistance"] = refDistance,
+                    ["maxDistance"] = maxDistance,
+                    ["rollOff"] = rolloff
+                });
         }
 
         public void SetRoomAcoustics(RoomAcoustics acoustics)
@@ -83,6 +117,16 @@ namespace TS.Audio
             Volatile.Write(ref _spatial.RoomAirAbsorptionOverrideLow, acoustics.AirAbsorptionOverrideLow ?? float.NaN);
             Volatile.Write(ref _spatial.RoomAirAbsorptionOverrideMid, acoustics.AirAbsorptionOverrideMid ?? float.NaN);
             Volatile.Write(ref _spatial.RoomAirAbsorptionOverrideHigh, acoustics.AirAbsorptionOverrideHigh ?? float.NaN);
+            Emit(
+                AudioDiagnosticLevel.Trace,
+                AudioDiagnosticKind.SourceRoomAcousticsChanged,
+                "Audio source room acoustics changed.",
+                new Dictionary<string, object?>
+                {
+                    ["hasRoom"] = acoustics.HasRoom,
+                    ["reverbTimeSeconds"] = acoustics.ReverbTimeSeconds,
+                    ["occlusionScale"] = acoustics.OcclusionScale
+                });
         }
 
         internal void ApplyDirectSimulation(float occlusion, float airLow, float airMid, float airHigh, float transLow, float transMid, float transHigh)
@@ -130,6 +174,14 @@ namespace TS.Audio
 
             _dopplerFactor = Math.Max(0f, dopplerFactor);
             MiniAudioNative.ma_sound_group_set_doppler_factor(_group, _dopplerFactor);
+            Emit(
+                AudioDiagnosticLevel.Trace,
+                AudioDiagnosticKind.SourceDopplerChanged,
+                "Audio source doppler factor changed.",
+                new Dictionary<string, object?>
+                {
+                    ["dopplerFactor"] = _dopplerFactor
+                });
         }
 
         public void UpdateDoppler(Vector3 listenerPos, Vector3 listenerVel, AudioSystemConfig config)

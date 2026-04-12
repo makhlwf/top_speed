@@ -9,6 +9,7 @@ namespace TS.Audio
             if (_disposed)
                 return;
 
+            var snapshot = CaptureSnapshot();
             _disposed = true;
 
             AudioSourceHandle[] sourceSnapshot;
@@ -52,6 +53,16 @@ namespace TS.Audio
 
             _steamAudio?.Dispose();
             _runtime.Dispose();
+            _diagnostics.Emit(
+                AudioDiagnosticLevel.Info,
+                AudioDiagnosticKind.OutputDisposed,
+                AudioDiagnosticEntityType.Output,
+                Name,
+                null,
+                null,
+                "Audio output disposed.",
+                null,
+                new AudioDiagnosticSnapshot(output: snapshot));
         }
     }
 }

@@ -90,6 +90,18 @@ namespace TS.Audio
             var stream = new TrackStream(this, bus, ownsAssets, assets);
             lock (_sourceLock)
                 _streams.Add(stream);
+            _diagnostics.Emit(
+                AudioDiagnosticLevel.Debug,
+                AudioDiagnosticKind.StreamCreated,
+                AudioDiagnosticEntityType.Stream,
+                Name,
+                bus.Name,
+                null,
+                "Audio stream created.",
+                new Dictionary<string, object?>
+                {
+                    ["trackCount"] = assets.Length
+                });
             return stream;
         }
 
@@ -106,6 +118,14 @@ namespace TS.Audio
         {
             lock (_sourceLock)
                 _streams.Remove(stream);
+            _diagnostics.Emit(
+                AudioDiagnosticLevel.Debug,
+                AudioDiagnosticKind.StreamDisposed,
+                AudioDiagnosticEntityType.Stream,
+                Name,
+                null,
+                null,
+                "Audio stream disposed.");
         }
 
         internal void RetireEffect(BusEffect effect)
@@ -232,7 +252,55 @@ namespace TS.Audio
             for (var i = 0; i < sourceSnapshot.Length; i++)
                 sources.Add(sourceSnapshot[i].CaptureSnapshot());
 
-            return new AudioOutputSnapshot(Name, SampleRate, Channels, IsHrtfActive, sourceSnapshot.Length, streamSnapshot.Length, retiredCount, retiredEffectCount, buses, sources);
+            var master = GetMasterVolume();
+            var lastPrePeak = _runtime.GetLastPreLimiterPeak();
+            var lastPostPeak = _runtime.GetLastPostLimiterPeak();
+            return new AudioOutputSnapshot(
+                Name,
+                SampleRate,
+                Channels,
+                master,
+                AudioMath.GainToDecibels(master),
+                lastPrePeak,
+                AudioMath.GainToDecibels(lastPrePeak),
+                lastPostPeak,
+                AudioMath.GainToDecibels(lastPostPeak),
+                IsHrtfActive,
+                sourceSnapshot.Length,
+                streamSnapshot.Length,
+                retiredCount,
+                retiredEffectCount,
+                buses,
+                sources);
+        }
+
+        internal AudioDiagnosticMixSnapshot CaptureMixSnapshot(float preLimiterPeak, float postLimiterPeak, float limiterGain, float masterVolume)
+        {
+            AudioSourceHandle[] sourceSnapshot;
+            lock (_sourceLock)
+                sourceSnapshot = _sources.ToArray();
+
+            var activeSources = new List<AudioSourceSnapshot>(sourceSnapshot.Length);
+            for (var i = 0; i < sourceSnapshot.Length; i++)
+            {
+                var source = sourceSnapshot[i];
+                if (!source.IsPlaying)
+                    continue;
+
+                activeSources.Add(source.CaptureSnapshot());
+            }
+
+            return new AudioDiagnosticMixSnapshot(
+                Name,
+                masterVolume,
+                AudioMath.GainToDecibels(masterVolume),
+                preLimiterPeak,
+                AudioMath.GainToDecibels(preLimiterPeak),
+                postLimiterPeak,
+                AudioMath.GainToDecibels(postLimiterPeak),
+                limiterGain,
+                AudioMath.GainToDecibels(limiterGain),
+                activeSources);
         }
     }
 }

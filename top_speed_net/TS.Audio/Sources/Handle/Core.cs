@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
 using MiniAudioEx.Native;
@@ -8,6 +9,7 @@ namespace TS.Audio
     public sealed partial class AudioSourceHandle : IDisposable
     {
         private const float MaxDistanceInfinite = 1000000000f;
+        private static int s_nextId;
 
         private readonly AudioOutput _output;
         private readonly AudioAsset _asset;
@@ -17,8 +19,10 @@ namespace TS.Audio
         private readonly IntPtr _sourceHandle;
         private readonly ma_sound_group_ptr _group;
         private readonly AudioSourceSpatialParams _spatial;
+        private readonly AudioSourceEnvelopeParams _envelope;
         private readonly bool _spatialize;
         private readonly SourceGraph _graph;
+        private readonly int _id;
         private bool _disposed;
         private bool _disposeRequested;
         private bool _looping;
@@ -34,6 +38,8 @@ namespace TS.Audio
         private float _fadeStartVolume;
         private float _fadeTargetVolume;
         private bool _stopAfterFade;
+        private DateTime? _startRequestedUtc;
+        private bool _silentStartReported;
 
         internal AudioSourceHandle(AudioOutput output, AudioAsset asset, bool spatialize, bool useHrtf, AudioBus bus, bool ownsAsset = true)
         {
@@ -43,7 +49,9 @@ namespace TS.Audio
             _playback = asset.CreatePlayback();
             _bus = bus ?? throw new ArgumentNullException(nameof(bus));
             _spatial = new AudioSourceSpatialParams();
+            _envelope = new AudioSourceEnvelopeParams();
             _spatialize = spatialize;
+            _id = Interlocked.Increment(ref s_nextId);
             _sourceHandle = MiniAudioExNative.ma_ex_audio_source_init(output.Runtime.ContextHandle);
             if (_sourceHandle == IntPtr.Zero)
                 throw new InvalidOperationException("Failed to initialize audio source.");
@@ -65,14 +73,28 @@ namespace TS.Audio
                 throw new InvalidOperationException("Failed to bind audio source group: " + setGroup);
             }
 
-            _graph = new SourceGraph(output, bus, _group, _spatial, spatialize, useHrtf);
+            _graph = new SourceGraph(output, bus, _group, _spatial, _envelope, spatialize, useHrtf);
 
             InitializeVolumeState();
             _graph.Configure();
             ApplyPersistedState();
+            Emit(
+                AudioDiagnosticLevel.Debug,
+                AudioDiagnosticKind.SourceCreated,
+                "Audio source created.",
+                new Dictionary<string, object?>
+                {
+                    ["assetType"] = _asset.GetType().Name,
+                    ["inputChannels"] = InputChannels,
+                    ["inputSampleRate"] = InputSampleRate,
+                    ["spatialized"] = _spatialize,
+                    ["usesHrtf"] = _graph.UsesHrtf
+                });
+            MaybeEmitSuspiciousConfig();
         }
 
         public bool IsPlaying => !_disposeRequested && MiniAudioExNative.ma_ex_audio_source_get_is_playing(_sourceHandle) > 0;
+        public int Id => _id;
         public int InputChannels => _asset.InputChannels;
         public int InputSampleRate => _asset.InputSampleRate;
         internal bool UsesSteamAudio => _graph.UsesHrtf;
@@ -92,19 +114,47 @@ namespace TS.Audio
             _notifiedEnd = false;
             SetLooping(loop);
 
+            if (UsePreciseFade(fadeInSeconds))
+            {
+                CancelFade();
+                _currentVolume = _userVolume;
+                SetRuntimeVolume(_currentVolume);
+                _graph.BeginEnvelope(0f, 1f, fadeInSeconds, stopAfter: false);
+                Emit(
+                    AudioDiagnosticLevel.Trace,
+                    AudioDiagnosticKind.SourceFadeStarted,
+                    "Audio source precise fade-in started.",
+                    new Dictionary<string, object?>
+                    {
+                        ["fadeSeconds"] = fadeInSeconds
+                    });
+                StartPlayback();
+                return;
+            }
+
             if (fadeInSeconds > 0f)
             {
                 CancelFade();
                 _currentVolume = 0f;
                 SetRuntimeVolume(0f);
+                _graph.ResetEnvelope(1f);
                 StartPlayback();
                 BeginFade(_userVolume, fadeInSeconds, stopAfter: false);
+                Emit(
+                    AudioDiagnosticLevel.Trace,
+                    AudioDiagnosticKind.SourceFadeStarted,
+                    "Audio source fade-in started.",
+                    new Dictionary<string, object?>
+                    {
+                        ["fadeSeconds"] = fadeInSeconds
+                    });
                 return;
             }
 
             CancelFade();
             _currentVolume = _userVolume;
             SetRuntimeVolume(_currentVolume);
+            _graph.ResetEnvelope(1f);
             StartPlayback();
         }
 
@@ -121,11 +171,38 @@ namespace TS.Audio
             {
                 CancelFade();
                 MiniAudioExNative.ma_ex_audio_source_stop(_sourceHandle);
+                _graph.ResetEnvelope(1f);
                 _notifiedEnd = false;
+                _startRequestedUtc = null;
+                _silentStartReported = false;
+                Emit(AudioDiagnosticLevel.Debug, AudioDiagnosticKind.SourceStopped, "Audio source stopped.");
+                return;
+            }
+
+            if (UsePreciseFade(fadeOutSeconds))
+            {
+                CancelFade();
+                _graph.BeginEnvelope(Volatile.Read(ref _envelope.CurrentGain), 0f, fadeOutSeconds, stopAfter: true);
+                Emit(
+                    AudioDiagnosticLevel.Trace,
+                    AudioDiagnosticKind.SourceFadeStarted,
+                    "Audio source precise fade-out started.",
+                    new Dictionary<string, object?>
+                    {
+                        ["fadeSeconds"] = fadeOutSeconds
+                    });
                 return;
             }
 
             BeginFade(0f, fadeOutSeconds, stopAfter: true);
+            Emit(
+                AudioDiagnosticLevel.Trace,
+                AudioDiagnosticKind.SourceFadeStarted,
+                "Audio source fade-out started.",
+                new Dictionary<string, object?>
+                {
+                    ["fadeSeconds"] = fadeOutSeconds
+                });
         }
 
         public void FadeIn(float seconds)
@@ -137,6 +214,20 @@ namespace TS.Audio
                 CancelFade();
                 _currentVolume = _userVolume;
                 SetRuntimeVolume(_currentVolume);
+                _graph.ResetEnvelope(1f);
+                return;
+            }
+
+            if (UsePreciseFade(seconds))
+            {
+                if (!IsPlaying)
+                {
+                    Play(_looping, seconds);
+                    return;
+                }
+
+                CancelFade();
+                _graph.BeginEnvelope(Volatile.Read(ref _envelope.CurrentGain), 1f, seconds, stopAfter: false);
                 return;
             }
 
@@ -155,6 +246,12 @@ namespace TS.Audio
                 return;
             }
 
+            if (UsePreciseFade(seconds))
+            {
+                Stop(seconds);
+                return;
+            }
+
             BeginFade(0f, seconds, stopAfter: true);
         }
 
@@ -170,6 +267,19 @@ namespace TS.Audio
 
             _currentVolume = _userVolume;
             SetRuntimeVolume(_currentVolume);
+            Emit(
+                AudioDiagnosticLevel.Trace,
+                AudioDiagnosticKind.SourceVolumeChanged,
+                "Audio source volume changed.",
+                new Dictionary<string, object?>
+                {
+                    ["volume"] = _currentVolume,
+                    ["volumeDb"] = AudioMath.GainToDecibels(_currentVolume),
+                    ["busEffectiveVolume"] = _bus.GetEffectiveVolume(),
+                    ["busEffectiveVolumeDb"] = AudioMath.GainToDecibels(_bus.GetEffectiveVolume()),
+                    ["estimatedMixVolume"] = _currentVolume * _bus.GetEffectiveVolume(),
+                    ["estimatedMixVolumeDb"] = AudioMath.GainToDecibels(_currentVolume * _bus.GetEffectiveVolume())
+                });
         }
 
         public float GetVolume()
@@ -177,11 +287,49 @@ namespace TS.Audio
             return MiniAudioNative.ma_sound_group_get_volume(_group);
         }
 
+        internal float GetCurrentVolumeLinear()
+        {
+            return _currentVolume;
+        }
+
+        internal float GetCurrentVolumeDb()
+        {
+            return AudioMath.GainToDecibels(_currentVolume);
+        }
+
+        internal float GetBusEffectiveVolumeLinear()
+        {
+            return _bus.GetEffectiveVolume();
+        }
+
+        internal float GetBusEffectiveVolumeDb()
+        {
+            return AudioMath.GainToDecibels(_bus.GetEffectiveVolume());
+        }
+
+        internal float GetEstimatedMixVolumeLinear()
+        {
+            return _currentVolume * _bus.GetEffectiveVolume();
+        }
+
+        internal float GetEstimatedMixVolumeDb()
+        {
+            return AudioMath.GainToDecibels(GetEstimatedMixVolumeLinear());
+        }
+
         public void SetPitch(float pitch)
         {
             ThrowIfDisposed();
             _basePitch = pitch;
             MiniAudioNative.ma_sound_group_set_pitch(_group, pitch);
+            Emit(
+                AudioDiagnosticLevel.Trace,
+                AudioDiagnosticKind.SourcePitchChanged,
+                "Audio source pitch changed.",
+                new Dictionary<string, object?>
+                {
+                    ["pitch"] = pitch
+                });
         }
 
         public float GetPitch()
@@ -197,6 +345,14 @@ namespace TS.Audio
                 return;
 
             MiniAudioNative.ma_sound_group_set_pan(_group, pan);
+            Emit(
+                AudioDiagnosticLevel.Trace,
+                AudioDiagnosticKind.SourcePanChanged,
+                "Audio source pan changed.",
+                new Dictionary<string, object?>
+                {
+                    ["pan"] = pan
+                });
         }
 
         public void SetStereoWidening(bool enabled)
@@ -205,12 +361,28 @@ namespace TS.Audio
                 return;
 
             Volatile.Write(ref _spatial.StereoWidening, enabled ? 1 : 0);
+            Emit(
+                AudioDiagnosticLevel.Trace,
+                AudioDiagnosticKind.SourceStereoWideningChanged,
+                enabled ? "Audio source stereo widening enabled." : "Audio source stereo widening disabled.",
+                new Dictionary<string, object?>
+                {
+                    ["enabled"] = enabled
+                });
         }
 
         public void SetLooping(bool loop)
         {
             _looping = loop;
             MiniAudioExNative.ma_ex_audio_source_set_loop(_sourceHandle, loop ? 1u : 0u);
+            Emit(
+                AudioDiagnosticLevel.Trace,
+                AudioDiagnosticKind.SourceLoopingChanged,
+                "Audio source looping changed.",
+                new Dictionary<string, object?>
+                {
+                    ["looping"] = loop
+                });
         }
 
         public void SeekToStart()
@@ -219,6 +391,7 @@ namespace TS.Audio
                 return;
 
             MiniAudioExNative.ma_ex_audio_source_set_pcm_position(_sourceHandle, 0);
+            Emit(AudioDiagnosticLevel.Trace, AudioDiagnosticKind.SourceSeeked, "Audio source seeked to start.");
         }
 
         public float GetLengthSeconds()
@@ -240,13 +413,55 @@ namespace TS.Audio
 
         internal AudioSourceSnapshot CaptureSnapshot()
         {
-            return new AudioSourceSnapshot(_bus.Name, IsPlaying, _spatialize, _graph.UsesHrtf, InputChannels, InputSampleRate, GetLengthSeconds());
+            var busEffective = _bus.GetEffectiveVolume();
+            var estimatedMix = _currentVolume * busEffective;
+            return new AudioSourceSnapshot(
+                _id,
+                _bus.Name,
+                IsPlaying,
+                _spatialize,
+                _graph.UsesHrtf,
+                InputChannels,
+                InputSampleRate,
+                _looping,
+                _currentVolume,
+                AudioMath.GainToDecibels(_currentVolume),
+                _basePitch,
+                _pan,
+                busEffective,
+                AudioMath.GainToDecibels(busEffective),
+                estimatedMix,
+                AudioMath.GainToDecibels(estimatedMix),
+                _bus.CaptureGainStages(),
+                GetLengthSeconds());
         }
 
         private void ThrowIfDisposed()
         {
             if (_disposed || _disposeRequested)
                 throw new ObjectDisposedException(nameof(AudioSourceHandle));
+        }
+
+        private void Emit(AudioDiagnosticLevel level, AudioDiagnosticKind kind, string message, IReadOnlyDictionary<string, object?>? data = null, AudioDiagnosticSnapshot? snapshot = null)
+        {
+            _output.Diagnostics.Emit(level, kind, AudioDiagnosticEntityType.Source, _output.Name, _bus.Name, _id, message, data, snapshot);
+        }
+
+        private void MaybeEmitSuspiciousConfig()
+        {
+            if (InputChannels > 0 && InputSampleRate > 0)
+                return;
+
+            Emit(
+                AudioDiagnosticLevel.Warn,
+                AudioDiagnosticKind.AnomalySuspiciousSourceConfig,
+                "Audio source has suspicious input format.",
+                new Dictionary<string, object?>
+                {
+                    ["inputChannels"] = InputChannels,
+                    ["inputSampleRate"] = InputSampleRate
+                },
+                new AudioDiagnosticSnapshot(source: CaptureSnapshot()));
         }
     }
 }

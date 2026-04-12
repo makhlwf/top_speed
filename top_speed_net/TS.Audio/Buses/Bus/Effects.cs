@@ -14,6 +14,21 @@ namespace TS.Audio
                 _effectsEnabled = enabled;
                 RebuildEffectChain();
             }
+
+            _output.Diagnostics.Emit(
+                AudioDiagnosticLevel.Debug,
+                AudioDiagnosticKind.BusEffectsEnabledChanged,
+                AudioDiagnosticEntityType.Bus,
+                _output.Name,
+                Name,
+                null,
+                enabled ? "Audio bus effects enabled." : "Audio bus effects disabled.",
+                new Dictionary<string, object?>
+                {
+                    ["effectsEnabled"] = enabled,
+                    ["effectCount"] = _effects.Count
+                },
+                new AudioDiagnosticSnapshot(bus: CaptureSnapshot()));
         }
 
         public BusEffect AddEffect(AudioEffectProcessCallback process, string? name = null)
@@ -53,6 +68,21 @@ namespace TS.Audio
                 var insertAt = index < 0 ? 0 : Math.Min(index, _effects.Count);
                 _effects.Insert(insertAt, effect);
                 RebuildEffectChain();
+                _output.Diagnostics.Emit(
+                    AudioDiagnosticLevel.Debug,
+                    AudioDiagnosticKind.BusEffectAdded,
+                    AudioDiagnosticEntityType.Bus,
+                    _output.Name,
+                    Name,
+                    null,
+                    "Audio bus effect added.",
+                    new Dictionary<string, object?>
+                    {
+                        ["effectName"] = effect.Name,
+                        ["index"] = insertAt,
+                        ["effectCount"] = _effects.Count
+                    },
+                    new AudioDiagnosticSnapshot(bus: CaptureSnapshot()));
                 return effect;
             }
         }
@@ -68,6 +98,21 @@ namespace TS.Audio
                 _effects.RemoveAt(fromIndex);
                 _effects.Insert(toIndex, effect);
                 RebuildEffectChain();
+                _output.Diagnostics.Emit(
+                    AudioDiagnosticLevel.Trace,
+                    AudioDiagnosticKind.BusEffectMoved,
+                    AudioDiagnosticEntityType.Bus,
+                    _output.Name,
+                    Name,
+                    null,
+                    "Audio bus effect moved.",
+                    new Dictionary<string, object?>
+                    {
+                        ["fromIndex"] = fromIndex,
+                        ["toIndex"] = toIndex,
+                        ["effectName"] = effect.Name
+                    },
+                    new AudioDiagnosticSnapshot(bus: CaptureSnapshot()));
                 return true;
             }
         }
@@ -86,6 +131,21 @@ namespace TS.Audio
             }
 
             DetachEffect(removed);
+            _output.Diagnostics.Emit(
+                AudioDiagnosticLevel.Debug,
+                AudioDiagnosticKind.BusEffectRemoved,
+                AudioDiagnosticEntityType.Bus,
+                _output.Name,
+                Name,
+                null,
+                "Audio bus effect removed.",
+                new Dictionary<string, object?>
+                {
+                    ["index"] = index,
+                    ["effectName"] = removed.Name,
+                    ["effectCount"] = _effects.Count
+                },
+                new AudioDiagnosticSnapshot(bus: CaptureSnapshot()));
             return true;
         }
 
@@ -110,6 +170,20 @@ namespace TS.Audio
 
             for (var i = 0; i < removed.Length; i++)
                 DetachEffect(removed[i]);
+
+            _output.Diagnostics.Emit(
+                AudioDiagnosticLevel.Debug,
+                AudioDiagnosticKind.BusEffectsCleared,
+                AudioDiagnosticEntityType.Bus,
+                _output.Name,
+                Name,
+                null,
+                "Audio bus effects cleared.",
+                new Dictionary<string, object?>
+                {
+                    ["removedCount"] = removed.Length
+                },
+                new AudioDiagnosticSnapshot(bus: CaptureSnapshot()));
         }
 
         internal void RemoveEffect(BusEffect effect)

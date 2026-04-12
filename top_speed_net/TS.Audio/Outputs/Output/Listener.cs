@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Collections.Generic;
 using MiniAudioEx.Native;
 
 namespace TS.Audio
@@ -28,6 +29,21 @@ namespace TS.Audio
 
             for (var i = 0; i < snapshot.Length; i++)
                 snapshot[i].SetRoomAcoustics(_roomAcoustics);
+
+            _diagnostics.Emit(
+                AudioDiagnosticLevel.Debug,
+                AudioDiagnosticKind.OutputRoomAcousticsChanged,
+                AudioDiagnosticEntityType.Output,
+                Name,
+                null,
+                null,
+                "Audio output room acoustics changed.",
+                new Dictionary<string, object?>
+                {
+                    ["hasRoom"] = acoustics.HasRoom,
+                    ["reverbTimeSeconds"] = acoustics.ReverbTimeSeconds,
+                    ["reverbGain"] = acoustics.ReverbGain
+                });
         }
 
         private static ma_vec3f ToMaVec3(Vector3 value)

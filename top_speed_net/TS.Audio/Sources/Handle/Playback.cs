@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
 using MiniAudioEx.Native;
@@ -7,10 +8,49 @@ namespace TS.Audio
 {
     public sealed partial class AudioSourceHandle
     {
+        private const float PreciseFadeMaxSeconds = 0.02f;
+
         internal void Update(double deltaTime)
         {
             if (_disposeRequested || _disposed)
                 return;
+
+            if (_startRequestedUtc.HasValue && IsPlaying)
+            {
+                _startRequestedUtc = null;
+                _silentStartReported = false;
+            }
+
+            if (_startRequestedUtc.HasValue && !_silentStartReported)
+            {
+                var elapsed = DateTime.UtcNow - _startRequestedUtc.Value;
+                if (elapsed.TotalSeconds >= 0.25)
+                {
+                    _silentStartReported = true;
+                    Emit(
+                        AudioDiagnosticLevel.Warn,
+                        AudioDiagnosticKind.AnomalySilentStart,
+                        "Audio source did not report playback shortly after start.",
+                        new Dictionary<string, object?>
+                        {
+                            ["startDelayMs"] = elapsed.TotalMilliseconds,
+                            ["looping"] = _looping,
+                            ["lengthSeconds"] = GetLengthSeconds()
+                        },
+                        new AudioDiagnosticSnapshot(source: CaptureSnapshot()));
+                }
+            }
+
+            if (_graph.ConsumeStopRequested())
+            {
+                MiniAudioExNative.ma_ex_audio_source_stop(_sourceHandle);
+                _graph.ResetEnvelope(1f);
+                _notifiedEnd = false;
+                _startRequestedUtc = null;
+                _silentStartReported = false;
+                Emit(AudioDiagnosticLevel.Trace, AudioDiagnosticKind.SourceStopped, "Audio source stopped after precise fade.");
+                return;
+            }
 
             UpdateFade(deltaTime);
 
@@ -27,6 +67,7 @@ namespace TS.Audio
                 return;
 
             _notifiedEnd = true;
+            Emit(AudioDiagnosticLevel.Trace, AudioDiagnosticKind.SourceEnded, "Audio source reached end.");
             var onEnd = _onEnd;
             if (onEnd != null)
                 ThreadPool.QueueUserWorkItem(_ => onEnd());
@@ -34,16 +75,61 @@ namespace TS.Audio
 
         private void StartPlayback()
         {
+            _startRequestedUtc = DateTime.UtcNow;
+            _silentStartReported = false;
+            Emit(
+                AudioDiagnosticLevel.Debug,
+                AudioDiagnosticKind.SourcePlayRequested,
+                "Audio source playback requested.",
+                new Dictionary<string, object?>
+                {
+                    ["looping"] = _looping,
+                    ["fadeSeconds"] = _fadeRemaining > 0f ? _fadeRemaining : _fadeDuration
+                });
+
             var result = _playback.Prepare(_sourceHandle);
             if (result != ma_result.success)
+            {
+                Emit(
+                    AudioDiagnosticLevel.Error,
+                    AudioDiagnosticKind.SourceStarted,
+                    "Audio source prepare failed.",
+                    new Dictionary<string, object?>
+                    {
+                        ["result"] = result.ToString()
+                    },
+                    new AudioDiagnosticSnapshot(source: CaptureSnapshot()));
                 throw new InvalidOperationException("Failed to prepare audio playback: " + result);
+            }
 
             MiniAudioExNative.ma_ex_audio_source_apply_settings(_sourceHandle);
             ApplyPersistedState();
 
             result = MiniAudioExNative.ma_ex_audio_source_start(_sourceHandle);
             if (result != ma_result.success)
+            {
+                Emit(
+                    AudioDiagnosticLevel.Error,
+                    AudioDiagnosticKind.SourceStarted,
+                    "Audio source start failed.",
+                    new Dictionary<string, object?>
+                    {
+                        ["result"] = result.ToString()
+                    },
+                    new AudioDiagnosticSnapshot(source: CaptureSnapshot()));
                 throw new InvalidOperationException("Failed to start audio playback: " + result);
+            }
+
+            Emit(
+                AudioDiagnosticLevel.Debug,
+                AudioDiagnosticKind.SourceStarted,
+                "Audio source started.",
+                new Dictionary<string, object?>
+                {
+                    ["looping"] = _looping,
+                    ["isPlaying"] = IsPlaying
+                },
+                new AudioDiagnosticSnapshot(source: CaptureSnapshot()));
         }
 
         private void ApplyPersistedState()
@@ -93,6 +179,7 @@ namespace TS.Audio
             _fadeStartVolume = _currentVolume;
             _fadeTargetVolume = _currentVolume;
             _stopAfterFade = false;
+            _graph.ResetEnvelope(1f);
         }
 
         private void BeginFade(float targetVolume, float durationSeconds, bool stopAfter)
@@ -130,6 +217,9 @@ namespace TS.Audio
                 {
                     MiniAudioExNative.ma_ex_audio_source_stop(_sourceHandle);
                     _notifiedEnd = false;
+                    _startRequestedUtc = null;
+                    _silentStartReported = false;
+                    Emit(AudioDiagnosticLevel.Trace, AudioDiagnosticKind.SourceStopped, "Audio source stopped after fade.");
                 }
                 return;
             }
@@ -145,6 +235,11 @@ namespace TS.Audio
             if (volume < 0f)
                 volume = 0f;
             MiniAudioNative.ma_sound_group_set_volume(_group, volume);
+        }
+
+        private static bool UsePreciseFade(float seconds)
+        {
+            return seconds > 0f && seconds <= PreciseFadeMaxSeconds;
         }
     }
 }

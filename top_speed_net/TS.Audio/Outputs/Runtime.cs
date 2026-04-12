@@ -8,13 +8,14 @@ namespace TS.Audio
 {
     internal sealed class OutputRuntime : IDisposable
     {
-        private static readonly object RuntimeMapLock = new object();
-        private static readonly Dictionary<IntPtr, OutputRuntime> RuntimeByEngineHandle = new Dictionary<IntPtr, OutputRuntime>();
         private readonly ma_device_data_proc _deviceDataProc;
-        private readonly GCHandle _selfHandle;
         private readonly IntPtr _contextHandle;
         private float _masterVolume = 1f;
         private float _limiterGain = 1f;
+        private float _lastPreLimiterPeak;
+        private float _lastPostLimiterPeak;
+        private AudioOutput? _owner;
+        private long _nextClippingRiskTicks;
 
         public AudioOutputConfig Config { get; }
         public IntPtr ContextHandle => _contextHandle;
@@ -45,7 +46,6 @@ namespace TS.Audio
                 throw new InvalidOperationException("Failed to acquire engine from audio output.");
             }
 
-            _selfHandle = GCHandle.Alloc(this);
             InitializeListener();
             MiniAudioExNative.ma_ex_context_set_master_volume(_contextHandle, 1f);
 
@@ -57,8 +57,6 @@ namespace TS.Audio
             if (engineChannels > 0)
                 Config.Channels = engineChannels;
 
-            lock (RuntimeMapLock)
-                RuntimeByEngineHandle[EngineHandle.pointer] = this;
         }
 
         public void SetMasterVolume(float volume)
@@ -66,9 +64,24 @@ namespace TS.Audio
             Volatile.Write(ref _masterVolume, Clamp01(volume));
         }
 
+        public void BindOwner(AudioOutput owner)
+        {
+            _owner = owner;
+        }
+
         public float GetMasterVolume()
         {
             return Volatile.Read(ref _masterVolume);
+        }
+
+        public float GetLastPreLimiterPeak()
+        {
+            return Volatile.Read(ref _lastPreLimiterPeak);
+        }
+
+        public float GetLastPostLimiterPeak()
+        {
+            return Volatile.Read(ref _lastPostLimiterPeak);
         }
 
         public void UpdateListener(ma_vec3f position, ma_vec3f direction, ma_vec3f worldUp, ma_vec3f velocity)
@@ -82,12 +95,6 @@ namespace TS.Audio
 
         public void Dispose()
         {
-            lock (RuntimeMapLock)
-                RuntimeByEngineHandle.Remove(EngineHandle.pointer);
-
-            if (_selfHandle.IsAllocated)
-                _selfHandle.Free();
-
             if (_contextHandle != IntPtr.Zero)
                 MiniAudioExNative.ma_ex_context_uninit(_contextHandle);
         }
@@ -129,20 +136,26 @@ namespace TS.Audio
                 return;
 
             MiniAudioExNative.ma_engine_read_pcm_frames(engine, pOutput, frameCount, out _);
-
-            OutputRuntime? runtime;
-            lock (RuntimeMapLock)
-                RuntimeByEngineHandle.TryGetValue(engine, out runtime);
-
-            runtime?.ApplyMasterLimiter(pOutput, frameCount);
         }
 
-        private unsafe void ApplyMasterLimiter(IntPtr pOutput, uint frameCount)
+        internal void ProcessMasterLimiter(NativeArray<float> framesIn, uint frameCountIn, NativeArray<float> framesOut, ref uint frameCountOut, uint channels)
         {
-            if (pOutput == IntPtr.Zero || frameCount == 0)
+            if (frameCountIn == 0 || channels == 0)
+            {
+                frameCountOut = 0;
+                return;
+            }
+
+            frameCountOut = frameCountIn;
+            framesIn.CopyTo(framesOut);
+            ApplyMasterLimiter(framesOut.Pointer, frameCountIn, channels);
+        }
+
+        private unsafe void ApplyMasterLimiter(IntPtr pOutput, uint frameCount, uint channels)
+        {
+            if (pOutput == IntPtr.Zero || frameCount == 0 || channels == 0)
                 return;
 
-            var channels = Config.Channels > 0 ? Config.Channels : 2u;
             var sampleCountLong = (long)frameCount * channels;
             if (sampleCountLong <= 0 || sampleCountLong > int.MaxValue)
                 return;
@@ -177,8 +190,10 @@ namespace TS.Audio
             }
 
             _limiterGain = limiterGain;
+            Volatile.Write(ref _lastPreLimiterPeak, peak);
 
             var gain = master * limiterGain;
+            var postPeak = 0f;
             for (var i = 0; i < sampleCount; i++)
             {
                 var value = samples[i] * gain;
@@ -186,8 +201,54 @@ namespace TS.Audio
                     value = 1f;
                 else if (value < -1f)
                     value = -1f;
+                var abs = Math.Abs(value);
+                if (abs > postPeak)
+                    postPeak = abs;
                 samples[i] = value;
             }
+
+            Volatile.Write(ref _lastPostLimiterPeak, postPeak);
+
+            if (peak > 1f)
+                MaybeEmitClippingRisk(peak, postPeak, limiterGain, master);
+        }
+
+        private void MaybeEmitClippingRisk(float peak, float postPeak, float limiterGain, float master)
+        {
+            var owner = _owner;
+            if (owner == null)
+                return;
+
+            if (!owner.Diagnostics.ShouldEmit(AudioDiagnosticLevel.Warn, AudioDiagnosticKind.AnomalyClippingRisk, AudioDiagnosticEntityType.Output, owner.Name, null, null))
+                return;
+
+            var nowTicks = DateTime.UtcNow.Ticks;
+            var nextTicks = Interlocked.Read(ref _nextClippingRiskTicks);
+            if (nowTicks < nextTicks)
+                return;
+
+            var updated = nowTicks + TimeSpan.FromMilliseconds(500).Ticks;
+            Interlocked.Exchange(ref _nextClippingRiskTicks, updated);
+
+            owner.Diagnostics.Emit(
+                AudioDiagnosticLevel.Warn,
+                AudioDiagnosticKind.AnomalyClippingRisk,
+                AudioDiagnosticEntityType.Output,
+                owner.Name,
+                null,
+                null,
+                "Audio output peak exceeded unity gain.",
+                new Dictionary<string, object?>
+                {
+                    ["peak"] = peak,
+                    ["peakDbfs"] = AudioMath.GainToDecibels(peak),
+                    ["postLimiterPeak"] = postPeak,
+                    ["postLimiterPeakDbfs"] = AudioMath.GainToDecibels(postPeak),
+                    ["limiterGain"] = limiterGain,
+                    ["limiterGainDb"] = AudioMath.GainToDecibels(limiterGain),
+                    ["masterVolume"] = master
+                },
+                new AudioDiagnosticSnapshot(output: owner.CaptureSnapshot(), mix: owner.CaptureMixSnapshot(peak, postPeak, limiterGain, master)));
         }
     }
 }
