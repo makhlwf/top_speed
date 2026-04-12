@@ -38,6 +38,7 @@ namespace TopSpeed.Game
         void IMenuSettingsActions.RestoreDefaults() => RestoreDefaults();
         void IMenuSettingsActions.RecalibrateScreenReaderRate() => StartCalibrationSequence("options_speech");
         void IMenuSettingsActions.CheckForUpdates() => StartManualUpdateCheck();
+        void IMenuSettingsActions.ShowAboutDialog() => ShowAboutDialog();
         void IMenuSettingsActions.SetDevice(InputDeviceMode mode) => SetDevice(mode);
         void IMenuSettingsActions.SetSpeechBackend(ulong? backendId) => SetSpeechBackend(backendId);
         void IMenuSettingsActions.SetScreenReaderInterrupt(bool enabled) => SetScreenReaderInterrupt(enabled);

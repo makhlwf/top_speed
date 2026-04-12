@@ -16,6 +16,7 @@ namespace TopSpeed.Menu
         void RestoreDefaults();
         void RecalibrateScreenReaderRate();
         void CheckForUpdates();
+        void ShowAboutDialog();
         void SetDevice(InputDeviceMode mode);
         void SetSpeechBackend(ulong? backendId);
         void SetScreenReaderInterrupt(bool enabled);

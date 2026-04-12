@@ -144,6 +144,7 @@ namespace TopSpeed.Menu
                 new MenuItem(LocalizationService.Mark("MultiPlayer game"), MenuAction.None, nextMenuId: "multiplayer"),
                 new MenuItem(LocalizationService.Mark("Options"), MenuAction.None, nextMenuId: "options_main"),
                 new MenuItem(LocalizationService.Mark("Check for updates"), MenuAction.None, onActivate: _settingsActions.CheckForUpdates),
+                new MenuItem(LocalizationService.Mark("About"), MenuAction.None, onActivate: _settingsActions.ShowAboutDialog),
                 new MenuItem(LocalizationService.Mark("Exit Game"), MenuAction.Exit)
             }, LocalizationService.Mark("Main menu"), titleProvider: MainMenuTitle);
 
