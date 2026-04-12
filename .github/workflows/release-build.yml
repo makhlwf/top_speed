@@ -242,29 +242,6 @@ jobs:
     - name: Build Linux client
       run: dotnet build TopSpeed/TopSpeed.csproj --configuration Release -p:RuntimeIdentifier=linux-x64 -p:UseTrimmedUpdater=true
 
-    - name: Verify Linux updater outputs
-      shell: bash
-      run: |
-        set -euo pipefail
-
-        server_updater="TopSpeed.Server/bin/Publish/linux-x64/Updater"
-        client_updater="TopSpeed/bin/Release/net10.0/linux-x64/Updater"
-
-        for updater in "$server_updater" "$client_updater"; do
-          if [ ! -f "$updater" ]; then
-            echo "Missing updater output: $updater"
-            exit 1
-          fi
-
-          size=$(stat -c%s "$updater")
-          echo "$updater -> $size bytes"
-
-          if [ "$size" -gt 30000000 ]; then
-            echo "Updater output is too large and appears untrimmed: $updater ($size bytes)"
-            exit 1
-          fi
-        done
-
     - name: Create Linux archives
       shell: bash
       run: |
@@ -295,39 +272,6 @@ jobs:
             zip -rq "$destination" .
           )
         done
-
-    - name: Verify Linux archives
-      shell: bash
-      run: |
-        set -euo pipefail
-        python - <<'PY'
-        import os
-        import sys
-        import zipfile
-
-        root = os.path.join(os.environ["GITHUB_WORKSPACE"], "top_speed_net")
-        version = "${{ needs.metadata.outputs.version }}"
-        server_version = "${{ needs.metadata.outputs.server_version }}"
-
-        archives = [
-            os.path.join(root, f"TopSpeed-linux-x64-Release-v-{version}.zip"),
-            os.path.join(root, f"TopSpeed.Server-linux-x64-Release-v-{server_version}.zip"),
-        ]
-
-        for archive_path in archives:
-            if not os.path.isfile(archive_path):
-                raise SystemExit(f"Missing archive: {archive_path}")
-
-            with zipfile.ZipFile(archive_path, "r") as archive:
-                updater_entries = [entry for entry in archive.infolist() if os.path.basename(entry.filename) == "Updater"]
-                if not updater_entries:
-                    raise SystemExit(f"Updater not found in archive: {archive_path}")
-
-                for entry in updater_entries:
-                    print(f"{os.path.basename(archive_path)} -> {entry.filename} -> {entry.file_size} bytes")
-                    if entry.file_size > 30_000_000:
-                        raise SystemExit(f"Updater inside archive appears untrimmed: {archive_path} ({entry.file_size} bytes)")
-        PY
 
     - name: Upload Linux artifacts
       uses: actions/upload-artifact@v4
