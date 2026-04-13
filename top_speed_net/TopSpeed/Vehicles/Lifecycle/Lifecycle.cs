@@ -238,7 +238,7 @@ namespace TopSpeed.Vehicles
                 _soundWipers.SeekToStart();
                 _soundWipers.SetPanPercent(0);
             }
-            _soundHorn.Stop();
+            _soundHorn.Stop(0.005f);
             _soundHorn.SeekToStart();
             _soundHorn.SetPanPercent(0);
             _gear = NeutralGear;

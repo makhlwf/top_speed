@@ -167,14 +167,21 @@ namespace TopSpeed.Vehicles
 
             if (_horning && _state == ComputerState.Running)
             {
-                if (!_soundHorn.IsPlaying)
-                    _soundHorn.Play(loop: true);
+                if (_horning && !_prevHorning)
+                {
+                    _soundHorn.Restart(loop: true, fadeInSeconds: 0.010f);
+                }
+                else if (!_soundHorn.IsPlaying)
+                {
+                    _soundHorn.Play(loop: true, fadeInSeconds: 0.010f);
+                }
             }
             else
             {
                 if (_soundHorn.IsPlaying)
-                    _soundHorn.Stop();
+                    _soundHorn.Stop(0.010f);
             }
+            _prevHorning = _horning;
 
             if (_crashLateralAnchored && !_soundCrash.IsPlaying)
                 _crashLateralAnchored = false;

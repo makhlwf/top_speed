@@ -152,6 +152,7 @@ namespace TopSpeed.Vehicles
         private float _lateralVelocityMps;
         private float _yawRateRad;
 
+        private bool _prevHorning;
         private Source _soundEngine = default!;
         private Source? _soundThrottle;
         private Source _soundHorn = default!;

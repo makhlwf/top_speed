@@ -59,6 +59,13 @@ namespace TopSpeed.Audio
             handle.SeekToStart();
             handle.Play(loop);
         }
+
+        public static void Restart(this Source handle, bool loop, float fadeInSeconds)
+        {
+            handle.Stop(fadeInSeconds);
+            handle.SeekToStart();
+            handle.Play(loop, fadeInSeconds);
+        }
     }
 }
 

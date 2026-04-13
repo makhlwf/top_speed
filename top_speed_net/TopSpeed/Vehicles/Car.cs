@@ -92,10 +92,12 @@ namespace TopSpeed.Vehicles
             var controlIntent = ResolveControlIntent(controlContext);
             OnBeforeRun(elapsed, controlContext, controlIntent);
             var horning = controlIntent.Horn;
+            var horningChanged = horning && !_prevHorning;
+            _prevHorning = horning;
 
             _physicsModel.Step(this, elapsed, controlIntent);
 
-            _audioFlow.UpdateHorn(_soundHorn, _state, horning);
+            _audioFlow.UpdateHorn(_soundHorn, _state, horning, horningChanged);
             _eventProcessor.ProcessDue(_events, _currentTime());
 
             UpdateRuntimeContext(elapsed);

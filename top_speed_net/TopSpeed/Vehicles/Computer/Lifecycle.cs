@@ -84,7 +84,7 @@ namespace TopSpeed.Vehicles
             _soundEngine.SetPanPercent(0);
             _soundBrake.Stop();
             _soundBrake.SeekToStart();
-            _soundHorn.Stop();
+            _soundHorn.Stop(0.005f);
             _gear = 1;
             _positionX = newPosition;
             _state = ComputerState.Crashing;
@@ -136,7 +136,7 @@ namespace TopSpeed.Vehicles
         public void Quiet()
         {
             _soundBrake.Stop();
-            _soundHorn.Stop();
+            _soundHorn.Stop(0.005f);
             SetOtherEngineVolumePercent(_soundEngine, 80);
             if (_soundBackfire != null)
                 SetOtherEventVolumePercent(_soundBackfire, 80);
@@ -153,7 +153,7 @@ namespace TopSpeed.Vehicles
             if (_soundBrake.IsPlaying)
                 _soundBrake.Stop();
             if (_soundHorn.IsPlaying)
-                _soundHorn.Stop();
+                _soundHorn.Stop(0.005f);
             if (_soundBackfire != null && _soundBackfire.IsPlaying)
             {
                 _soundBackfire.Stop();

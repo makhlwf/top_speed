@@ -10,7 +10,8 @@ namespace TopSpeed.Vehicles.Audio
     internal sealed class Flow : IFlow
     {
         private const int MaxSurfaceFreq = 100000;
-        private const float HornFadeSeconds = 0.005f;
+        private const float HornFadeSeconds = 0.010f;
+        private const float HornRestartFadeSeconds = 0.010f;
 
         public void RefreshVolumes(
             DriveSettings settings,
@@ -77,12 +78,18 @@ namespace TopSpeed.Vehicles.Audio
             SetSurfaceLoopVolumePercent(settings, soundSnow, 90);
         }
 
-        public void UpdateHorn(Source soundHorn, CarState state, bool horning)
+        public void UpdateHorn(Source soundHorn, CarState state, bool horning, bool horningChanged)
         {
             if (horning && state != CarState.Crashing)
             {
-                if (!soundHorn.IsPlaying)
+                if (horningChanged)
+                {
+                    soundHorn.Restart(loop: true, HornFadeSeconds);
+                }
+                else if (!soundHorn.IsPlaying)
+                {
                     soundHorn.Play(loop: true, fadeInSeconds: HornFadeSeconds);
+                }
             }
             else if (soundHorn.IsPlaying)
             {
@@ -194,7 +201,7 @@ namespace TopSpeed.Vehicles.Audio
             if (soundBrake.IsPlaying)
                 soundBrake.Stop();
             if (soundHorn.IsPlaying)
-                soundHorn.Stop();
+                soundHorn.Stop(HornFadeSeconds);
             stopResetBackfireVariants();
             soundWipers?.Stop();
             switch (surface)

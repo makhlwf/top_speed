@@ -394,6 +394,21 @@ namespace TS.Audio
             Emit(AudioDiagnosticLevel.Trace, AudioDiagnosticKind.SourceSeeked, "Audio source seeked to start.");
         }
 
+        public void Restart(bool loop, float fadeInSeconds)
+        {
+            ThrowIfDisposed();
+
+            // If we are already playing, we must ensure we don't click when seeking.
+            // We use a tiny 1ms snap-fade to zero before seeking if precise fades are enabled.
+            if (IsPlaying && UsePreciseFade(fadeInSeconds))
+            {
+                _graph.BeginEnvelope(Volatile.Read(ref _envelope.CurrentGain), 0f, 0.001f, stopAfter: false);
+            }
+
+            SeekToStart();
+            Play(loop, fadeInSeconds);
+        }
+
         public float GetLengthSeconds()
         {
             if (_asset.LengthSeconds > 0f)

@@ -99,6 +99,7 @@ namespace TopSpeed.Vehicles
         private int _difficulty;
         private bool _finished;
         private bool _horning;
+        private bool _prevHorning;
         private bool _networkBackfireActive;
         private bool _remoteEngineStartPending;
         private float _remoteEngineStartRemaining;

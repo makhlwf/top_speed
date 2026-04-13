@@ -33,7 +33,7 @@ namespace TopSpeed.Vehicles.Audio
             ref int lastPlayerEventsVolumePercent,
             ref int lastSurfaceLoopVolumePercent);
 
-        void UpdateHorn(Source soundHorn, CarState state, bool horning);
+        void UpdateHorn(Source soundHorn, CarState state, bool horning, bool horningChanged);
         void UpdateRoad(
             TrackSurface surface,
             float speed,
