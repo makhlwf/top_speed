@@ -34,7 +34,7 @@ namespace TS.Audio
             Buses.Add(new AudioBusOptions { Name = WorldBusName, ParentName = "main", Defaults = new PlaybackPolicy { UseHrtf = true } });
             Buses.Add(new AudioBusOptions { Name = UiBusName, ParentName = "main" });
             Buses.Add(new AudioBusOptions { Name = MusicBusName, ParentName = "main" });
-            Buses.Add(new AudioBusOptions { Name = VehiclesBusName, ParentName = "main", Volume = 0.8f, Defaults = new PlaybackPolicy { UseHrtf = true } });
+            Buses.Add(new AudioBusOptions { Name = VehiclesBusName, ParentName = "main", Defaults = new PlaybackPolicy { UseHrtf = true } });
             Buses.Add(new AudioBusOptions { Name = TrackBusName, ParentName = "main" });
             Buses.Add(new AudioBusOptions { Name = CopilotBusName, ParentName = "main" });
             Buses.Add(new AudioBusOptions { Name = RadioBusName, ParentName = "main", Defaults = new PlaybackPolicy { UseHrtf = true } });
