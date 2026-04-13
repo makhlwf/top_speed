@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using TopSpeed.Runtime;
 
 namespace TopSpeed.Core
 {
@@ -21,6 +22,10 @@ namespace TopSpeed.Core
         }
 
         public static string SoundsRoot => Path.Combine(Root, "Sounds");
+
+        public static string? ResolveExistingPath(params string[] segments)
+        {
+            return RuntimeAssetPathResolver.ResolveExistingPath(Root, segments);
+        }
     }
 }
-

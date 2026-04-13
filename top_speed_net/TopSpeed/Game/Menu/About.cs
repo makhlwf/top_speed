@@ -7,7 +7,8 @@ using TopSpeed.Protocol;
 #if NETFRAMEWORK
 using System.Windows.Forms;
 #else
-using Eto.Forms;
+using EtoApplication = Eto.Forms.Application;
+using EtoClipboard = Eto.Forms.Clipboard;
 #endif
 
 namespace TopSpeed.Game
@@ -86,7 +87,7 @@ namespace TopSpeed.Game
 #else
             try
             {
-                var app = Application.Instance;
+                var app = EtoApplication.Instance;
                 if (app == null)
                     return false;
 
@@ -95,7 +96,7 @@ namespace TopSpeed.Game
                 {
                     try
                     {
-                        Clipboard.Instance.Text = text;
+                        EtoClipboard.Instance.Text = text;
                         copied = true;
                     }
                     catch

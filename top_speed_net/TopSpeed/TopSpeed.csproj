@@ -215,7 +215,7 @@
     <Exec Command="python &quot;$(MSBuildThisFileDirectory)..\..\docs\render_docs.py&quot;" ContinueOnError="WarnAndContinue" />
   </Target>
 
-  <Target Name="CopyUpdater" AfterTargets="Build" Condition="'$(TargetFramework)' == 'net472'">
+  <Target Name="CopyUpdater" AfterTargets="Build" Condition="'$(SkipClientUpdaterBuild)' != 'true' and '$(TargetFramework)' == 'net472'">
     <PropertyGroup>
       <_UpdaterProjectPath>$(MSBuildThisFileDirectory)../Updater/Updater.csproj</_UpdaterProjectPath>
       <_UpdaterBuildDir>$(MSBuildThisFileDirectory)../Updater/bin/$(Configuration)/net472/</_UpdaterBuildDir>
@@ -226,7 +226,7 @@
     <Copy SourceFiles="$(_UpdaterBuildDir)Updater.pdb" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" Condition="Exists('$(_UpdaterBuildDir)Updater.pdb')" />
   </Target>
 
-  <Target Name="CopyUpdaterNet10" AfterTargets="Build" Condition="('$(TargetFramework)' == 'net10.0' or '$(TargetFramework)' == 'net10.0-windows') and '$(RuntimeIdentifier)' != ''">
+  <Target Name="CopyUpdaterNet10" AfterTargets="Build" Condition="'$(SkipClientUpdaterBuild)' != 'true' and ('$(TargetFramework)' == 'net10.0' or '$(TargetFramework)' == 'net10.0-windows') and '$(RuntimeIdentifier)' != ''">
     <PropertyGroup>
       <_UpdaterProjectPath>$(MSBuildThisFileDirectory)../Updater/Updater.csproj</_UpdaterProjectPath>
       <_UpdaterOutputPath>$([System.IO.Path]::GetFullPath('$(OutDir)'))</_UpdaterOutputPath>
@@ -240,7 +240,7 @@
     <Copy SourceFiles="@(_UpdaterPublishedFiles)" DestinationFiles="@(_UpdaterPublishedFiles->'$(_UpdaterOutputPath)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>
 
-  <Target Name="PublishUpdaterNet10" AfterTargets="Publish" Condition="('$(TargetFramework)' == 'net10.0' or '$(TargetFramework)' == 'net10.0-windows') and '$(RuntimeIdentifier)' != ''">
+  <Target Name="PublishUpdaterNet10" AfterTargets="Publish" Condition="'$(SkipClientUpdaterBuild)' != 'true' and ('$(TargetFramework)' == 'net10.0' or '$(TargetFramework)' == 'net10.0-windows') and '$(RuntimeIdentifier)' != ''">
     <PropertyGroup>
       <_UpdaterProjectPath>$(MSBuildThisFileDirectory)../Updater/Updater.csproj</_UpdaterProjectPath>
       <_PublishDestinationPath>$([System.IO.Path]::GetFullPath('$(PublishDir)'))</_PublishDestinationPath>

@@ -125,14 +125,12 @@ namespace TopSpeed.Drive.Multiplayer
             var relative = key.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
             if (string.IsNullOrWhiteSpace(Path.GetExtension(relative)))
                 relative += ".ogg";
-            var path = Path.Combine(AssetPaths.SoundsRoot, language, relative);
-            return File.Exists(path) ? path : null;
+            return AssetPaths.ResolveExistingPath("Sounds", language, relative);
         }
 
         private static string? GetLegacySoundPath(string fileName)
         {
-            var path = Path.Combine(AssetPaths.SoundsRoot, "Legacy", fileName);
-            return File.Exists(path) ? path : null;
+            return AssetPaths.ResolveExistingPath("Sounds", "Legacy", fileName);
         }
 
         private Source LoadBusSource(string path, string busName, bool streamFromDisk)
