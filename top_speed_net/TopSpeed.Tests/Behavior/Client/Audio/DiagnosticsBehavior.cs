@@ -121,8 +121,6 @@ public sealed class DiagnosticsBehaviorTests
                         {
                             new AudioSourceSnapshot(42, "vehicles", false, true, false, 2, 48000, true, 1f, 0f, 1f, 0f, 0.8f, -1.94f, 0.8f, -1.94f, Array.Empty<AudioGainStageSnapshot>(), 1.25f)
                         })));
-
-                Thread.Sleep(250);
             }
 
             var text = File.ReadAllText(path);

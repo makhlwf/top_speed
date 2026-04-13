@@ -3,7 +3,7 @@
   "serverVersion": "2026.4.13.2",
   "changes": [
     "Remote radio volume is now affected by the player who's streaming it. For example if the player changes the radio volume, other players will also hear the change. If the radio volume in settings is at 100% and the player streams a radio at 50% volume, you will now hear it at 50% and not at 100.",
-    "Added an about item to the main menu that shows game version and protocol version",
+    "Added an about item to the main menu that shows game version and protocol version"
   ],
   "serverChanges": [
     "The server for Linux now correctly includes the updater."

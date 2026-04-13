@@ -196,7 +196,7 @@ namespace TS.Audio
                 if (sink.Filter != null && !sink.Filter.Matches(diagnosticEvent))
                     continue;
 
-                ThreadPool.QueueUserWorkItem(_ => sink.Sink.Write(diagnosticEvent));
+                sink.Sink.Write(diagnosticEvent);
             }
         }
 
