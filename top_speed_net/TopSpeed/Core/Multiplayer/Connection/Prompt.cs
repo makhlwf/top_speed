@@ -75,6 +75,23 @@ namespace TopSpeed.Core.Multiplayer
                         PromptCallSignInput(result.Text);
                 });
         }
+
+        private void HandleDefaultCallSignInput(string text)
+        {
+            var trimmed = (text ?? string.Empty).Trim();
+            _settings.DefaultCallSign = trimmed;
+            _saveSettings();
+
+            if (trimmed.Length == 0)
+            {
+                _speech.Speak(LocalizationService.Mark("Default call sign cleared."));
+                return;
+            }
+
+            _speech.Speak(LocalizationService.Format(
+                LocalizationService.Mark("Default call sign set to {0}."),
+                trimmed));
+        }
     }
 }
 

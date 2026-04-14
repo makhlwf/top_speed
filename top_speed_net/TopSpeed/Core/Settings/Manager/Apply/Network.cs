@@ -12,6 +12,8 @@ namespace TopSpeed.Core.Settings
                 settings.LastServerAddress = network.LastServerAddress;
 
             settings.DefaultServerPort = ReadDefaultServerPort(network.DefaultServerPort, settings.DefaultServerPort, "network.defaultServerPort", issues);
+            if (network.DefaultCallSign != null)
+                settings.DefaultCallSign = (network.DefaultCallSign ?? string.Empty).Trim();
             settings.SavedServers = ParseSavedServers(network.SavedServers?.Servers, issues);
         }
 
@@ -41,7 +43,8 @@ namespace TopSpeed.Core.Settings
                 {
                     Name = (entry.Name ?? string.Empty).Trim(),
                     Host = host,
-                    Port = ClampInt(entry.Port, 0, 0, 65535, $"network.savedServers.servers[{i}].port", issues)
+                    Port = ClampInt(entry.Port, 0, 0, 65535, $"network.savedServers.servers[{i}].port", issues),
+                    DefaultCallSign = (entry.DefaultCallSign ?? string.Empty).Trim()
                 });
             }
 

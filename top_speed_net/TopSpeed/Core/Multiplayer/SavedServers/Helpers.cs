@@ -14,7 +14,8 @@ namespace TopSpeed.Core.Multiplayer
             {
                 Name = source.Name ?? string.Empty,
                 Host = source.Host ?? string.Empty,
-                Port = source.Port
+                Port = source.Port,
+                DefaultCallSign = source.DefaultCallSign ?? string.Empty
             };
         }
 
@@ -23,6 +24,7 @@ namespace TopSpeed.Core.Multiplayer
             var copy = CloneSavedServer(source);
             copy.Name = (copy.Name ?? string.Empty).Trim();
             copy.Host = (copy.Host ?? string.Empty).Trim();
+            copy.DefaultCallSign = (copy.DefaultCallSign ?? string.Empty).Trim();
             if (copy.Port < 0 || copy.Port > 65535)
                 copy.Port = 0;
             return copy;

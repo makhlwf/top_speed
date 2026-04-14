@@ -16,6 +16,7 @@ namespace TopSpeed.Core.Multiplayer
 
         void BeginManualServerEntry();
         void BeginServerPortEntry();
+        void BeginDefaultCallSignEntry();
         void StartServerDiscovery();
         void OpenSavedServersManager();
         bool UpdatePendingOperations();

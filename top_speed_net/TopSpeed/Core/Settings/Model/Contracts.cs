@@ -217,6 +217,7 @@ namespace TopSpeed.Core.Settings
     {
         [DataMember(Name = "lastServerAddress")] public string? LastServerAddress { get; set; }
         [DataMember(Name = "defaultServerPort")] public int? DefaultServerPort { get; set; }
+        [DataMember(Name = "defaultCallSign")] public string? DefaultCallSign { get; set; }
         [DataMember(Name = "savedServers")] public SettingsSavedServersDocument? SavedServers { get; set; }
     }
 
@@ -232,6 +233,7 @@ namespace TopSpeed.Core.Settings
         [DataMember(Name = "name")] public string? Name { get; set; }
         [DataMember(Name = "host")] public string? Host { get; set; }
         [DataMember(Name = "port")] public int? Port { get; set; }
+        [DataMember(Name = "defaultCallSign")] public string? DefaultCallSign { get; set; }
     }
 
     [DataContract]

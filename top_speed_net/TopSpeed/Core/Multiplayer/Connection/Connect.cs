@@ -41,7 +41,7 @@ namespace TopSpeed.Core.Multiplayer
 
         private void BeginCallSignInput()
         {
-            PromptCallSignInput(null);
+            PromptCallSignInput(ResolveCallSignPromptInitialValue());
         }
 
         private bool HandleCallSignInput(string text)
@@ -56,6 +56,53 @@ namespace TopSpeed.Core.Multiplayer
             _state.Connection.PendingCallSign = trimmed;
             AttemptConnect(_state.Connection.PendingServerAddress, _state.Connection.PendingServerPort, _state.Connection.PendingCallSign);
             return true;
+        }
+
+        private string? ResolveCallSignPromptInitialValue()
+        {
+            var fromServer = ResolvePendingServerCallSign();
+            if (!string.IsNullOrWhiteSpace(fromServer))
+                return fromServer;
+
+            return NormalizeOptionalCallSign(_settings.DefaultCallSign);
+        }
+
+        private string? ResolvePendingServerCallSign()
+        {
+            var pendingHost = (_state.Connection.PendingServerAddress ?? string.Empty).Trim();
+            if (pendingHost.Length == 0)
+                return null;
+
+            var pendingPort = _state.Connection.PendingServerPort;
+            var servers = _settings.SavedServers;
+            if (servers == null || servers.Count == 0)
+                return null;
+
+            for (var i = 0; i < servers.Count; i++)
+            {
+                var server = servers[i];
+                if (server == null)
+                    continue;
+
+                var host = (server.Host ?? string.Empty).Trim();
+                if (!string.Equals(host, pendingHost, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (ResolveSavedServerPort(server) != pendingPort)
+                    continue;
+
+                var callSign = NormalizeOptionalCallSign(server.DefaultCallSign);
+                if (!string.IsNullOrWhiteSpace(callSign))
+                    return callSign;
+            }
+
+            return null;
+        }
+
+        private static string? NormalizeOptionalCallSign(string? value)
+        {
+            var trimmed = (value ?? string.Empty).Trim();
+            return trimmed.Length == 0 ? null : trimmed;
         }
 
         private void AttemptConnect(string host, int port, string callSign)

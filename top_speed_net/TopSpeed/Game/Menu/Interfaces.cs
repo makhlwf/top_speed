@@ -20,6 +20,7 @@ namespace TopSpeed.Game
         void IMenuServerActions.OpenSavedServersManager() => _multiplayerCoordinator.OpenSavedServersManager();
         void IMenuServerActions.BeginManualServerEntry() => _multiplayerCoordinator.BeginManualServerEntry();
         void IMenuServerActions.BeginServerPortEntry() => _multiplayerCoordinator.BeginServerPortEntry();
+        void IMenuServerActions.BeginDefaultCallSignEntry() => _multiplayerCoordinator.BeginDefaultCallSignEntry();
         void IMenuServerActions.NextChatCategory() => _multiplayerCoordinator.NextChatCategory();
         void IMenuServerActions.PreviousChatCategory() => _multiplayerCoordinator.PreviousChatCategory();
 

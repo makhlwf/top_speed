@@ -21,6 +21,11 @@ namespace TopSpeed.Core.Multiplayer
             _connectionFlow.BeginServerPortEntry();
         }
 
+        public void BeginDefaultCallSignEntry()
+        {
+            _connectionFlow.BeginDefaultCallSignEntry();
+        }
+
         internal void BeginServerPortEntryCore()
         {
             var current = _settings.DefaultServerPort.ToString();
@@ -35,6 +40,22 @@ namespace TopSpeed.Core.Multiplayer
                         return;
 
                     HandleServerPortInput(result.Text);
+                });
+        }
+
+        internal void BeginDefaultCallSignEntryCore()
+        {
+            _promptTextInput(
+                LocalizationService.Mark("Enter the default call sign used when connecting to servers. Leave empty to clear it."),
+                _settings.DefaultCallSign,
+                SpeechService.SpeakFlag.None,
+                true,
+                result =>
+                {
+                    if (result.Cancelled)
+                        return;
+
+                    HandleDefaultCallSignInput(result.Text);
                 });
         }
 

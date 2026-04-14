@@ -134,6 +134,7 @@ namespace TopSpeed.Core.Settings
                 {
                     LastServerAddress = settings.LastServerAddress,
                     DefaultServerPort = settings.DefaultServerPort,
+                    DefaultCallSign = settings.DefaultCallSign,
                     SavedServers = new SettingsSavedServersDocument
                     {
                         Servers = BuildSavedServers(settings.SavedServers)
@@ -188,7 +189,8 @@ namespace TopSpeed.Core.Settings
                 {
                     Name = entry.Name,
                     Host = entry.Host,
-                    Port = entry.Port
+                    Port = entry.Port,
+                    DefaultCallSign = entry.DefaultCallSign
                 });
             }
 

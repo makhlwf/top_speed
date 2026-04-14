@@ -1,7 +1,8 @@
 {
-  "version": "2026.4.13.2",
+  "version": "2026.4.14.1",
   "serverVersion": "2026.4.13.2",
   "changes": [
+    "Added the ability to specify a default call sign that will be used when connecting to specific servers, or a global call sign that will be prefilled when connecting to any server. If both of those are empty, you'll still get the call sign prompt when connecting but it remains empty.",
     "Remote radio volume is now affected by the player who's streaming it. For example if the player changes the radio volume, other players will also hear the change. If the radio volume in settings is at 100% and the player streams a radio at 50% volume, you will now hear it at 50% and not at 100.",
     "Added an about item to the main menu that shows game version and protocol version"
   ],

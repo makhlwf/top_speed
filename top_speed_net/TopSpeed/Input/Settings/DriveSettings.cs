@@ -79,6 +79,7 @@ namespace TopSpeed.Input
         public bool SingleRaceCustomVehicles { get; set; }
         public string LastServerAddress { get; set; } = string.Empty;
         public int DefaultServerPort { get; set; }
+        public string DefaultCallSign { get; set; } = string.Empty;
         public float ScreenReaderRateMs { get; set; }
         public ulong? SpeechBackendId { get; set; }
         public SpeechOutputMode SpeechMode { get; set; }
@@ -172,6 +173,7 @@ namespace TopSpeed.Input
             SingleRaceCustomVehicles = false;
             LastServerAddress = string.Empty;
             DefaultServerPort = 28630;
+            DefaultCallSign = string.Empty;
             ScreenReaderRateMs = 0f;
             SpeechBackendId = null;
             SpeechMode = SpeechOutputMode.Speech;
