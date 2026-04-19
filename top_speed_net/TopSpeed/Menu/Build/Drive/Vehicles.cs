@@ -20,7 +20,7 @@ namespace TopSpeed.Menu
             }
 
             items.Add(new MenuItem(LocalizationService.Mark("Custom"), MenuAction.None, onActivate: () => OpenCustomVehicleMenuOrAnnounce(mode)));
-            items.Add(new MenuItem(LocalizationService.Mark("Random"), MenuAction.None, onActivate: () => CompleteVehicleSelection(mode, _selection.SelectRandomCustomVehicle)));
+            items.Add(new MenuItem(LocalizationService.Mark("Random"), MenuAction.None, onActivate: () => CompleteVehicleSelection(mode, _selection.SelectRandomVehicle)));
             return BackMenu(id, items, LocalizationService.Mark("Select a vehicle"));
         }
 
@@ -50,7 +50,7 @@ namespace TopSpeed.Menu
                 items.Add(new MenuItem(displayName, MenuAction.None, onActivate: () => CompleteVehicleSelection(mode, () => _selection.SelectCustomVehicle(filePath))));
             }
 
-            items.Add(new MenuItem(LocalizationService.Mark("Random"), MenuAction.None, onActivate: () => CompleteVehicleSelection(mode, _selection.SelectRandomVehicle)));
+            items.Add(new MenuItem(LocalizationService.Mark("Random"), MenuAction.None, onActivate: () => CompleteVehicleSelection(mode, _selection.SelectRandomCustomVehicle)));
             return items;
         }
 
