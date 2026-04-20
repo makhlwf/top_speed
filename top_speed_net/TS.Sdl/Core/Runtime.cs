@@ -19,6 +19,14 @@ namespace TS.Sdl
             return SDL_Init(flags);
         }
 
+        public static void SetMainReady()
+        {
+            if (!IsAvailable)
+                return;
+
+            SDL_SetMainReady();
+        }
+
         public static bool InitSubSystem(InitFlags flags)
         {
             if (!IsAvailable)
@@ -84,9 +92,20 @@ namespace TS.Sdl
             return SDL_PollEvent(out value);
         }
 
+        public static ulong GetTicksNs()
+        {
+            if (!IsAvailable)
+                return 0;
+
+            return SDL_GetTicksNS();
+        }
+
         [DllImport(LibraryName, EntryPoint = "SDL_Init", CallingConvention = CallingConvention.Cdecl)]
         [return: MarshalAs(UnmanagedType.I1)]
         private static extern bool SDL_Init(InitFlags flags);
+
+        [DllImport(LibraryName, EntryPoint = "SDL_SetMainReady", CallingConvention = CallingConvention.Cdecl)]
+        private static extern void SDL_SetMainReady();
 
         [DllImport(LibraryName, EntryPoint = "SDL_InitSubSystem", CallingConvention = CallingConvention.Cdecl)]
         [return: MarshalAs(UnmanagedType.I1)]
@@ -113,5 +132,8 @@ namespace TS.Sdl
         [DllImport(LibraryName, EntryPoint = "SDL_PollEvent", CallingConvention = CallingConvention.Cdecl)]
         [return: MarshalAs(UnmanagedType.I1)]
         private static extern bool SDL_PollEvent(out Event value);
+
+        [DllImport(LibraryName, EntryPoint = "SDL_GetTicksNS", CallingConvention = CallingConvention.Cdecl)]
+        private static extern ulong SDL_GetTicksNS();
     }
 }

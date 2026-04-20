@@ -13,7 +13,8 @@ namespace TopSpeed.Menu
                 return MenuAction.None;
 
             var current = _stack.Peek();
-            if (input.WasPressed(Key.Space) && current.TrySpeakCurrentHintOnDemand())
+            var helpRequested = input.WasPressed(Key.Space) || input.WasGesturePressed(GestureIntent.LongPress);
+            if (helpRequested && current.TrySpeakCurrentHintOnDemand())
                 return MenuAction.None;
 
             if (TryHandleShortcut(input, current))

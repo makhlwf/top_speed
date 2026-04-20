@@ -37,50 +37,15 @@ namespace TopSpeed.Core.Settings
                     ForceFeedback = settings.ForceFeedback,
                     KeyboardProgressiveRate = (int)settings.KeyboardProgressiveRate,
                     DeviceMode = (int)settings.DeviceMode,
+                    AndroidUseMotionSteering = settings.AndroidUseMotionSteering,
                     Keyboard = new SettingsKeyboardDocument
                     {
-                        Left = (int)settings.KeyLeft,
-                        Right = (int)settings.KeyRight,
-                        Throttle = (int)settings.KeyThrottle,
-                        Brake = (int)settings.KeyBrake,
-                        Clutch = (int)settings.KeyClutch,
-                        GearUp = (int)settings.KeyGearUp,
-                        GearDown = (int)settings.KeyGearDown,
-                        Horn = (int)settings.KeyHorn,
-                        RequestInfo = (int)settings.KeyRequestInfo,
-                        CurrentGear = (int)settings.KeyCurrentGear,
-                        CurrentLapNr = (int)settings.KeyCurrentLapNr,
-                        CurrentRacePerc = (int)settings.KeyCurrentRacePerc,
-                        CurrentLapPerc = (int)settings.KeyCurrentLapPerc,
-                        CurrentRaceTime = (int)settings.KeyCurrentRaceTime,
-                        StartEngine = (int)settings.KeyStartEngine,
-                        ReportDistance = (int)settings.KeyReportDistance,
-                        ReportSpeed = (int)settings.KeyReportSpeed,
-                        TrackName = (int)settings.KeyTrackName,
-                        Pause = (int)settings.KeyPause
+                        Bindings = BuildKeyboardBindings(settings.KeyboardBindings)
                     },
                     MenuShortcuts = BuildMenuShortcuts(settings.ShortcutKeyBindings),
                     Controller = new SettingsControllerDocument
                     {
-                        Left = (int)settings.ControllerLeft,
-                        Right = (int)settings.ControllerRight,
-                        Throttle = (int)settings.ControllerThrottle,
-                        Brake = (int)settings.ControllerBrake,
-                        Clutch = (int)settings.ControllerClutch,
-                        GearUp = (int)settings.ControllerGearUp,
-                        GearDown = (int)settings.ControllerGearDown,
-                        Horn = (int)settings.ControllerHorn,
-                        RequestInfo = (int)settings.ControllerRequestInfo,
-                        CurrentGear = (int)settings.ControllerCurrentGear,
-                        CurrentLapNr = (int)settings.ControllerCurrentLapNr,
-                        CurrentRacePerc = (int)settings.ControllerCurrentRacePerc,
-                        CurrentLapPerc = (int)settings.ControllerCurrentLapPerc,
-                        CurrentRaceTime = (int)settings.ControllerCurrentRaceTime,
-                        StartEngine = (int)settings.ControllerStartEngine,
-                        ReportDistance = (int)settings.ControllerReportDistance,
-                        ReportSpeed = (int)settings.ControllerReportSpeed,
-                        TrackName = (int)settings.ControllerTrackName,
-                        Pause = (int)settings.ControllerPause,
+                        Bindings = BuildControllerBindings(settings.ControllerBindings),
                         ThrottleInvertMode = (int)settings.ControllerThrottleInvertMode,
                         BrakeInvertMode = (int)settings.ControllerBrakeInvertMode,
                         ClutchInvertMode = (int)settings.ControllerClutchInvertMode,
@@ -103,6 +68,7 @@ namespace TopSpeed.Core.Settings
                     AutomaticInfo = (int)settings.AutomaticInfo,
                     Copilot = (int)settings.Copilot,
                     CurveAnnouncement = (int)settings.CurveAnnouncement,
+                    CurveAnnouncementLeadTimeSeconds = Round3Decimal(settings.CurveAnnouncementLeadTimeSeconds),
                     NumberOfLaps = settings.NrOfLaps,
                     NumberOfComputers = settings.NrOfComputers,
                     Difficulty = (int)settings.Difficulty,
@@ -134,6 +100,7 @@ namespace TopSpeed.Core.Settings
                 {
                     LastServerAddress = settings.LastServerAddress,
                     DefaultServerPort = settings.DefaultServerPort,
+                    DefaultCallSign = settings.DefaultCallSign,
                     SavedServers = new SettingsSavedServersDocument
                     {
                         Servers = BuildSavedServers(settings.SavedServers)
@@ -145,6 +112,50 @@ namespace TopSpeed.Core.Settings
                     ShuffleEnabled = settings.RadioShuffle
                 }
             };
+        }
+
+        private static List<SettingsKeyboardBindingDocument> BuildKeyboardBindings(Dictionary<DriveIntent, InputKey>? bindings)
+        {
+            var result = new List<SettingsKeyboardBindingDocument>();
+            if (bindings == null)
+                return result;
+
+            foreach (var pair in bindings)
+            {
+                if (pair.Key == DriveIntent.Steering)
+                    continue;
+
+                result.Add(new SettingsKeyboardBindingDocument
+                {
+                    Intent = pair.Key.ToString(),
+                    Key = (int)pair.Value
+                });
+            }
+
+            result.Sort((left, right) => string.Compare(left.Intent, right.Intent, StringComparison.Ordinal));
+            return result;
+        }
+
+        private static List<SettingsControllerBindingDocument> BuildControllerBindings(Dictionary<DriveIntent, TopSpeed.Input.Devices.Controller.AxisOrButton>? bindings)
+        {
+            var result = new List<SettingsControllerBindingDocument>();
+            if (bindings == null)
+                return result;
+
+            foreach (var pair in bindings)
+            {
+                if (pair.Key == DriveIntent.Steering)
+                    continue;
+
+                result.Add(new SettingsControllerBindingDocument
+                {
+                    Intent = pair.Key.ToString(),
+                    Axis = (int)pair.Value
+                });
+            }
+
+            result.Sort((left, right) => string.Compare(left.Intent, right.Intent, StringComparison.Ordinal));
+            return result;
         }
 
         private static SettingsMenuShortcutsDocument BuildMenuShortcuts(Dictionary<string, InputKey>? shortcuts)
@@ -188,7 +199,8 @@ namespace TopSpeed.Core.Settings
                 {
                     Name = entry.Name,
                     Host = entry.Host,
-                    Port = entry.Port
+                    Port = entry.Port,
+                    DefaultCallSign = entry.DefaultCallSign
                 });
             }
 

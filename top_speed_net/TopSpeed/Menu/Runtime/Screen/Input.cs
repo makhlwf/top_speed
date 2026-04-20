@@ -24,18 +24,20 @@ namespace TopSpeed.Menu
             var shiftHeld = input.IsDown(Key.LeftShift) || input.IsDown(Key.RightShift);
 
             var state = new UpdateInputState(
-                input.WasPressed(Key.Up),
-                input.WasPressed(Key.Down),
-                input.WasPressed(Key.Home),
-                input.WasPressed(Key.End),
-                input.WasPressed(Key.Left),
-                input.WasPressed(Key.Right),
-                input.WasPressed(Key.PageUp),
-                input.WasPressed(Key.PageDown),
+                MenuInputBindings.IsPressed(input, MenuInputAction.PreviousItem),
+                MenuInputBindings.IsPressed(input, MenuInputAction.NextItem),
+                MenuInputBindings.IsPressed(input, MenuInputAction.MoveHome),
+                MenuInputBindings.IsPressed(input, MenuInputAction.MoveEnd),
+                MenuInputBindings.IsPressed(input, MenuInputAction.MoveLeft),
+                MenuInputBindings.IsPressed(input, MenuInputAction.MoveRight),
+                MenuInputBindings.IsPressed(input, MenuInputAction.PageUp),
+                MenuInputBindings.IsPressed(input, MenuInputAction.PageDown),
                 tabPressed && !shiftHeld,
                 tabPressed && shiftHeld,
-                input.WasPressed(Key.Return) || input.WasPressed(Key.NumberPadEnter),
-                input.WasPressed(Key.Escape));
+                MenuInputBindings.IsPressed(input, MenuInputAction.Activate),
+                MenuInputBindings.IsPressed(input, MenuInputAction.Back));
+
+            ApplyGestureInput(input, ref state);
 
             if (input.TryGetControllerState(out var controller))
             {
@@ -60,6 +62,77 @@ namespace TopSpeed.Menu
             }
 
             return state;
+        }
+
+        private void ApplyGestureInput(IInputService input, ref UpdateInputState state)
+        {
+            if (UseMultiplayerTouchZones())
+            {
+                ApplyMultiplayerZoneGestureInput(input, ref state);
+                return;
+            }
+
+            var swipeLeft = input.WasGesturePressed(GestureIntent.SwipeLeft);
+            var swipeRight = input.WasGesturePressed(GestureIntent.SwipeRight);
+            var swipeUp = input.WasGesturePressed(GestureIntent.SwipeUp);
+            var swipeDown = input.WasGesturePressed(GestureIntent.SwipeDown);
+            var twoFingerSwipeLeft = input.WasGesturePressed(GestureIntent.TwoFingerSwipeLeft);
+            var twoFingerSwipeRight = input.WasGesturePressed(GestureIntent.TwoFingerSwipeRight);
+            var twoFingerSwipeUp = input.WasGesturePressed(GestureIntent.TwoFingerSwipeUp);
+            var twoFingerSwipeDown = input.WasGesturePressed(GestureIntent.TwoFingerSwipeDown);
+            var threeFingerSwipeUp = input.WasGesturePressed(GestureIntent.ThreeFingerSwipeUp);
+            var threeFingerSwipeDown = input.WasGesturePressed(GestureIntent.ThreeFingerSwipeDown);
+
+            state.MoveUp |= swipeLeft;
+            state.MoveDown |= swipeRight;
+
+            var currentItem = _index >= 0 && _index < _items.Count
+                ? _items[_index]
+                : null;
+            var isSlider = currentItem is Slider;
+            var supportsFineAdjust = currentItem is Slider || currentItem is RadioButton || currentItem is ToggleItem;
+
+            if (isSlider)
+            {
+                state.PageUp |= twoFingerSwipeUp;
+                state.PageDown |= twoFingerSwipeDown;
+                state.MoveHome |= threeFingerSwipeUp;
+                state.MoveEnd |= threeFingerSwipeDown;
+                state.Back |= swipeDown;
+            }
+            else
+            {
+                state.Activate |= swipeUp;
+                state.Back |= swipeDown;
+                state.MoveHome |= twoFingerSwipeUp;
+                state.MoveEnd |= twoFingerSwipeDown;
+            }
+
+            if (supportsFineAdjust || (currentItem?.HasActions ?? false))
+            {
+                state.MoveLeft |= twoFingerSwipeLeft;
+                state.MoveRight |= twoFingerSwipeRight;
+            }
+
+        }
+
+        private bool UseMultiplayerTouchZones()
+        {
+            return InteractionHints.IsTouchPlatform() && MenuTouchProfile.UsesMultiplayerZones(Id);
+        }
+
+        private static void ApplyMultiplayerZoneGestureInput(IInputService input, ref UpdateInputState state)
+        {
+            var bottomSwipeLeft = input.WasZoneGesturePressed(GestureIntent.SwipeLeft, MenuTouchProfile.MultiplayerBottomZoneId);
+            var bottomSwipeRight = input.WasZoneGesturePressed(GestureIntent.SwipeRight, MenuTouchProfile.MultiplayerBottomZoneId);
+            var bottomSwipeUp = input.WasZoneGesturePressed(GestureIntent.SwipeUp, MenuTouchProfile.MultiplayerBottomZoneId);
+            var bottomSwipeDown = input.WasZoneGesturePressed(GestureIntent.SwipeDown, MenuTouchProfile.MultiplayerBottomZoneId);
+
+            // Left/right maps to previous/next item in menu ordering.
+            state.MoveUp |= bottomSwipeLeft;
+            state.MoveDown |= bottomSwipeRight;
+            state.Activate |= bottomSwipeUp;
+            state.Back |= bottomSwipeDown;
         }
 
         private bool TryHandleHeldInputGate(IInputService input, UpdateInputState state, out MenuUpdateResult result)

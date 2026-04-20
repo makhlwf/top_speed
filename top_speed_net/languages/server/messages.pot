@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-12 15:10+0200\n"
+"POT-Creation-Date: 2026-04-16 20:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -379,12 +379,12 @@ msgstr ""
 msgid "Failed to start transport on port {0}."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:214
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:215
 #, csharp-format
 msgid "Finish ignored: room={0}, player={1}, number={2}, state={3}."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:195
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:196
 #, csharp-format
 msgid ""
 "Finish recorded: room={0}, player={1}, number={2}, place={3}, timeMs={4}."
@@ -533,7 +533,7 @@ msgstr ""
 msgid "Join denied: player={0}, room={1}, raceStarted={2}, preparing={3}."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Room\Membership.cs:204
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Room\Membership.cs:205
 #, csharp-format
 msgid "Join room assignment: room={0}, player={1}, playerNumber={2}, host={3}."
 msgstr ""
@@ -639,7 +639,7 @@ msgstr ""
 msgid "Player joined room: room={0} \"{1}\", player={2}, participants={3}/{4}."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Room\Membership.cs:160
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Room\Membership.cs:161
 #, csharp-format
 msgid "Player left room: room={0} \"{1}\", player={2}, notify={3}."
 msgstr ""
@@ -654,7 +654,7 @@ msgid ""
 "Player ready: room={0}, player={1}, car={2}, automatic={3}, ready={4}/{5}."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:125
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:126
 #, csharp-format
 msgid "Player state transition from data: room={0}, player={1}, {2} -> {3}."
 msgstr ""
@@ -671,8 +671,8 @@ msgstr ""
 #: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Runtime\admin.cs:78
 #: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Notify\Room.cs:194
 #: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:60
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Room\Membership.cs:195
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Room\Membership.cs:199
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Room\Membership.cs:196
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Room\Membership.cs:200
 #: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Room\Numbering.cs:72
 #: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Room\Ready.cs:83
 #, csharp-format
@@ -727,7 +727,7 @@ msgstr ""
 msgid "Protocol version: {0}"
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:205
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:206
 #, csharp-format
 msgid "Race completion pending: room={0}, finished={1}/{2}."
 msgstr ""
@@ -824,7 +824,7 @@ msgid ""
 "Room add-bot denied: room={0}, player={1}, raceStarted={2}, preparing={3}."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Room\Membership.cs:140
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Room\Membership.cs:141
 #, csharp-format
 msgid "Room closed: room={0} \"{1}\"."
 msgstr ""
@@ -1443,7 +1443,7 @@ msgstr ""
 msgid "{0} has disconnected from the server."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Room\Membership.cs:130
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Room\Membership.cs:131
 #, csharp-format
 msgid "{0} has left the game."
 msgstr ""
@@ -1475,7 +1475,7 @@ msgstr ""
 msgid "{0} paused the current game."
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:247
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:248
 #, csharp-format
 msgid ""
 "{0} payload mismatch: room={1}, connectionPlayer={2}/{3}, payload={4}/{5}."
@@ -1486,7 +1486,7 @@ msgstr ""
 msgid "{0} players are connected:"
 msgstr ""
 
-#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:261
+#: D:\top_speed\top_speed_net\TopSpeed.Server\Network\Services\Race\Players.cs:262
 #, csharp-format
 msgid ""
 "{0} race instance mismatch: room={1}, connectionPlayer={2}/{3}, "

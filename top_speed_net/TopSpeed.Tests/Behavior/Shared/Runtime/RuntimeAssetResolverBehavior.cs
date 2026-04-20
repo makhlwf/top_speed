@@ -9,6 +9,7 @@ public sealed class RuntimeAssetResolverBehaviorTests
 {
     [Theory]
     [InlineData("win-x64", false, false, false, "windows-x64")]
+    [InlineData("android-arm64", false, false, false, "android-arm64")]
     [InlineData("linux-x64", false, false, false, "linux-x64")]
     [InlineData("osx-x64", false, false, false, "mac-x64")]
     [InlineData("", true, false, false, "windows-x64")]

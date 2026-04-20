@@ -18,9 +18,9 @@ public sealed class WheelPedalBehaviorTests
         input.Run(new InputState(), new State { Z = 100, Rz = 100, Slider1 = 100 }, 0f, controllerIsRacingWheel: true);
         input.Run(new InputState(), new State { Z = -100, Rz = -100, Slider1 = -100 }, 0f, controllerIsRacingWheel: true);
 
-        input.GetThrottle().Should().Be(100);
-        input.GetBrake().Should().Be(-100);
-        input.GetClutch().Should().Be(100);
+        input.Intents.GetAxisPercent(DriveIntent.Throttle).Should().Be(100);
+        input.Intents.GetAxisPercent(DriveIntent.Brake).Should().Be(-100);
+        input.Intents.GetAxisPercent(DriveIntent.Clutch).Should().Be(100);
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public sealed class WheelPedalBehaviorTests
         input.Run(new InputState(), new State { Rz = -100 }, 0f, controllerIsRacingWheel: true);
         input.Run(new InputState(), new State { Rz = 0 }, 0f, controllerIsRacingWheel: true);
 
-        input.GetThrottle().Should().BeInRange(45, 55);
+        input.Intents.GetAxisPercent(DriveIntent.Throttle).Should().BeInRange(45, 55);
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public sealed class WheelPedalBehaviorTests
         input.Run(new InputState(), new State { Rz = 31 }, 0f, controllerIsRacingWheel: true);
         input.Run(new InputState(), new State { Rz = -31 }, 0f, controllerIsRacingWheel: true);
 
-        input.GetThrottle().Should().Be(100);
+        input.Intents.GetAxisPercent(DriveIntent.Throttle).Should().Be(100);
     }
 
     [Theory]

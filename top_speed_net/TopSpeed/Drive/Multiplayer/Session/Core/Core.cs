@@ -63,6 +63,7 @@ namespace TopSpeed.Drive.Multiplayer
             _panelManager = runtimeObjects.PanelManager;
 
             _soundNumbers = CreateNumberSounds();
+            _soundLaps = CreateLapSounds(_lapLimit);
             (_randomSounds, _totalRandomSounds) = CreateRandomSoundContainers();
             LoadDefaultRandomSounds();
             _soundUnkey = CreateUnkeySounds();

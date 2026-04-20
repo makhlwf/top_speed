@@ -5,6 +5,12 @@ namespace TopSpeed.Input
 {
     internal sealed partial class DriveInput
     {
+        public void Run(DriveInputFrame frame, float deltaSeconds)
+        {
+            var controller = frame.HasController ? frame.ControllerState : (State?)null;
+            Run(frame.KeyboardState, controller, deltaSeconds, frame.ControllerIsRacingWheel);
+        }
+
         public void Run(InputState input, float deltaSeconds)
         {
             Run(input, null, deltaSeconds, controllerIsRacingWheel: false);
@@ -53,6 +59,7 @@ namespace TopSpeed.Input
                 UpdatePedalCalibrationSamples();
 
             UpdateSimulatedInputs(deltaSeconds);
+            _intentState = CaptureIntentState();
         }
 
         public void SetCenter(State center)

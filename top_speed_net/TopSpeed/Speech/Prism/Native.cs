@@ -9,6 +9,9 @@ namespace TopSpeed.Speech.Prism
 
         private static IMethods CreateMethods()
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Create("ANDROID")))
+                return new AndroidMethods();
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 return new WindowsMethods();
 

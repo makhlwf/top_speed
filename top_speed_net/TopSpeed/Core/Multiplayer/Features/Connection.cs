@@ -19,6 +19,11 @@ namespace TopSpeed.Core.Multiplayer
             _owner.BeginServerPortEntryCore();
         }
 
+        public void BeginDefaultCallSignEntry()
+        {
+            _owner.BeginDefaultCallSignEntryCore();
+        }
+
         public void StartServerDiscovery()
         {
             _owner.StartServerDiscoveryCore();

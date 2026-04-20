@@ -91,7 +91,7 @@ namespace TopSpeed.Drive.Panels
         private void HandlePlaybackEndAdvance()
         {
             var isPlaying = _radio.HasMedia && _radio.IsPlaying;
-            if (_radio.HasMedia && _radio.DesiredPlaying && _lastObservedPlaying && !isPlaying)
+            if (_radio.HasMedia && _radio.DesiredPlaying && !_radio.IsPaused && _lastObservedPlaying && !isPlaying)
             {
                 if (_playlist.Count > 1 && !_radio.LoopPlayback)
                 {

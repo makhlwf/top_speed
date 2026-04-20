@@ -17,6 +17,8 @@ namespace TS.Sdl.Input
         public bool IsOpen => _handle != IntPtr.Zero;
         public uint InstanceId => SDL_GetSensorID(_handle);
         public SensorType Type => SDL_GetSensorType(_handle);
+        public int NonPortableType => SDL_GetSensorNonPortableType(_handle);
+        public uint PropertiesId => SDL_GetSensorProperties(_handle);
         public string? Name => Utf8.FromNative(SDL_GetSensorName(_handle));
 
         public static uint[] GetIds()
@@ -44,6 +46,27 @@ namespace TS.Sdl.Input
         public static SensorType GetTypeForId(uint instanceId)
         {
             return SDL_GetSensorTypeForID(instanceId);
+        }
+
+        public static int GetNonPortableTypeForId(uint instanceId)
+        {
+            return SDL_GetSensorNonPortableTypeForID(instanceId);
+        }
+
+        public static IntPtr GetHandleForId(uint instanceId)
+        {
+            if (!Runtime.IsAvailable)
+                return IntPtr.Zero;
+
+            return SDL_GetSensorFromID(instanceId);
+        }
+
+        public static void Update()
+        {
+            if (!Runtime.IsAvailable)
+                return;
+
+            SDL_UpdateSensors();
         }
 
         public static Sensor? Open(uint instanceId)
@@ -81,14 +104,26 @@ namespace TS.Sdl.Input
         [DllImport(LibraryName, EntryPoint = "SDL_GetSensorTypeForID", CallingConvention = CallingConvention.Cdecl)]
         private static extern SensorType SDL_GetSensorTypeForID(uint instanceId);
 
+        [DllImport(LibraryName, EntryPoint = "SDL_GetSensorNonPortableTypeForID", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int SDL_GetSensorNonPortableTypeForID(uint instanceId);
+
         [DllImport(LibraryName, EntryPoint = "SDL_OpenSensor", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr SDL_OpenSensor(uint instanceId);
+
+        [DllImport(LibraryName, EntryPoint = "SDL_GetSensorFromID", CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr SDL_GetSensorFromID(uint instanceId);
 
         [DllImport(LibraryName, EntryPoint = "SDL_GetSensorID", CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SDL_GetSensorID(IntPtr sensor);
 
         [DllImport(LibraryName, EntryPoint = "SDL_GetSensorType", CallingConvention = CallingConvention.Cdecl)]
         private static extern SensorType SDL_GetSensorType(IntPtr sensor);
+
+        [DllImport(LibraryName, EntryPoint = "SDL_GetSensorNonPortableType", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int SDL_GetSensorNonPortableType(IntPtr sensor);
+
+        [DllImport(LibraryName, EntryPoint = "SDL_GetSensorProperties", CallingConvention = CallingConvention.Cdecl)]
+        private static extern uint SDL_GetSensorProperties(IntPtr sensor);
 
         [DllImport(LibraryName, EntryPoint = "SDL_GetSensorName", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr SDL_GetSensorName(IntPtr sensor);
@@ -99,6 +134,9 @@ namespace TS.Sdl.Input
 
         [DllImport(LibraryName, EntryPoint = "SDL_CloseSensor", CallingConvention = CallingConvention.Cdecl)]
         private static extern void SDL_CloseSensor(IntPtr sensor);
+
+        [DllImport(LibraryName, EntryPoint = "SDL_UpdateSensors", CallingConvention = CallingConvention.Cdecl)]
+        private static extern void SDL_UpdateSensors();
 
         [DllImport(LibraryName, EntryPoint = "SDL_free", CallingConvention = CallingConvention.Cdecl)]
         private static extern void SDL_Free(IntPtr memory);

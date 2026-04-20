@@ -60,11 +60,23 @@ namespace TS.Sdl.Interop
         {
             var baseDir = AppContext.BaseDirectory;
             var fileName = GetLibraryFileName();
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return new[]
+                {
+                    new Candidate(Path.Combine(baseDir, "lib", fileName), true, Path.Combine("lib", fileName)),
+                    new Candidate(Path.Combine(baseDir, fileName), true, fileName),
+                    new Candidate(fileName, false, $"system:{fileName}")
+                };
+            }
+
+            var shortName = GetShortLibraryName(fileName);
             return new[]
             {
                 new Candidate(Path.Combine(baseDir, "lib", fileName), true, Path.Combine("lib", fileName)),
                 new Candidate(Path.Combine(baseDir, fileName), true, fileName),
-                new Candidate(fileName, false, $"system:{fileName}")
+                new Candidate(fileName, false, $"system:{fileName}"),
+                new Candidate(shortName, false, $"system:{shortName}")
             };
         }
 
@@ -74,7 +86,20 @@ namespace TS.Sdl.Interop
                 return "SDL3.dll";
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 return "libSDL3.dylib";
+            if (IsAndroid())
+                return "libSDL3.so";
             return "libSDL3.so";
+        }
+
+        private static string GetShortLibraryName(string libraryFileName)
+        {
+            if (libraryFileName.StartsWith("lib", StringComparison.OrdinalIgnoreCase) &&
+                libraryFileName.EndsWith(".so", StringComparison.OrdinalIgnoreCase))
+            {
+                return libraryFileName.Substring(3, libraryFileName.Length - 6);
+            }
+
+            return libraryFileName;
         }
 
         private static bool TryLoad(string path, bool requireFile, out string error)
@@ -121,7 +146,9 @@ namespace TS.Sdl.Interop
         {
             var pointer = RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
                 ? DlerrorMac()
-                : DlerrorLinux();
+                : IsAndroid()
+                    ? DlerrorAndroid()
+                    : DlerrorLinux();
             return pointer == IntPtr.Zero ? null : Marshal.PtrToStringAnsi(pointer);
         }
 
@@ -131,11 +158,17 @@ namespace TS.Sdl.Interop
         [DllImport("libdl.so.2", EntryPoint = "dlopen", CharSet = CharSet.Ansi)]
         private static extern IntPtr DlopenLinux(string fileName, int flags);
 
+        [DllImport("libdl.so", EntryPoint = "dlopen", CharSet = CharSet.Ansi)]
+        private static extern IntPtr DlopenAndroid(string fileName, int flags);
+
         [DllImport("libSystem.B.dylib", EntryPoint = "dlopen", CharSet = CharSet.Ansi)]
         private static extern IntPtr DlopenMac(string fileName, int flags);
 
         [DllImport("libdl.so.2", EntryPoint = "dlerror", CharSet = CharSet.Ansi)]
         private static extern IntPtr DlerrorLinux();
+
+        [DllImport("libdl.so", EntryPoint = "dlerror", CharSet = CharSet.Ansi)]
+        private static extern IntPtr DlerrorAndroid();
 
         [DllImport("libSystem.B.dylib", EntryPoint = "dlerror", CharSet = CharSet.Ansi)]
         private static extern IntPtr DlerrorMac();
@@ -144,7 +177,14 @@ namespace TS.Sdl.Interop
         {
             return RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
                 ? DlopenMac(fileName, flags)
-                : DlopenLinux(fileName, flags);
+                : IsAndroid()
+                    ? DlopenAndroid(fileName, flags)
+                    : DlopenLinux(fileName, flags);
+        }
+
+        private static bool IsAndroid()
+        {
+            return RuntimeInformation.IsOSPlatform(OSPlatform.Create("ANDROID"));
         }
 
         private readonly struct Candidate

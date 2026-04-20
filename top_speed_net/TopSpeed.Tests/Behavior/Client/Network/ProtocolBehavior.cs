@@ -50,9 +50,10 @@ public sealed class ProtocolBehaviorTests
             backfiring: false,
             mediaLoaded: true,
             mediaPlaying: true,
-            mediaId: 99u);
+            mediaId: 99u,
+            radioVolumePercent: 75);
 
-        payload.Length.Should().Be(2 + 35);
+        payload.Length.Should().Be(2 + 36);
 
         var reader = new PacketReader(payload);
         reader.ReadByte().Should().Be(ProtocolConstants.Version);
@@ -73,6 +74,7 @@ public sealed class ProtocolBehaviorTests
         reader.ReadBool().Should().BeTrue();
         reader.ReadBool().Should().BeTrue();
         reader.ReadUInt32().Should().Be(99u);
+        reader.ReadByte().Should().Be((byte)75);
     }
 
     [Fact]

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
+using TopSpeed.Input;
 
 namespace TopSpeed.Core.Settings
 {
@@ -92,6 +93,9 @@ namespace TopSpeed.Core.Settings
         [DataMember(Name = "deviceMode")]
         public int? DeviceMode { get; set; }
 
+        [DataMember(Name = "androidUseMotionSteering")]
+        public bool? AndroidUseMotionSteering { get; set; }
+
         [DataMember(Name = "keyboard")]
         public SettingsKeyboardDocument? Keyboard { get; set; }
 
@@ -122,54 +126,41 @@ namespace TopSpeed.Core.Settings
     [DataContract]
     internal sealed class SettingsKeyboardDocument
     {
-        [DataMember(Name = "left")] public int? Left { get; set; }
-        [DataMember(Name = "right")] public int? Right { get; set; }
-        [DataMember(Name = "throttle")] public int? Throttle { get; set; }
-        [DataMember(Name = "brake")] public int? Brake { get; set; }
-        [DataMember(Name = "clutch")] public int? Clutch { get; set; }
-        [DataMember(Name = "gearUp")] public int? GearUp { get; set; }
-        [DataMember(Name = "gearDown")] public int? GearDown { get; set; }
-        [DataMember(Name = "horn")] public int? Horn { get; set; }
-        [DataMember(Name = "requestInfo")] public int? RequestInfo { get; set; }
-        [DataMember(Name = "currentGear")] public int? CurrentGear { get; set; }
-        [DataMember(Name = "currentLapNr")] public int? CurrentLapNr { get; set; }
-        [DataMember(Name = "currentRacePerc")] public int? CurrentRacePerc { get; set; }
-        [DataMember(Name = "currentLapPerc")] public int? CurrentLapPerc { get; set; }
-        [DataMember(Name = "currentRaceTime")] public int? CurrentRaceTime { get; set; }
-        [DataMember(Name = "startEngine")] public int? StartEngine { get; set; }
-        [DataMember(Name = "reportDistance")] public int? ReportDistance { get; set; }
-        [DataMember(Name = "reportSpeed")] public int? ReportSpeed { get; set; }
-        [DataMember(Name = "trackName")] public int? TrackName { get; set; }
-        [DataMember(Name = "pause")] public int? Pause { get; set; }
+        [DataMember(Name = "bindings")]
+        public List<SettingsKeyboardBindingDocument>? Bindings { get; set; }
+    }
+
+    [DataContract]
+    internal sealed class SettingsKeyboardBindingDocument
+    {
+        [DataMember(Name = "intent")]
+        public string? Intent { get; set; }
+
+        [DataMember(Name = "key")]
+        public int? Key { get; set; }
     }
 
     [DataContract]
     internal sealed class SettingsControllerDocument
     {
-        [DataMember(Name = "left")] public int? Left { get; set; }
-        [DataMember(Name = "right")] public int? Right { get; set; }
-        [DataMember(Name = "throttle")] public int? Throttle { get; set; }
-        [DataMember(Name = "brake")] public int? Brake { get; set; }
-        [DataMember(Name = "clutch")] public int? Clutch { get; set; }
-        [DataMember(Name = "gearUp")] public int? GearUp { get; set; }
-        [DataMember(Name = "gearDown")] public int? GearDown { get; set; }
-        [DataMember(Name = "horn")] public int? Horn { get; set; }
-        [DataMember(Name = "requestInfo")] public int? RequestInfo { get; set; }
-        [DataMember(Name = "currentGear")] public int? CurrentGear { get; set; }
-        [DataMember(Name = "currentLapNr")] public int? CurrentLapNr { get; set; }
-        [DataMember(Name = "currentRacePerc")] public int? CurrentRacePerc { get; set; }
-        [DataMember(Name = "currentLapPerc")] public int? CurrentLapPerc { get; set; }
-        [DataMember(Name = "currentRaceTime")] public int? CurrentRaceTime { get; set; }
-        [DataMember(Name = "startEngine")] public int? StartEngine { get; set; }
-        [DataMember(Name = "reportDistance")] public int? ReportDistance { get; set; }
-        [DataMember(Name = "reportSpeed")] public int? ReportSpeed { get; set; }
-        [DataMember(Name = "trackName")] public int? TrackName { get; set; }
-        [DataMember(Name = "pause")] public int? Pause { get; set; }
+        [DataMember(Name = "bindings")]
+        public List<SettingsControllerBindingDocument>? Bindings { get; set; }
+
         [DataMember(Name = "throttleInvertMode")] public int? ThrottleInvertMode { get; set; }
         [DataMember(Name = "brakeInvertMode")] public int? BrakeInvertMode { get; set; }
         [DataMember(Name = "clutchInvertMode")] public int? ClutchInvertMode { get; set; }
         [DataMember(Name = "steeringDeadZone")] public int? SteeringDeadZone { get; set; }
         [DataMember(Name = "center")] public SettingsControllerCenterDocument? Center { get; set; }
+    }
+
+    [DataContract]
+    internal sealed class SettingsControllerBindingDocument
+    {
+        [DataMember(Name = "intent")]
+        public string? Intent { get; set; }
+
+        [DataMember(Name = "axis")]
+        public int? Axis { get; set; }
     }
 
     [DataContract]
@@ -191,6 +182,7 @@ namespace TopSpeed.Core.Settings
         [DataMember(Name = "automaticInfo")] public int? AutomaticInfo { get; set; }
         [DataMember(Name = "copilot")] public int? Copilot { get; set; }
         [DataMember(Name = "curveAnnouncement")] public int? CurveAnnouncement { get; set; }
+        [DataMember(Name = "curveAnnouncementLeadTimeSeconds")] public decimal? CurveAnnouncementLeadTimeSeconds { get; set; }
         [DataMember(Name = "numberOfLaps")] public int? NumberOfLaps { get; set; }
         [DataMember(Name = "numberOfComputers")] public int? NumberOfComputers { get; set; }
         [DataMember(Name = "difficulty")] public int? Difficulty { get; set; }
@@ -217,6 +209,7 @@ namespace TopSpeed.Core.Settings
     {
         [DataMember(Name = "lastServerAddress")] public string? LastServerAddress { get; set; }
         [DataMember(Name = "defaultServerPort")] public int? DefaultServerPort { get; set; }
+        [DataMember(Name = "defaultCallSign")] public string? DefaultCallSign { get; set; }
         [DataMember(Name = "savedServers")] public SettingsSavedServersDocument? SavedServers { get; set; }
     }
 
@@ -232,6 +225,7 @@ namespace TopSpeed.Core.Settings
         [DataMember(Name = "name")] public string? Name { get; set; }
         [DataMember(Name = "host")] public string? Host { get; set; }
         [DataMember(Name = "port")] public int? Port { get; set; }
+        [DataMember(Name = "defaultCallSign")] public string? DefaultCallSign { get; set; }
     }
 
     [DataContract]

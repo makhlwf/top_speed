@@ -7,41 +7,41 @@ namespace TopSpeed.Input
 {
     internal sealed partial class DriveInput
     {
-        internal IReadOnlyList<InputActionDefinition> GetActionDefinitions()
+        internal IReadOnlyList<DriveIntentDefinition> GetIntentDefinitions()
         {
-            return _actionDefinitions;
+            return _intentDefinitions;
         }
 
-        internal string GetActionLabel(InputAction action)
+        internal string GetIntentLabel(DriveIntent action)
         {
-            return _actionBindings.TryGetValue(action, out var binding)
+            return _intentBindings.TryGetValue(action, out var binding)
                 ? binding.Label
                 : LocalizationService.Mark("Action");
         }
 
-        internal Key GetKeyMapping(InputAction action)
+        internal Key GetKeyMapping(DriveIntent action)
         {
-            return _actionBindings.TryGetValue(action, out var binding)
+            return _intentBindings.TryGetValue(action, out var binding)
                 ? binding.GetKey()
                 : Key.Unknown;
         }
 
-        internal AxisOrButton GetAxisMapping(InputAction action)
+        internal AxisOrButton GetAxisMapping(DriveIntent action)
         {
-            return _actionBindings.TryGetValue(action, out var binding)
+            return _intentBindings.TryGetValue(action, out var binding)
                 ? binding.GetAxis()
                 : AxisOrButton.AxisNone;
         }
 
-        internal void ApplyKeyMapping(InputAction action, Key key)
+        internal void ApplyKeyMapping(DriveIntent action, Key key)
         {
-            if (_actionBindings.TryGetValue(action, out var binding))
+            if (_intentBindings.TryGetValue(action, out var binding))
                 binding.SetKey(key);
         }
 
-        internal void ApplyAxisMapping(InputAction action, AxisOrButton axis)
+        internal void ApplyAxisMapping(DriveIntent action, AxisOrButton axis)
         {
-            if (_actionBindings.TryGetValue(action, out var binding))
+            if (_intentBindings.TryGetValue(action, out var binding))
                 binding.SetAxis(axis);
         }
     }

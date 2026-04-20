@@ -14,13 +14,13 @@ namespace TopSpeed.Vehicles.Control
         public CarControlIntent ReadIntent(in CarControlContext context)
         {
             return new CarControlIntent(
-                _input.GetSteering(),
-                _input.GetThrottle(),
-                _input.GetBrake(),
-                _input.GetClutch(),
-                _input.GetHorn(),
-                _input.GetGearUp(),
-                _input.GetGearDown());
+                _input.Intents.GetAxisPercent(DriveIntent.Steering),
+                _input.Intents.GetAxisPercent(DriveIntent.Throttle),
+                _input.Intents.GetAxisPercent(DriveIntent.Brake),
+                _input.Intents.GetAxisPercent(DriveIntent.Clutch),
+                _input.Intents.IsTriggered(DriveIntent.Horn),
+                _input.Intents.IsTriggered(DriveIntent.GearUp),
+                _input.Intents.IsTriggered(DriveIntent.GearDown));
         }
     }
 }

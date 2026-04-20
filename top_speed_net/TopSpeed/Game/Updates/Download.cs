@@ -22,6 +22,7 @@ namespace TopSpeed.Game
             _updatePercent = 0;
             _updateTonePercent = 0;
             _lastSpokenUpdatePercent = 0;
+            _updateDownloadCanceledByUser = false;
             _updateProgressOpen = true;
             _updateCompleteOpen = false;
             _updateZipPath = string.Empty;
@@ -37,6 +38,16 @@ namespace TopSpeed.Game
                     AppContext.BaseDirectory,
                     OnUpdateProgress,
                     _updateDownloadCts.Token));
+        }
+
+        private void CancelUpdateDownload()
+        {
+            _updateProgressOpen = false;
+            if (_updateDownloadTask == null)
+                return;
+
+            _updateDownloadCanceledByUser = true;
+            _updateDownloadCts?.Cancel();
         }
 
         private void OnUpdateProgress(DownloadProgress progress)
@@ -61,9 +72,12 @@ namespace TopSpeed.Game
             if (_updateDownloadTask == null)
                 return;
 
-            HandleUpdateProgressEffects();
-            if (_updateProgressOpen)
-                ShowUpdateProgressDialog();
+            if (!_updateDownloadCanceledByUser)
+            {
+                HandleUpdateProgressEffects();
+                if (_updateProgressOpen)
+                    ShowUpdateProgressDialog();
+            }
 
             if (!_updateDownloadTask.IsCompleted)
                 return;
@@ -86,6 +100,12 @@ namespace TopSpeed.Game
             _updateDownloadCts?.Dispose();
             _updateDownloadCts = null;
             _updateProgressOpen = false;
+            var canceledByUser = _updateDownloadCanceledByUser;
+            _updateDownloadCanceledByUser = false;
+
+            if (canceledByUser)
+                return;
+
             _dialogs.CloseActive();
 
             if (!result.IsSuccess)

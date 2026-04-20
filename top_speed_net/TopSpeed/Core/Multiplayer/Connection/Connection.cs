@@ -1,3 +1,4 @@
+using System;
 using TopSpeed.Network;
 using TopSpeed.Localization;
 using TopSpeed.Speech;
@@ -13,12 +14,22 @@ namespace TopSpeed.Core.Multiplayer
 
         internal void BeginManualServerEntryCore()
         {
-            PromptServerAddressInput(_settings.LastServerAddress);
+            string? initialAddress = _settings.LastServerAddress;
+#if !NETFRAMEWORK
+            if (OperatingSystem.IsAndroid())
+                initialAddress = null;
+#endif
+            PromptServerAddressInput(initialAddress);
         }
 
         public void BeginServerPortEntry()
         {
             _connectionFlow.BeginServerPortEntry();
+        }
+
+        public void BeginDefaultCallSignEntry()
+        {
+            _connectionFlow.BeginDefaultCallSignEntry();
         }
 
         internal void BeginServerPortEntryCore()
@@ -35,6 +46,22 @@ namespace TopSpeed.Core.Multiplayer
                         return;
 
                     HandleServerPortInput(result.Text);
+                });
+        }
+
+        internal void BeginDefaultCallSignEntryCore()
+        {
+            _promptTextInput(
+                LocalizationService.Mark("Enter the default call sign used when connecting to servers. Leave empty to clear it."),
+                _settings.DefaultCallSign,
+                SpeechService.SpeakFlag.None,
+                true,
+                result =>
+                {
+                    if (result.Cancelled)
+                        return;
+
+                    HandleDefaultCallSignInput(result.Text);
                 });
         }
 

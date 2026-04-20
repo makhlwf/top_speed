@@ -22,6 +22,7 @@ namespace TopSpeed.Server.Network
             MassKg = 1500f;
             Handshake = HandshakeState.Pending;
             NegotiatedProtocol = ProtocolProfile.ServerSupported.MaxSupported;
+            RadioVolumePercent = 100;
         }
 
         public IPEndPoint EndPoint { get; }
@@ -43,6 +44,7 @@ namespace TopSpeed.Server.Network
         public bool MediaLoaded { get; set; }
         public bool MediaPlaying { get; set; }
         public uint MediaId { get; set; }
+        public byte RadioVolumePercent { get; set; }
         public InMedia? IncomingMedia { get; set; }
         public LiveState? Live { get; set; }
         public DateTime LastSeenUtc { get; set; }
@@ -75,7 +77,8 @@ namespace TopSpeed.Server.Network
                 Backfiring = Backfiring,
                 MediaLoaded = MediaLoaded,
                 MediaPlaying = MediaPlaying,
-                MediaId = MediaId
+                MediaId = MediaId,
+                RadioVolumePercent = RadioVolumePercent
             };
         }
     }

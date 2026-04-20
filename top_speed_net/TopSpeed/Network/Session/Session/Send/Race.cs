@@ -22,7 +22,8 @@ namespace TopSpeed.Network
             bool backfiring,
             bool radioLoaded,
             bool radioPlaying,
-            uint radioMediaId)
+            uint radioMediaId,
+            byte radioVolumePercent)
         {
             var payload = ClientPacketSerializer.WriteRacePlayerDataToServer(
                 raceInstanceId,
@@ -37,7 +38,8 @@ namespace TopSpeed.Network
                 backfiring,
                 radioLoaded,
                 radioPlaying,
-                radioMediaId);
+                radioMediaId,
+                radioVolumePercent);
             return _sender.TrySend(payload, PacketStream.RaceState, PacketDeliveryKind.Sequenced);
         }
 

@@ -23,7 +23,7 @@ namespace TopSpeed.Game
                 null,
                 QuestionId.Close,
                 items,
-                onResult: _ => _updateProgressOpen = false,
+                onResult: _ => CancelUpdateDownload(),
                 new DialogButton(QuestionId.Close, LocalizationService.Mark("Cancel")));
             _dialogs.Show(dialog);
         }

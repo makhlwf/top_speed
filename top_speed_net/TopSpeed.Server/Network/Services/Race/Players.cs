@@ -88,6 +88,7 @@ namespace TopSpeed.Server.Network
                 player.Horning = data.Horning;
                 player.Backfiring = data.Backfiring;
                 _owner.UpdateMediaState(player, room, data);
+                player.RadioVolumePercent = (byte)Math.Clamp((int)data.RadioVolumePercent, 0, 100);
                 var nextState = data.State;
 
                 if (nextState == PlayerState.Undefined || nextState == PlayerState.NotReady)

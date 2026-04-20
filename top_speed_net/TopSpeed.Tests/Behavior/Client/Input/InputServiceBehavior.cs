@@ -2,6 +2,9 @@ using System;
 using TopSpeed.Input;
 using TopSpeed.Input.Devices.Controller;
 using TopSpeed.Input.Devices.Vibration;
+using TopSpeed.Runtime;
+using TS.Sdl.Events;
+using TS.Sdl.Input;
 using Xunit;
 
 namespace TopSpeed.Tests;
@@ -38,6 +41,208 @@ public sealed class InputServiceBehaviorTests
 
         keyboard.SetDown(InputKey.Return);
         service.WasPressed(InputKey.Return).Should().BeTrue();
+    }
+
+    [Fact]
+    public void WasGesturePressed_ConsumesMappedGestureOnce()
+    {
+        var (service, _, _) = InputHarness.CreateService();
+
+        service.SubmitGesture(new GestureEvent { Kind = GestureKind.Swipe, Direction = SwipeDirection.Right });
+
+        service.WasGesturePressed(GestureIntent.SwipeRight).Should().BeTrue();
+        service.WasGesturePressed(GestureIntent.SwipeRight).Should().BeFalse();
+    }
+
+    [Fact]
+    public void WasGesturePressed_MapsTwoFingerSwipeSeparatelyFromSingleFinger()
+    {
+        var (service, _, _) = InputHarness.CreateService();
+
+        service.SubmitGesture(new GestureEvent
+        {
+            Kind = GestureKind.Swipe,
+            FingerCount = 2,
+            Direction = SwipeDirection.Left
+        });
+
+        service.WasGesturePressed(GestureIntent.SwipeLeft).Should().BeFalse();
+        service.WasGesturePressed(GestureIntent.TwoFingerSwipeLeft).Should().BeTrue();
+        service.WasGesturePressed(GestureIntent.TwoFingerSwipeLeft).Should().BeFalse();
+    }
+
+    [Fact]
+    public void SubmitGesture_IgnoresUnsupportedGestureKinds()
+    {
+        var (service, _, _) = InputHarness.CreateService();
+
+        service.SubmitGesture(new GestureEvent { Kind = GestureKind.PinchUpdate });
+
+        service.WasGesturePressed(GestureIntent.Tap).Should().BeFalse();
+        service.WasGesturePressed(GestureIntent.SwipeLeft).Should().BeFalse();
+    }
+
+    [Fact]
+    public void WasZoneGesturePressed_ConsumesMappedZoneGestureOnce()
+    {
+        var (service, _, _) = InputHarness.CreateService();
+        service.SubmitTouchZoneGesture(new TouchZoneGestureEvent(
+            new GestureEvent
+            {
+                Kind = GestureKind.Swipe,
+                FingerCount = 2,
+                Direction = SwipeDirection.Up
+            },
+            new TouchZoneHit("drive_bottom", priority: 0, assigned: true)));
+
+        service.WasZoneGesturePressed(GestureIntent.TwoFingerSwipeUp, "drive_bottom").Should().BeTrue();
+        service.WasZoneGesturePressed(GestureIntent.TwoFingerSwipeUp, "drive_bottom").Should().BeFalse();
+        service.WasGesturePressed(GestureIntent.TwoFingerSwipeUp).Should().BeFalse();
+    }
+
+    [Fact]
+    public void SubmitTouchZoneGesture_IgnoresUnassignedZone()
+    {
+        var (service, _, _) = InputHarness.CreateService();
+        service.SubmitTouchZoneGesture(new TouchZoneGestureEvent(
+            new GestureEvent
+            {
+                Kind = GestureKind.DoubleTap
+            },
+            TouchZoneHit.None));
+
+        service.WasZoneGesturePressed(GestureIntent.DoubleTap, "info_top").Should().BeFalse();
+    }
+
+    [Fact]
+    public void SetTouchZones_ForServiceWithoutZoneSource_IsNoOp()
+    {
+        var (service, _, _) = InputHarness.CreateService();
+        var zones = TouchZoneLayout.Horizontal("top", "bottom");
+
+        var act = () => service.SetTouchZones(zones);
+        var clear = () => service.ClearTouchZones();
+
+        act.Should().NotThrow();
+        clear.Should().NotThrow();
+    }
+
+    [Fact]
+    public void ResetState_ClearsZoneGestureLatch()
+    {
+        var (service, _, _) = InputHarness.CreateService();
+        service.SubmitTouchZoneGesture(new TouchZoneGestureEvent(
+            new GestureEvent
+            {
+                Kind = GestureKind.Swipe,
+                Direction = SwipeDirection.Down
+            },
+            new TouchZoneHit("menu_top", priority: 0, assigned: true)));
+
+        service.ResetState();
+
+        service.WasZoneGesturePressed(GestureIntent.SwipeDown, "menu_top").Should().BeFalse();
+    }
+
+    [Fact]
+    public void TryGetTouchZoneState_TracksPrimaryTouchAndFingerCount()
+    {
+        using var fixture = CreateTouchServiceFixture();
+        fixture.Source.RaiseTouch(new TouchZoneTouchEvent(
+            EventType.FingerDown,
+            new TouchFingerEvent
+            {
+                Timestamp = 1000,
+                TouchId = 1,
+                FingerId = 10,
+                X = 0.40f,
+                Y = 0.80f,
+                Pressure = 1f
+            },
+            new TouchZoneHit("drive_vehicle", priority: 0, assigned: true)));
+        fixture.Source.RaiseTouch(new TouchZoneTouchEvent(
+            EventType.FingerDown,
+            new TouchFingerEvent
+            {
+                Timestamp = 1100,
+                TouchId = 1,
+                FingerId = 11,
+                X = 0.60f,
+                Y = 0.82f,
+                Pressure = 1f
+            },
+            new TouchZoneHit("drive_vehicle", priority: 0, assigned: true)));
+        fixture.Source.RaiseTouch(new TouchZoneTouchEvent(
+            EventType.FingerMotion,
+            new TouchFingerEvent
+            {
+                Timestamp = 1200,
+                TouchId = 1,
+                FingerId = 10,
+                X = 0.45f,
+                Y = 0.74f,
+                Pressure = 1f
+            },
+            new TouchZoneHit("drive_vehicle", priority: 0, assigned: true)));
+
+        fixture.Service.TryGetTouchZoneState("drive_vehicle", out var state).Should().BeTrue();
+        state.IsActive.Should().BeTrue();
+        state.FingerCount.Should().Be(2);
+        state.StartX.Should().BeApproximately(0.40f, 0.0001f);
+        state.StartY.Should().BeApproximately(0.80f, 0.0001f);
+        state.X.Should().BeApproximately(0.45f, 0.0001f);
+        state.Y.Should().BeApproximately(0.74f, 0.0001f);
+    }
+
+    [Fact]
+    public void TryGetTouchZoneState_ClearsWhenTouchEndsOrZonesAreCleared()
+    {
+        using var fixture = CreateTouchServiceFixture();
+        fixture.Source.RaiseTouch(new TouchZoneTouchEvent(
+            EventType.FingerDown,
+            new TouchFingerEvent
+            {
+                Timestamp = 1000,
+                TouchId = 2,
+                FingerId = 1,
+                X = 0.50f,
+                Y = 0.88f,
+                Pressure = 1f
+            },
+            new TouchZoneHit("drive_vehicle", priority: 0, assigned: true)));
+
+        fixture.Service.TryGetTouchZoneState("drive_vehicle", out _).Should().BeTrue();
+
+        fixture.Source.RaiseTouch(new TouchZoneTouchEvent(
+            EventType.FingerUp,
+            new TouchFingerEvent
+            {
+                Timestamp = 1200,
+                TouchId = 2,
+                FingerId = 1,
+                X = 0.50f,
+                Y = 0.88f,
+                Pressure = 0f
+            },
+            new TouchZoneHit("drive_vehicle", priority: 0, assigned: true)));
+        fixture.Service.TryGetTouchZoneState("drive_vehicle", out _).Should().BeFalse();
+
+        fixture.Source.RaiseTouch(new TouchZoneTouchEvent(
+            EventType.FingerDown,
+            new TouchFingerEvent
+            {
+                Timestamp = 1300,
+                TouchId = 2,
+                FingerId = 1,
+                X = 0.55f,
+                Y = 0.84f,
+                Pressure = 1f
+            },
+            new TouchZoneHit("drive_vehicle", priority: 0, assigned: true)));
+        fixture.Service.TryGetTouchZoneState("drive_vehicle", out _).Should().BeTrue();
+
+        fixture.Service.ClearTouchZones();
+        fixture.Service.TryGetTouchZoneState("drive_vehicle", out _).Should().BeFalse();
     }
 
     [Fact]
@@ -198,6 +403,72 @@ public sealed class InputServiceBehaviorTests
 
         public void Dispose()
         {
+        }
+    }
+
+    private static TouchServiceFixture CreateTouchServiceFixture()
+    {
+        var keyboard = new InputHarness.FakeKeyboardDevice();
+        var controller = new InputHarness.FakeControllerBackend();
+        var source = new FakeTouchEventSource();
+        var registry = new BackendRegistry(
+            new IKeyboardBackendFactory[]
+            {
+                new InputHarness.FakeKeyboardFactory("keyboard", 1, true, keyboard)
+            },
+            new IControllerBackendFactory[]
+            {
+                new InputHarness.FakeControllerFactory("controller", 1, true, controller)
+            });
+
+        var service = new InputService(IntPtr.Zero, registry, keyboardEventSource: null, source);
+        return new TouchServiceFixture(service, source);
+    }
+
+    private sealed class TouchServiceFixture : IDisposable
+    {
+        public TouchServiceFixture(InputService service, FakeTouchEventSource source)
+        {
+            Service = service;
+            Source = source;
+        }
+
+        public InputService Service { get; }
+        public FakeTouchEventSource Source { get; }
+
+        public void Dispose()
+        {
+            Service.Dispose();
+        }
+    }
+
+    private sealed class FakeTouchEventSource : IGestureEventSource, ITouchZoneGestureEventSource, ITouchZoneTouchEventSource
+    {
+        public event Action<GestureEvent>? GestureRaised;
+        public event Action<TouchZoneGestureEvent>? TouchZoneGestureRaised;
+        public event Action<TouchZoneTouchEvent>? TouchZoneTouchRaised;
+
+        public void SetTouchZones(System.Collections.Generic.IReadOnlyList<TouchZone> zones)
+        {
+        }
+
+        public void ClearTouchZones()
+        {
+        }
+
+        public void RaiseGesture(GestureEvent value)
+        {
+            GestureRaised?.Invoke(value);
+        }
+
+        public void RaiseZoneGesture(TouchZoneGestureEvent value)
+        {
+            TouchZoneGestureRaised?.Invoke(value);
+        }
+
+        public void RaiseTouch(TouchZoneTouchEvent value)
+        {
+            TouchZoneTouchRaised?.Invoke(value);
         }
     }
 }

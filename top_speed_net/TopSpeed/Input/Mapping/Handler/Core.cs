@@ -16,7 +16,7 @@ namespace TopSpeed.Input
 
         private bool _mappingActive;
         private InputMappingMode _mappingMode;
-        private InputAction _mappingAction;
+        private DriveIntent _mappingAction;
         private bool _mappingNeedsInstruction;
         private State _mappingPrevController;
         private bool _mappingHasPrevController;
@@ -37,7 +37,7 @@ namespace TopSpeed.Input
 
         public bool IsActive => _mappingActive;
 
-        public void BeginMapping(InputMappingMode mode, InputAction action)
+        public void BeginMapping(InputMappingMode mode, DriveIntent action)
         {
             if (mode == InputMappingMode.Controller)
             {
@@ -80,7 +80,7 @@ namespace TopSpeed.Input
                 TryCaptureControllerMapping();
         }
 
-        public string FormatMappingValue(InputAction action, InputMappingMode mode)
+        public string FormatMappingValue(DriveIntent action, InputMappingMode mode)
         {
             if (mode == InputMappingMode.Keyboard)
                 return KeyMapManager.FormatKey(_driveInput.KeyMap.GetKey(action));

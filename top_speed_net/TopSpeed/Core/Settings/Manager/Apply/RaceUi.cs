@@ -11,6 +11,15 @@ namespace TopSpeed.Core.Settings
             settings.AutomaticInfo = ReadEnum(race.AutomaticInfo, settings.AutomaticInfo, "race.automaticInfo", issues);
             settings.Copilot = ReadEnum(race.Copilot, settings.Copilot, "race.copilot", issues);
             settings.CurveAnnouncement = ReadEnum(race.CurveAnnouncement, settings.CurveAnnouncement, "race.curveAnnouncement", issues);
+            if (race.CurveAnnouncementLeadTimeSeconds.HasValue)
+            {
+                settings.CurveAnnouncementLeadTimeSeconds = ClampFloat(
+                    (float)race.CurveAnnouncementLeadTimeSeconds.Value,
+                    0.5f,
+                    4.0f,
+                    "race.curveAnnouncementLeadTimeSeconds",
+                    issues);
+            }
             settings.NrOfLaps = ClampInt(race.NumberOfLaps, settings.NrOfLaps, 1, 16, "race.numberOfLaps", issues);
             settings.NrOfComputers = ClampInt(race.NumberOfComputers, settings.NrOfComputers, 1, 7, "race.numberOfComputers", issues);
             settings.Difficulty = ReadEnum(race.Difficulty, settings.Difficulty, "race.difficulty", issues);

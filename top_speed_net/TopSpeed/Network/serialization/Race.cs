@@ -184,9 +184,10 @@ namespace TopSpeed.Network
             bool backfiring,
             bool mediaLoaded,
             bool mediaPlaying,
-            uint mediaId)
+            uint mediaId,
+            byte radioVolumePercent)
         {
-            var buffer = WritePacketHeader(Command.PlayerDataToServer, 4 + 4 + 1 + 1 + 4 + 4 + 2 + 4 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 4);
+            var buffer = WritePacketHeader(Command.PlayerDataToServer, 4 + 4 + 1 + 1 + 4 + 4 + 2 + 4 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 4 + 1);
             var writer = new PacketWriter(buffer);
             writer.WriteByte(ProtocolConstants.Version);
             writer.WriteByte((byte)Command.PlayerDataToServer);
@@ -206,6 +207,7 @@ namespace TopSpeed.Network
             writer.WriteBool(mediaLoaded);
             writer.WriteBool(mediaPlaying);
             writer.WriteUInt32(mediaId);
+            writer.WriteByte(radioVolumePercent);
             return buffer;
         }
     }

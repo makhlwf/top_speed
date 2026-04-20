@@ -24,6 +24,9 @@ namespace TopSpeed.Core.Updates
 
         public async Task<UpdateCheckResult> CheckAsync(GameVersion current, CancellationToken cancellationToken)
         {
+            if (string.IsNullOrWhiteSpace(_config.RuntimeAssetTag))
+                return Fail(LocalizationService.Mark("Updates are not available on this platform."));
+
             try
             {
                 var info = await ReadInfoAsync(cancellationToken).ConfigureAwait(false);

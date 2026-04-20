@@ -35,13 +35,13 @@ namespace TopSpeed.Drive.Session.Systems
 
         public override void Update(SessionContext context, float elapsed)
         {
-            if (!_input.GetPause() && !_pauseKeyReleased)
+            if (!_input.Intents.IsTriggered(DriveIntent.Pause) && !_pauseKeyReleased)
             {
                 _pauseKeyReleased = true;
                 return;
             }
 
-            if (_input.GetPause() && _pauseKeyReleased && _isStarted() && _getLap() <= _getLapLimit() && _car.State == CarState.Running)
+            if (_input.Intents.IsTriggered(DriveIntent.Pause) && _pauseKeyReleased && _isStarted() && _getLap() <= _getLapLimit() && _car.State == CarState.Running)
             {
                 _pauseKeyReleased = false;
                 _requestPause();

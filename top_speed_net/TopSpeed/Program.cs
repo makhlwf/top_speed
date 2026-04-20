@@ -42,7 +42,8 @@ namespace TopSpeed
                        window,
                        window,
                        new LoopHost(),
-                       new FileDialogService()))
+                       new FileDialogService(),
+                       new ClipboardService()))
 #else
             var window = new WindowHost();
             var textInput = new TextInputService(window);
@@ -50,7 +51,8 @@ namespace TopSpeed
                        window,
                        textInput,
                        new LoopHost(),
-                       new FileDialogService(window)))
+                       new FileDialogService(window),
+                       new ClipboardService()))
 #endif
             {
                 app.Run();

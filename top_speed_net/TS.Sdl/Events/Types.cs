@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using TS.Sdl.Interop;
 
 namespace TS.Sdl.Events
 {
@@ -63,6 +64,81 @@ namespace TS.Sdl.Events
         public uint Type;
         private uint _reserved;
         public ulong Timestamp;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct KeyboardEvent
+    {
+        public EventType Type;
+        private uint _reserved;
+        public ulong Timestamp;
+        public uint WindowId;
+        public uint Which;
+        public Input.Scancode Scancode;
+        public int Key;
+        public Input.Keymod Mod;
+        public ushort Raw;
+        [MarshalAs(UnmanagedType.I1)] public bool Down;
+        [MarshalAs(UnmanagedType.I1)] public bool Repeat;
+        private byte _padding1;
+        private byte _padding2;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct TextEditingEvent
+    {
+        public EventType Type;
+        private uint _reserved;
+        public ulong Timestamp;
+        public uint WindowId;
+        public IntPtr TextPointer;
+        public int Start;
+        public int Length;
+
+        public string Text => Utf8.FromNative(TextPointer) ?? string.Empty;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct TextEditingCandidatesEvent
+    {
+        public EventType Type;
+        private uint _reserved;
+        public ulong Timestamp;
+        public uint WindowId;
+        public IntPtr CandidatesPointer;
+        public int CandidateCount;
+        public int SelectedCandidate;
+        [MarshalAs(UnmanagedType.I1)] public bool Horizontal;
+        private byte _padding1;
+        private byte _padding2;
+        private byte _padding3;
+
+        public string[] GetCandidates()
+        {
+            if (CandidatesPointer == IntPtr.Zero || CandidateCount <= 0)
+                return Array.Empty<string>();
+
+            var values = new string[CandidateCount];
+            for (var i = 0; i < CandidateCount; i++)
+            {
+                var pointer = Marshal.ReadIntPtr(CandidatesPointer, i * IntPtr.Size);
+                values[i] = Utf8.FromNative(pointer) ?? string.Empty;
+            }
+
+            return values;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct TextInputEvent
+    {
+        public EventType Type;
+        private uint _reserved;
+        public ulong Timestamp;
+        public uint WindowId;
+        public IntPtr TextPointer;
+
+        public string Text => Utf8.FromNative(TextPointer) ?? string.Empty;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -205,6 +281,10 @@ namespace TS.Sdl.Events
     {
         [FieldOffset(0)] public uint Type;
         [FieldOffset(0)] public CommonEvent Common;
+        [FieldOffset(0)] public KeyboardEvent Keyboard;
+        [FieldOffset(0)] public TextEditingEvent TextEditing;
+        [FieldOffset(0)] public TextEditingCandidatesEvent TextEditingCandidates;
+        [FieldOffset(0)] public TextInputEvent TextInput;
         [FieldOffset(0)] public JoyDeviceEvent JoyDevice;
         [FieldOffset(0)] public JoyBatteryEvent JoyBattery;
         [FieldOffset(0)] public JoyAxisEvent JoyAxis;

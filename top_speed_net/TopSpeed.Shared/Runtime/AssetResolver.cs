@@ -40,6 +40,12 @@ namespace TopSpeed.Runtime
             bool isMacOs)
         {
             var rid = NormalizeRuntimeIdentifier(runtimeIdentifier);
+            if (rid.Contains("android-arm64"))
+                return "android-arm64";
+            if (rid.Contains("android-arm"))
+                return "android-arm";
+            if (rid.Contains("android"))
+                return "android";
             if (rid.Contains("win"))
                 return "windows-x64";
             if (rid.Contains("osx") || rid.Contains("mac"))

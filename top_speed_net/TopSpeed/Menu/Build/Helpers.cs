@@ -33,6 +33,11 @@ namespace TopSpeed.Menu
 
         private string MainMenuTitle()
         {
+            if (InteractionHints.IsTouchPlatform())
+            {
+                return LocalizationService.Mark("Main menu. Swipe left or right to navigate the options. Swipe up to activate. Swipe down to go back. Swipe up with two fingers to move to the first item and swipe down with two fingers to move to the last item. Long press repeats the current usage hint.");
+            }
+
             var keyboard = LocalizationService.Mark("Main Menu. Use your arrow keys to navigate the options. Press ENTER to select. Press ESCAPE to back out of any menu. Pressing HOME or END will move you to the top or bottom of a menu.");
             var controller = LocalizationService.Mark("Main Menu. Use the view finder to move through the options. Press up or down to navigate. Press right or button 1 to select. Press left to back out of any menu.");
             var both = LocalizationService.Mark("Main Menu. Use your arrow keys or the view finder to move through the options. Press ENTER or right or button 1 to select. Press ESCAPE or left to back out of any menu. Pressing HOME or END will move you to the top or bottom of a menu.");
@@ -43,6 +48,11 @@ namespace TopSpeed.Menu
                 InputDeviceMode.Controller => controller,
                 _ => both
             };
+        }
+
+        private static string HintForPlatform(string desktopHint, string touchHint)
+        {
+            return InteractionHints.ForPlatform(desktopHint, touchHint);
         }
 
         private static string FormatServerPort(int port)

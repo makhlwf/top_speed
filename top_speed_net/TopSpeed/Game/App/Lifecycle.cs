@@ -6,7 +6,7 @@ namespace TopSpeed.Game
     {
         private void OnLoaded()
         {
-            _game = new Game(_window, _textInput, _fileDialogs);
+            _game = new Game(_window, _textInput, _fileDialogs, _clipboard);
             var game = _game;
             _game.ExitRequested += async () =>
             {

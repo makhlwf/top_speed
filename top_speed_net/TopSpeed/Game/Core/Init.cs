@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using TopSpeed.Audio;
 using TopSpeed.Core;
 using TopSpeed.Core.Multiplayer;
@@ -18,11 +20,12 @@ namespace TopSpeed.Game
 {
     internal sealed partial class Game
     {
-        public Game(IWindowHost window, ITextInputService textInput, IFileDialogs fileDialogs)
+        public Game(IWindowHost window, ITextInputService textInput, IFileDialogs fileDialogs, IClipboardService clipboard)
         {
             _window = window ?? throw new ArgumentNullException(nameof(window));
             _textInput = textInput ?? throw new ArgumentNullException(nameof(textInput));
             _fileDialogs = fileDialogs ?? throw new ArgumentNullException(nameof(fileDialogs));
+            _clipboard = clipboard ?? throw new ArgumentNullException(nameof(clipboard));
             _settingsManager = new SettingsManager();
             var settingsLoad = _settingsManager.Load();
             _settings = settingsLoad.Settings;
@@ -32,21 +35,28 @@ namespace TopSpeed.Game
             _settings.Language = ClientLanguages.ResolveCode(_settings.Language, _clientLanguages);
             LocalizationBootstrap.Configure(_settings.Language, LocalizationBootstrap.ClientCatalogGroup);
             var audio = new AudioManager(_settings.HrtfAudio, _settings.AutoDetectAudioDeviceFormat);
-            var backendRegistry = new BackendRegistry(
-                new IKeyboardBackendFactory[]
-                {
+            _isAndroidPlatform = RuntimeInformation.IsOSPlatform(OSPlatform.Create("ANDROID"));
+            var keyboardFactories = new List<IKeyboardBackendFactory>
+            {
 #if NETFRAMEWORK
-                    new TopSpeed.Input.Devices.Keyboard.Backends.DirectInput.Factory(),
-                    new TopSpeed.Input.Devices.Keyboard.Backends.Sdl.Factory()
+                new TopSpeed.Input.Devices.Keyboard.Backends.DirectInput.Factory(),
 #else
-                    new TopSpeed.Input.Devices.Keyboard.Backends.Eto.Factory()
+                new TopSpeed.Input.Devices.Keyboard.Backends.Eto.Factory(),
 #endif
-                },
-                new IControllerBackendFactory[]
-                {
-                    new TopSpeed.Input.Backends.Sdl.Factory()
-                });
-            var input = new InputService(_window.NativeHandle, backendRegistry, _window as IKeyboardEventSource);
+                new TopSpeed.Input.Devices.Keyboard.Backends.Sdl.Factory()
+            };
+            var controllerFactories = new List<IControllerBackendFactory>();
+            if (!_isAndroidPlatform)
+                controllerFactories.Add(new TopSpeed.Input.Backends.Sdl.Factory());
+
+            var backendRegistry = new BackendRegistry(
+                keyboardFactories,
+                controllerFactories);
+            var input = new InputService(
+                _window.NativeHandle,
+                backendRegistry,
+                _window as IKeyboardEventSource,
+                _window as IGestureEventSource);
             var speech = new SpeechService(audio, input.IsAnyInputHeld, input.PrepareForInterruptableSpeech);
             _audio = audio;
             _input = input;

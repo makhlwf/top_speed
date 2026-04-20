@@ -21,7 +21,8 @@ namespace TopSpeed.Drive.Multiplayer
                 data.Backfiring,
                 data.MediaLoaded,
                 data.MediaPlaying,
-                data.MediaId);
+                data.MediaId,
+                data.RadioVolumePercent);
         }
 
         private void ApplyRemoteDataCore(
@@ -38,7 +39,8 @@ namespace TopSpeed.Drive.Multiplayer
             bool backfiring,
             bool mediaLoaded,
             bool mediaPlaying,
-            uint mediaId)
+            uint mediaId,
+            byte radioVolumePercent)
         {
             if (playerNumber == LocalPlayerNumber)
                 return;
@@ -65,6 +67,7 @@ namespace TopSpeed.Drive.Multiplayer
                 mediaLoaded,
                 mediaPlaying,
                 mediaId,
+                radioVolumePercent,
                 _car.PositionX,
                 _car.PositionY,
                 GetSpatialTrackLength());

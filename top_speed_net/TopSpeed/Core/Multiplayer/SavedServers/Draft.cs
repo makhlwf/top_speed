@@ -71,6 +71,23 @@ namespace TopSpeed.Core.Multiplayer
                     RebuildSavedServerFormMenu();
                 });
         }
+
+        private void UpdateSavedServerDraftDefaultCallSign()
+        {
+            _promptTextInput(
+                LocalizationService.Mark("Enter the default call sign for this server. Leave empty to use the global default call sign."),
+                _state.SavedServers.Draft.DefaultCallSign,
+                SpeechService.SpeakFlag.None,
+                true,
+                result =>
+                {
+                    if (result.Cancelled)
+                        return;
+
+                    _state.SavedServers.Draft.DefaultCallSign = (result.Text ?? string.Empty).Trim();
+                    RebuildSavedServerFormMenu();
+                });
+        }
     }
 }
 

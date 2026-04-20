@@ -1,16 +1,18 @@
+using TopSpeed.Input;
+
 namespace TopSpeed.Game
 {
     internal sealed partial class Game
     {
         private void UpdatePaused()
         {
-            if (!_driveInput.GetPause() && !_pauseKeyReleased)
+            if (!_driveInput.Intents.IsTriggered(DriveIntent.Pause) && !_pauseKeyReleased)
             {
                 _pauseKeyReleased = true;
                 return;
             }
 
-            if (_driveInput.GetPause() && _pauseKeyReleased)
+            if (_driveInput.Intents.IsTriggered(DriveIntent.Pause) && _pauseKeyReleased)
             {
                 _pauseKeyReleased = false;
                 switch (_pausedState)

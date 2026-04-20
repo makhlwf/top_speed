@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Key = TopSpeed.Input.InputKey;
 using TopSpeed.Audio;
+using TopSpeed.Input;
 using TopSpeed.Shortcuts;
 using TopSpeed.Speech;
 
@@ -65,9 +66,13 @@ namespace TopSpeed.Menu
             string description,
             Key key,
             Action onTrigger,
-            Func<bool>? canExecute = null)
+            Func<bool>? canExecute = null,
+            GestureIntent? gestureIntent = null)
         {
-            _shortcutCatalog.RegisterAction(actionId, displayName, description, key, onTrigger, canExecute);
+            if (gestureIntent.HasValue && MenuInputBindings.IsReservedGesture(gestureIntent.Value))
+                throw new InvalidOperationException($"Gesture intent '{gestureIntent.Value}' is reserved for core menu actions.");
+
+            _shortcutCatalog.RegisterAction(actionId, displayName, description, key, onTrigger, canExecute, gestureIntent);
         }
 
         public void SetShortcutBinding(string actionId, Key key)
@@ -133,6 +138,8 @@ namespace TopSpeed.Menu
             var screen = GetScreen(id);
             screen.OnClose = onClose;
         }
+
+        public bool IsWrapNavigationEnabled => _wrapNavigation;
 
     }
 }

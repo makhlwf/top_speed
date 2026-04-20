@@ -13,12 +13,14 @@ namespace TopSpeed.Vehicles
 
             if (playing)
             {
-                if (!_source.IsPlaying)
+                if (_source.IsPaused)
+                    _source.Resume();
+                else if (!_source.IsPlaying)
                     _source.Play(loop: _loopPlayback);
             }
-            else if (_source.IsPlaying)
+            else if (_source.IsPlaying || _source.IsPaused)
             {
-                _source.Stop();
+                _source.Pause();
             }
         }
 
@@ -30,14 +32,19 @@ namespace TopSpeed.Vehicles
         public void PauseForGame()
         {
             _pausedByGame = true;
-            if (_source != null && _source.IsPlaying)
-                _source.Stop();
+            if (_source != null)
+                _source.Pause();
         }
 
         public void ResumeFromGame()
         {
             _pausedByGame = false;
-            if (_source != null && _desiredPlaying && !_source.IsPlaying)
+            if (_source == null || !_desiredPlaying)
+                return;
+
+            if (_source.IsPaused)
+                _source.Resume();
+            else if (!_source.IsPlaying)
                 _source.Play(loop: _loopPlayback);
         }
 

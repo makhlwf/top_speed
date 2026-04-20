@@ -41,6 +41,7 @@ namespace TopSpeed.Game
         private readonly IWindowHost _window;
         private readonly ITextInputService _textInput;
         private readonly IFileDialogs _fileDialogs;
+        private readonly IClipboardService _clipboard;
         private readonly IGameAudio _audio;
         private readonly IGameSpeech _speech;
         private readonly IInputService _input;
@@ -92,6 +93,7 @@ namespace TopSpeed.Game
         private int _updatePercent;
         private int _updateTonePercent;
         private int _lastSpokenUpdatePercent;
+        private bool _updateDownloadCanceledByUser;
         private bool _updateProgressOpen;
         private bool _updateCompleteOpen;
         private string _updateZipPath = string.Empty;
@@ -105,8 +107,9 @@ namespace TopSpeed.Game
 
         private const string CalibrationIntroMenuId = "calibration_intro";
         private const string CalibrationSampleMenuId = "calibration_sample";
-        private static readonly string CalibrationInstructions = LocalizationService.Mark(
-            "Screen-reader calibration. You'll be presented with a short piece of text on the next screen. Press ENTER when your screen-reader finishes speaking it.");
+        private static readonly string CalibrationInstructions = InteractionHints.ForPlatform(
+            LocalizationService.Mark("Screen-reader calibration. You'll be presented with a short piece of text on the next screen. Press ENTER when your screen-reader finishes speaking it."),
+            LocalizationService.Mark("Screen-reader calibration. You'll be presented with a short piece of text on the next screen. Swipe up when your screen-reader finishes speaking it."));
         private static readonly string CalibrationSampleText = LocalizationService.Mark(
             "I really have nothing interesting to put here not even the secret to life except this really long run on sentence that is probably the most boring thing you have ever read but that will help me get an idea of how fast your screen reader is speaking.");
 

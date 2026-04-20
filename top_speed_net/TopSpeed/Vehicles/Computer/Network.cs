@@ -18,6 +18,7 @@ namespace TopSpeed.Vehicles
             bool radioLoaded,
             bool radioPlaying,
             uint radioMediaId,
+            byte radioVolumePercent,
             float playerX,
             float playerY,
             float trackLength)
@@ -143,7 +144,7 @@ namespace TopSpeed.Vehicles
                 _soundBackfire.Play(loop: false);
             }
             _networkBackfireActive = backfiring;
-            ApplyRadioState(radioLoaded, radioPlaying, radioMediaId);
+            ApplyRadioState(radioLoaded, radioPlaying, radioMediaId, radioVolumePercent);
 
             if (preserveCrashState)
                 _state = ComputerState.Crashing;
@@ -201,8 +202,9 @@ namespace TopSpeed.Vehicles
                 _speed = 0f;
         }
 
-        public void ApplyRadioState(bool loaded, bool playing, uint mediaId)
+        public void ApplyRadioState(bool loaded, bool playing, uint mediaId, byte radioVolumePercent)
         {
+            SetRemoteRadioSenderVolumePercent(radioVolumePercent);
             _radioLoaded = loaded;
             _radioPlaying = loaded && playing;
             _radioMediaId = loaded ? mediaId : 0u;

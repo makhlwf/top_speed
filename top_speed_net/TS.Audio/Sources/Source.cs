@@ -15,6 +15,7 @@ namespace TS.Audio
         }
 
         public bool IsPlaying => _handle.IsPlaying;
+        public bool IsPaused => _handle.IsPaused;
         public int InputChannels => _handle.InputChannels;
         public int InputSampleRate => _handle.InputSampleRate;
         public float LengthSeconds => _handle.GetLengthSeconds();
@@ -24,6 +25,8 @@ namespace TS.Audio
         public void Play(bool loop, float fadeInSeconds) => _handle.Play(loop, fadeInSeconds);
         public void Stop() => _handle.Stop();
         public void Stop(float fadeOutSeconds) => _handle.Stop(fadeOutSeconds);
+        public void Pause() => _handle.Pause();
+        public void Resume() => _handle.Resume();
         public void FadeIn(float seconds) => _handle.FadeIn(seconds);
         public void FadeOut(float seconds) => _handle.FadeOut(seconds);
         public void SeekToStart() => _handle.SeekToStart();

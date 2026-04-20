@@ -16,49 +16,69 @@ namespace TopSpeed.Menu
                     BuildLanguageOptionText,
                     MenuAction.None,
                     onActivate: _settingsActions.ChangeLanguage,
-                    hint: LocalizationService.Mark("Choose the language used for menu and spoken interface text. Press ENTER to select.")),
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("Choose the language used for menu and spoken interface text. Press ENTER to select."),
+                        LocalizationService.Mark("Choose the language used for menu and spoken interface text. Swipe up to select."))),
                 new CheckBox(LocalizationService.Mark("Include custom tracks in randomization"),
                     () => _settings.RandomCustomTracks,
                     value => _settingsActions.UpdateSetting(() => _settings.RandomCustomTracks = value),
-                    hint: LocalizationService.Mark("When checked, random track selection can include custom tracks. Press ENTER to toggle.")),
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("When checked, random track selection can include custom tracks. Press ENTER to toggle."),
+                        LocalizationService.Mark("When checked, random track selection can include custom tracks. Swipe up to toggle."))),
                 new CheckBox(LocalizationService.Mark("Include custom vehicles in randomization"),
                     () => _settings.RandomCustomVehicles,
                     value => _settingsActions.UpdateSetting(() => _settings.RandomCustomVehicles = value),
-                    hint: LocalizationService.Mark("When checked, random vehicle selection can include custom vehicles. Press ENTER to toggle.")),
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("When checked, random vehicle selection can include custom vehicles. Press ENTER to toggle."),
+                        LocalizationService.Mark("When checked, random vehicle selection can include custom vehicles. Swipe up to toggle."))),
                 new Switch(LocalizationService.Mark("Units"),
                     LocalizationService.Mark("metric"),
                     LocalizationService.Mark("imperial"),
                     () => _settings.Units == UnitSystem.Metric,
                     value => _settingsActions.UpdateSetting(() => _settings.Units = value ? UnitSystem.Metric : UnitSystem.Imperial),
-                    hint: LocalizationService.Mark("Switch between metric and imperial units. Press ENTER to change.")),
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("Switch between metric and imperial units. Press ENTER to change."),
+                        LocalizationService.Mark("Switch between metric and imperial units. Swipe up to change."))),
                 new CheckBox(LocalizationService.Mark("Enable usage hints"),
                     () => _settings.UsageHints,
                     value => _settingsActions.UpdateSetting(() => _settings.UsageHints = value),
-                    hint: LocalizationService.Mark("When checked, menu items can speak usage hints after a short delay. Press ENTER to toggle.")),
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("When checked, menu items can speak usage hints after a short delay. Press ENTER to toggle."),
+                        LocalizationService.Mark("When checked, menu items can speak usage hints after a short delay. Swipe up to toggle."))),
                 new CheckBox(LocalizationService.Mark("Automatically focus first menu item"),
                     () => _settings.MenuAutoFocus,
                     value => _settingsActions.UpdateSetting(() => _settings.MenuAutoFocus = value),
                     onChanged: value => _menu.SetMenuAutoFocus(value),
-                    hint: LocalizationService.Mark("When checked, each menu automatically focuses and announces the first item after the title. Press ENTER to toggle.")),
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("When checked, each menu automatically focuses and announces the first item after the title. Press ENTER to toggle."),
+                        LocalizationService.Mark("When checked, each menu automatically focuses and announces the first item after the title. Swipe up to toggle."))),
                 new CheckBox(LocalizationService.Mark("Enable menu wrapping"),
                     () => _settings.MenuWrapNavigation,
                     value => _settingsActions.UpdateSetting(() => _settings.MenuWrapNavigation = value),
                     onChanged: value => _menu.SetWrapNavigation(value),
-                    hint: LocalizationService.Mark("When checked, menu navigation wraps from the last item to the first. Press ENTER to toggle.")),
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("When checked, menu navigation wraps from the last item to the first. Press ENTER to toggle."),
+                        LocalizationService.Mark("When checked, menu navigation wraps from the last item to the first. Swipe up to toggle."))),
                 BuildMenuSoundPresetItem(),
                 new CheckBox(LocalizationService.Mark("Enable menu navigation panning"),
                     () => _settings.MenuNavigatePanning,
                     value => _settingsActions.UpdateSetting(() => _settings.MenuNavigatePanning = value),
                     onChanged: value => _menu.SetMenuNavigatePanning(value),
-                    hint: LocalizationService.Mark("When checked, menu navigation sounds pan left or right based on the item position. Press ENTER to toggle.")),
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("When checked, menu navigation sounds pan left or right based on the item position. Press ENTER to toggle."),
+                        LocalizationService.Mark("When checked, menu navigation sounds pan left or right based on the item position. Swipe up to toggle."))),
                 new CheckBox(LocalizationService.Mark("Play logo at startup"),
                     () => _settings.PlayLogoAtStartup,
                     value => _settingsActions.UpdateSetting(() => _settings.PlayLogoAtStartup = value),
-                    hint: LocalizationService.Mark("When checked, the startup logo audio plays when the game launches. Press ENTER to toggle.")),
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("When checked, the startup logo audio plays when the game launches. Press ENTER to toggle."),
+                        LocalizationService.Mark("When checked, the startup logo audio plays when the game launches. Swipe up to toggle."))),
                 new CheckBox(LocalizationService.Mark("Check for updates on startup"),
                     () => _settings.AutoCheckUpdates,
                     value => _settingsActions.UpdateSetting(() => _settings.AutoCheckUpdates = value),
-                    hint: LocalizationService.Mark("When checked, the game checks for updates automatically after the logo. Press ENTER to toggle."))
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("When checked, the game checks for updates automatically after the logo. Press ENTER to toggle."),
+                        LocalizationService.Mark("When checked, the game checks for updates automatically after the logo. Swipe up to toggle.")))
             };
             return BackMenu("options_game", items);
         }
@@ -88,7 +108,9 @@ namespace TopSpeed.Menu
                 () => GetMenuSoundPresetIndex(),
                 value => _settingsActions.UpdateSetting(() => _settings.MenuSoundPreset = _menuSoundPresets[value]),
                 onChanged: _ => _menu.SetMenuSoundPreset(_settings.MenuSoundPreset),
-                hint: LocalizationService.Mark("Select the menu sound preset. Use LEFT or RIGHT to change."));
+                hint: HintForPlatform(
+                    LocalizationService.Mark("Select the menu sound preset. Use LEFT or RIGHT to change."),
+                    LocalizationService.Mark("Select the menu sound preset. Swipe left or right with two fingers to change.")));
         }
 
         private int GetMenuSoundPresetIndex()

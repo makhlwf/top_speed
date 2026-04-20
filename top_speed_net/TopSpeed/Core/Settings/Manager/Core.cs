@@ -22,7 +22,7 @@ namespace TopSpeed.Core.Settings
         };
 
         private const string SettingsFileName = "settings.json";
-        private const int CurrentSchemaVersion = 1;
+        private const int CurrentSchemaVersion = 2;
         private readonly string _settingsPath = string.Empty;
 
         public SettingsManager(string? settingsPath = null)

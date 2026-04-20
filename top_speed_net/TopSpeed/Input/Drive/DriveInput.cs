@@ -19,9 +19,9 @@ namespace TopSpeed.Input
             Press
         }
 
-        private readonly struct InputActionMeta
+        private readonly struct DriveIntentMeta
         {
-            public InputActionMeta(InputScope scope, TriggerMode keyboardMode, TriggerMode controllerMode, bool allowNumpadEnterAlias = false)
+            public DriveIntentMeta(InputScope scope, TriggerMode keyboardMode, TriggerMode controllerMode, bool allowNumpadEnterAlias = false)
             {
                 Scope = scope;
                 KeyboardMode = keyboardMode;
@@ -35,11 +35,11 @@ namespace TopSpeed.Input
             public bool AllowNumpadEnterAlias { get; }
         }
 
-        private readonly struct InputActionBinding
+        private readonly struct DriveIntentBinding
         {
-            public InputActionBinding(
+            public DriveIntentBinding(
                 string label,
-                InputActionMeta meta,
+                DriveIntentMeta meta,
                 Func<Key> getKey,
                 Action<Key> setKey,
                 Func<AxisOrButton> getAxis,
@@ -54,7 +54,7 @@ namespace TopSpeed.Input
             }
 
             public string Label { get; }
-            public InputActionMeta Meta { get; }
+            public DriveIntentMeta Meta { get; }
             public Func<Key> GetKey { get; }
             public Action<Key> SetKey { get; }
             public Func<AxisOrButton> GetAxis { get; }
@@ -64,8 +64,8 @@ namespace TopSpeed.Input
         private readonly DriveSettings _settings;
         private readonly InputState _lastState;
         private readonly InputState _prevState;
-        private readonly List<InputActionDefinition> _actionDefinitions;
-        private readonly Dictionary<InputAction, InputActionBinding> _actionBindings;
+        private readonly List<DriveIntentDefinition> _intentDefinitions;
+        private readonly Dictionary<DriveIntent, DriveIntentBinding> _intentBindings;
         private AxisOrButton _left;
         private AxisOrButton _right;
         private AxisOrButton _throttle;
@@ -142,18 +142,41 @@ namespace TopSpeed.Input
         private float _simBrake;
         private float _simSteer;
         private float _simClutch;
+        private int _touchSteering;
+        private int _touchThrottle;
+        private int _touchBrake;
+        private int _touchClutch;
+        private bool _touchHorn;
+        private bool _touchGearUp;
+        private bool _touchGearDown;
+        private bool _touchStartEngine;
+        private bool _touchReportDistance;
+        private bool _touchReportSpeed;
+        private bool _touchCurrentGear;
+        private bool _touchCurrentLapNr;
+        private bool _touchCurrentRacePerc;
+        private bool _touchCurrentLapPerc;
+        private bool _touchCurrentRaceTime;
+        private bool _touchPause;
+        private bool _touchRequestInfo;
+        private bool _touchPreviousPlayerInfo;
+        private bool _touchNextPlayerInfo;
+        private bool _touchRepeatPlayerInfo;
+        private DriveIntentState _intentState;
         private bool UseController => _deviceMode != InputDeviceMode.Keyboard && _controllerAvailable;
         private bool UseKeyboard => _deviceMode != InputDeviceMode.Controller || !_controllerAvailable;
 
         public KeyMapManager KeyMap { get; }
+        public DriveIntentState Intents => _intentState;
 
         public DriveInput(DriveSettings settings)
         {
             _settings = settings;
             _lastState = new InputState();
             _prevState = new InputState();
-            _actionDefinitions = new List<InputActionDefinition>();
-            _actionBindings = CreateActionBindings();
+            _intentDefinitions = new List<DriveIntentDefinition>();
+            _intentBindings = CreateIntentBindings();
+            _intentState = DriveIntentState.Empty;
             Initialize();
             KeyMap = new KeyMapManager(this);
         }

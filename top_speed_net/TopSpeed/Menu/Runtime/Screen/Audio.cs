@@ -146,6 +146,21 @@ namespace TopSpeed.Menu
                 useHrtf: false);
         }
 
+        internal void PlayNavigateCue()
+        {
+            PlayNavigateSound();
+        }
+
+        internal void PlayWrapCue()
+        {
+            PlaySfx(_wrapSound);
+        }
+
+        internal void PlayEdgeCue()
+        {
+            PlaySfx(_edgeSound);
+        }
+
         private float CalculateNavigatePan()
         {
             if (_index < 0)

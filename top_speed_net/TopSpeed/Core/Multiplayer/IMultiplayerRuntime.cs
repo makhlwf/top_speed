@@ -16,6 +16,7 @@ namespace TopSpeed.Core.Multiplayer
 
         void BeginManualServerEntry();
         void BeginServerPortEntry();
+        void BeginDefaultCallSignEntry();
         void StartServerDiscovery();
         void OpenSavedServersManager();
         bool UpdatePendingOperations();
@@ -23,6 +24,9 @@ namespace TopSpeed.Core.Multiplayer
 
         void NextChatCategory();
         void PreviousChatCategory();
+        void NextChatItem();
+        void PreviousChatItem();
+        void CheckPing();
         void OpenGlobalChatHotkey();
         void OpenRoomChatHotkey();
 

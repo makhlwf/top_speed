@@ -118,6 +118,7 @@ namespace TopSpeed.Server.Network
                 player.MediaLoaded = false;
                 player.MediaPlaying = false;
                 player.MediaId = 0;
+                player.RadioVolumePercent = 100;
 
                 if (notify)
                 {

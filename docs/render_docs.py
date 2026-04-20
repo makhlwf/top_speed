@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
-"""Render the vehicle physics markdown guide to a full standalone HTML page."""
+"""Render markdown guides in docs/ to standalone HTML pages."""
 
 from __future__ import annotations
 
 import argparse
 import html
 from pathlib import Path
+import re
 import sys
 
 import markdown
 
-
-DEFAULT_INPUT = "vehicle-physics-and-creation-guide.md"
-DEFAULT_OUTPUT = "vehicle-physics-and-creation-guide.html"
+EXCLUDED_MARKDOWN_FILENAMES = {
+    "testing.md",
+}
 
 
 def build_html(title: str, body_html: str) -> str:
@@ -176,9 +177,64 @@ def normalize_toc_block(text: str) -> str:
     return result
 
 
+def normalize_key_blocks(text: str) -> str:
+    """
+    Normalize key-description blocks so they render as separate paragraphs/lists
+    instead of a single combined line.
+    """
+    lines = text.splitlines()
+    if not lines:
+        return text
+
+    out: list[str] = []
+    in_fence = False
+    key_line_re = re.compile(r"^\s*`[^`]+`\s*$")
+
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            out.append(line)
+            i += 1
+            continue
+
+        if in_fence:
+            out.append(line)
+            i += 1
+            continue
+
+        if stripped in {"Allowed values:", "Alias values:", "Alias keys:"}:
+            if out and out[-1].strip() != "":
+                out.append("")
+            out.append(line)
+            if i + 1 < len(lines) and lines[i + 1].lstrip().startswith("- "):
+                out.append("")
+            i += 1
+            continue
+
+        if key_line_re.match(stripped):
+            out.append(line)
+            if i + 1 < len(lines) and lines[i + 1].strip() != "":
+                out.append("")
+            i += 1
+            continue
+
+        out.append(line)
+        i += 1
+
+    result = "\n".join(out)
+    if text.endswith("\n"):
+        result += "\n"
+    return result
+
+
 def render_markdown(input_path: Path, output_path: Path) -> None:
     text = input_path.read_text(encoding="utf-8-sig")
     text = normalize_toc_block(text)
+    text = normalize_key_blocks(text)
     body = markdown.markdown(
         text,
         extensions=[
@@ -202,37 +258,88 @@ def render_markdown(input_path: Path, output_path: Path) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    script_dir = Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(
-        description="Render markdown into a standalone HTML page."
+        description="Render markdown docs into standalone HTML pages."
     )
     parser.add_argument(
-        "input",
-        nargs="?",
-        default=str(script_dir / DEFAULT_INPUT),
-        help="Input markdown path.",
+        "inputs",
+        nargs="*",
+        help="Input markdown files. If omitted, all .md files in docs/ are rendered.",
     )
     parser.add_argument(
-        "output",
-        nargs="?",
-        default=str(script_dir / DEFAULT_OUTPUT),
-        help="Output html path.",
+        "--output",
+        help="Optional output path. Valid only when rendering a single input.",
+    )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Render all .md files in docs/ (default behavior when no inputs are given).",
     )
     return parser.parse_args()
 
 
-def main() -> int:
-    args = parse_args()
-    input_path = Path(args.input).resolve()
-    output_path = Path(args.output).resolve()
+def resolve_input_path(raw: str, script_dir: Path) -> Path:
+    candidate = Path(raw)
+    if candidate.is_absolute():
+        return candidate
+    if candidate.exists():
+        return candidate.resolve()
+    return (script_dir / candidate).resolve()
 
-    if not input_path.exists():
-        print(f"Input file not found: {input_path}", file=sys.stderr)
+
+def render_all_docs(script_dir: Path) -> int:
+    markdown_paths = sorted(
+        (
+            path
+            for path in script_dir.glob("*.md")
+            if path.name.lower() not in EXCLUDED_MARKDOWN_FILENAMES
+        ),
+        key=lambda p: p.name.lower(),
+    )
+    if not markdown_paths:
+        print(f"No markdown files found in: {script_dir}", file=sys.stderr)
         return 1
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    render_markdown(input_path, output_path)
-    print(f"Rendered HTML: {output_path}")
+    for excluded in EXCLUDED_MARKDOWN_FILENAMES:
+        stale_output = script_dir / Path(excluded).with_suffix(".html")
+        if stale_output.exists():
+            stale_output.unlink()
+            print(f"Removed excluded output: {stale_output}")
+
+    for input_path in markdown_paths:
+        output_path = input_path.with_suffix(".html")
+        render_markdown(input_path, output_path)
+        print(f"Rendered HTML: {output_path}")
+
+    return 0
+
+
+def main() -> int:
+    args = parse_args()
+    script_dir = Path(__file__).resolve().parent
+
+    if args.output and len(args.inputs) != 1:
+        print("--output can be used only with exactly one input file.", file=sys.stderr)
+        return 1
+
+    if args.all or len(args.inputs) == 0:
+        return render_all_docs(script_dir)
+
+    for index, raw_input in enumerate(args.inputs):
+        input_path = resolve_input_path(raw_input, script_dir)
+        if not input_path.exists():
+            print(f"Input file not found: {input_path}", file=sys.stderr)
+            return 1
+
+        if args.output and index == 0:
+            output_path = Path(args.output).resolve()
+        else:
+            output_path = input_path.with_suffix(".html")
+
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        render_markdown(input_path, output_path)
+        print(f"Rendered HTML: {output_path}")
+
     return 0
 
 

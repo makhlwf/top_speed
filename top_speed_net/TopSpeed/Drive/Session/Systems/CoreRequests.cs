@@ -72,7 +72,7 @@ namespace TopSpeed.Drive.Session.Systems
 
         private void HandleEngineStartRequest()
         {
-            if (!_input.GetStartEngine() || !_isStarted())
+            if (!_input.Intents.IsTriggered(DriveIntent.StartEngine) || !_isStarted())
                 return;
             if (_car.State == CarState.Crashing || _car.State == CarState.Starting || _car.State == CarState.Stopping)
                 return;
@@ -98,24 +98,26 @@ namespace TopSpeed.Drive.Session.Systems
             if (!_car.ToggleShiftOnDemand())
                 return;
 
-            _speakText(_car.ShiftOnDemandEnabled ? "shift on demand" : "automatic");
+            _speakText(_car.ShiftOnDemandEnabled
+                ? LocalizationService.Mark("shift on demand")
+                : LocalizationService.Mark("automatic"));
         }
 
         private void HandleCurrentGearRequest()
         {
-            if (_input.GetCurrentGear() && IsActiveLapRange())
+            if (_input.Intents.IsTriggered(DriveIntent.CurrentGear) && IsActiveLapRange())
                 _speakText(LocalizationService.Format(LocalizationService.Mark("Gear {0}"), SessionText.FormatGearCode(_car)));
         }
 
         private void HandleCurrentLapNumberRequest()
         {
-            if (_input.GetCurrentLapNr() && _isStarted() && _getLap() <= _getLapLimit())
+            if (_input.Intents.IsTriggered(DriveIntent.CurrentLapNr) && _isStarted() && _getLap() <= _getLapLimit())
                 _speakText(LocalizationService.Format(LocalizationService.Mark("Lap {0}"), _getLap()));
         }
 
         private void HandleCurrentRacePercentageRequest()
         {
-            if (_input.GetCurrentRacePerc() && _isStarted() && _getLap() <= _getLapLimit())
+            if (_input.Intents.IsTriggered(DriveIntent.CurrentRacePerc) && _isStarted() && _getLap() <= _getLapLimit())
             {
                 var trackLength = _track.Length;
                 var lapLimit = _getLapLimit();
@@ -132,7 +134,7 @@ namespace TopSpeed.Drive.Session.Systems
 
         private void HandleCurrentLapPercentageRequest()
         {
-            if (_input.GetCurrentLapPerc() && _isStarted() && _getLap() <= _getLapLimit())
+            if (_input.Intents.IsTriggered(DriveIntent.CurrentLapPerc) && _isStarted() && _getLap() <= _getLapLimit())
             {
                 var lap = _getLap();
                 var trackLength = _track.Length;
@@ -149,19 +151,19 @@ namespace TopSpeed.Drive.Session.Systems
 
         private void HandleCurrentRaceTimeRequest()
         {
-            if (_input.GetCurrentRaceTime() && _isStarted())
+            if (_input.Intents.IsTriggered(DriveIntent.CurrentRaceTime) && _isStarted())
                 _speakText(LocalizationService.Format(LocalizationService.Mark("Race time {0}"), SessionText.FormatTime(_getRaceTimeMs(), detailed: false)));
         }
 
         private void HandleTrackNameRequest()
         {
-            if (_input.GetTrackName())
+            if (_input.Intents.IsTriggered(DriveIntent.TrackName))
                 _speakText(SessionText.FormatTrackName(_track.TrackName));
         }
 
         private void HandleSpeedReportRequest()
         {
-            if (!_input.GetSpeedReport() || !IsActiveLapRange())
+            if (!_input.Intents.IsTriggered(DriveIntent.ReportSpeed) || !IsActiveLapRange())
                 return;
 
             var speedKmh = _car.SpeedKmh;
@@ -187,7 +189,7 @@ namespace TopSpeed.Drive.Session.Systems
 
         private void HandleDistanceReportRequest()
         {
-            if (!_input.GetDistanceReport() || !IsActiveLapRange())
+            if (!_input.Intents.IsTriggered(DriveIntent.ReportDistance) || !IsActiveLapRange())
                 return;
 
             var distanceM = _car.DistanceMeters;

@@ -12,7 +12,7 @@ namespace TopSpeed.Windowing.Eto
         private readonly object _textInputLock = new object();
         private readonly Application _application;
         private readonly Form _window;
-        private readonly Panel _root;
+        private readonly Drawable _root;
         private TextBox? _inputBox;
         private bool _loadedRaised;
         private bool _submitPending;
@@ -45,7 +45,12 @@ namespace TopSpeed.Windowing.Eto
             _window.KeyDown += OnWindowKeyDown;
             _window.KeyUp += OnWindowKeyUp;
             _window.LostFocus += OnWindowLostFocus;
-            _root = new Panel();
+            _root = new Drawable
+            {
+                CanFocus = true
+            };
+            _root.KeyDown += OnWindowKeyDown;
+            _root.KeyUp += OnWindowKeyUp;
             _window.Content = _root;
         }
 
@@ -75,6 +80,8 @@ namespace TopSpeed.Windowing.Eto
             _window.KeyDown -= OnWindowKeyDown;
             _window.KeyUp -= OnWindowKeyUp;
             _window.LostFocus -= OnWindowLostFocus;
+            _root.KeyDown -= OnWindowKeyDown;
+            _root.KeyUp -= OnWindowKeyUp;
             DisposeInputBoxControl();
             _window.Dispose();
         }
@@ -109,7 +116,7 @@ namespace TopSpeed.Windowing.Eto
             InvokeOnUi(() =>
             {
                 HideInputBox();
-                _window.Focus();
+                _root.Focus();
             });
         }
 
@@ -142,7 +149,7 @@ namespace TopSpeed.Windowing.Eto
             {
                 _loadedRaised = true;
                 NativeHandle = ResolveNativeHandle(_window);
-                _window.Focus();
+                _root.Focus();
                 Loaded?.Invoke();
             }
         }

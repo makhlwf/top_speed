@@ -13,58 +13,23 @@ namespace TopSpeed.Input
         }
 
         public string Language { get; set; } = "en";
-        public AxisOrButton ControllerLeft { get; set; }
-        public AxisOrButton ControllerRight { get; set; }
-        public AxisOrButton ControllerThrottle { get; set; }
-        public AxisOrButton ControllerBrake { get; set; }
-        public AxisOrButton ControllerClutch { get; set; }
-        public AxisOrButton ControllerGearUp { get; set; }
-        public AxisOrButton ControllerGearDown { get; set; }
-        public AxisOrButton ControllerHorn { get; set; }
-        public AxisOrButton ControllerRequestInfo { get; set; }
-        public AxisOrButton ControllerCurrentGear { get; set; }
-        public AxisOrButton ControllerCurrentLapNr { get; set; }
-        public AxisOrButton ControllerCurrentRacePerc { get; set; }
-        public AxisOrButton ControllerCurrentLapPerc { get; set; }
-        public AxisOrButton ControllerCurrentRaceTime { get; set; }
-        public AxisOrButton ControllerStartEngine { get; set; }
-        public AxisOrButton ControllerReportDistance { get; set; }
-        public AxisOrButton ControllerReportSpeed { get; set; }
-        public AxisOrButton ControllerTrackName { get; set; }
-        public AxisOrButton ControllerPause { get; set; }
+        public Dictionary<DriveIntent, AxisOrButton> ControllerBindings { get; set; } = new Dictionary<DriveIntent, AxisOrButton>();
+        public Dictionary<DriveIntent, Key> KeyboardBindings { get; set; } = new Dictionary<DriveIntent, Key>();
         public PedalInvertMode ControllerThrottleInvertMode { get; set; }
         public PedalInvertMode ControllerBrakeInvertMode { get; set; }
         public PedalInvertMode ControllerClutchInvertMode { get; set; }
         public int ControllerSteeringDeadZone { get; set; }
         public State ControllerCenter { get; set; }
 
-        public Key KeyLeft { get; set; }
-        public Key KeyRight { get; set; }
-        public Key KeyThrottle { get; set; }
-        public Key KeyBrake { get; set; }
-        public Key KeyClutch { get; set; }
-        public Key KeyGearUp { get; set; }
-        public Key KeyGearDown { get; set; }
-        public Key KeyHorn { get; set; }
-        public Key KeyRequestInfo { get; set; }
-        public Key KeyCurrentGear { get; set; }
-        public Key KeyCurrentLapNr { get; set; }
-        public Key KeyCurrentRacePerc { get; set; }
-        public Key KeyCurrentLapPerc { get; set; }
-        public Key KeyCurrentRaceTime { get; set; }
-        public Key KeyStartEngine { get; set; }
-        public Key KeyReportDistance { get; set; }
-        public Key KeyReportSpeed { get; set; }
-        public Key KeyTrackName { get; set; }
-        public Key KeyPause { get; set; }
-
         public bool ForceFeedback { get; set; }
         public KeyboardProgressiveRate KeyboardProgressiveRate { get; set; }
+        public bool AndroidUseMotionSteering { get; set; }
         public InputDeviceMode DeviceMode { get; set; }
 
         public AutomaticInfoMode AutomaticInfo { get; set; }
         public CopilotMode Copilot { get; set; }
         public CurveAnnouncementMode CurveAnnouncement { get; set; }
+        public float CurveAnnouncementLeadTimeSeconds { get; set; }
         public int NrOfLaps { get; set; }
         public int NrOfComputers { get; set; }
         public RaceDifficulty Difficulty { get; set; }
@@ -79,6 +44,7 @@ namespace TopSpeed.Input
         public bool SingleRaceCustomVehicles { get; set; }
         public string LastServerAddress { get; set; } = string.Empty;
         public int DefaultServerPort { get; set; }
+        public string DefaultCallSign { get; set; } = string.Empty;
         public float ScreenReaderRateMs { get; set; }
         public ulong? SpeechBackendId { get; set; }
         public SpeechOutputMode SpeechMode { get; set; }
@@ -103,60 +69,51 @@ namespace TopSpeed.Input
             set => DeviceMode = value ? InputDeviceMode.Controller : InputDeviceMode.Keyboard;
         }
 
+        public Key GetKeyboardBinding(DriveIntent intent)
+        {
+            return KeyboardBindings != null && KeyboardBindings.TryGetValue(intent, out var key)
+                ? key
+                : Key.Unknown;
+        }
+
+        public AxisOrButton GetControllerBinding(DriveIntent intent)
+        {
+            return ControllerBindings != null && ControllerBindings.TryGetValue(intent, out var axis)
+                ? axis
+                : AxisOrButton.AxisNone;
+        }
+
+        public void SetKeyboardBinding(DriveIntent intent, Key key)
+        {
+            KeyboardBindings ??= new Dictionary<DriveIntent, Key>();
+            KeyboardBindings[intent] = key;
+        }
+
+        public void SetControllerBinding(DriveIntent intent, AxisOrButton axis)
+        {
+            ControllerBindings ??= new Dictionary<DriveIntent, AxisOrButton>();
+            ControllerBindings[intent] = axis;
+        }
+
         public void RestoreDefaults()
         {
             Language = "en";
-            ControllerLeft = AxisOrButton.AxisXNeg;
-            ControllerRight = AxisOrButton.AxisXPos;
-            ControllerThrottle = AxisOrButton.AxisRzPos;
-            ControllerBrake = AxisOrButton.AxisZPos;
-            ControllerClutch = AxisOrButton.AxisSlider1Pos;
-            ControllerGearUp = AxisOrButton.Button2;
-            ControllerGearDown = AxisOrButton.Button1;
-            ControllerHorn = AxisOrButton.Button3;
-            ControllerRequestInfo = AxisOrButton.Button4;
-            ControllerCurrentGear = AxisOrButton.Button5;
-            ControllerCurrentLapNr = AxisOrButton.Button6;
-            ControllerCurrentRacePerc = AxisOrButton.Button7;
-            ControllerCurrentLapPerc = AxisOrButton.Button8;
-            ControllerCurrentRaceTime = AxisOrButton.Button9;
-            ControllerStartEngine = AxisOrButton.Button10;
-            ControllerReportDistance = AxisOrButton.Button11;
-            ControllerReportSpeed = AxisOrButton.Button12;
-            ControllerTrackName = AxisOrButton.Button13;
-            ControllerPause = AxisOrButton.Button14;
+            ControllerBindings = CreateDefaultControllerBindings();
+            KeyboardBindings = CreateDefaultKeyboardBindings();
             ControllerThrottleInvertMode = PedalInvertMode.Auto;
             ControllerBrakeInvertMode = PedalInvertMode.Auto;
             ControllerClutchInvertMode = PedalInvertMode.Auto;
             ControllerSteeringDeadZone = 1;
             ControllerCenter = default;
 
-            KeyLeft = Key.Left;
-            KeyRight = Key.Right;
-            KeyThrottle = Key.Up;
-            KeyBrake = Key.Down;
-            KeyClutch = Key.LeftShift;
-            KeyGearUp = Key.A;
-            KeyGearDown = Key.Z;
-            KeyHorn = Key.Space;
-            KeyRequestInfo = Key.Tab;
-            KeyCurrentGear = Key.Q;
-            KeyCurrentLapNr = Key.W;
-            KeyCurrentRacePerc = Key.E;
-            KeyCurrentLapPerc = Key.R;
-            KeyCurrentRaceTime = Key.T;
-            KeyStartEngine = Key.Return;
-            KeyReportDistance = Key.C;
-            KeyReportSpeed = Key.S;
-            KeyTrackName = Key.F9;
-            KeyPause = Key.P;
-
             ForceFeedback = false;
             KeyboardProgressiveRate = KeyboardProgressiveRate.Off;
+            AndroidUseMotionSteering = true;
             DeviceMode = InputDeviceMode.Keyboard;
             AutomaticInfo = AutomaticInfoMode.On;
             Copilot = CopilotMode.All;
             CurveAnnouncement = CurveAnnouncementMode.SpeedDependent;
+            CurveAnnouncementLeadTimeSeconds = 1.8f;
             NrOfLaps = 3;
             NrOfComputers = 3;
             Difficulty = RaceDifficulty.Easy;
@@ -172,6 +129,7 @@ namespace TopSpeed.Input
             SingleRaceCustomVehicles = false;
             LastServerAddress = string.Empty;
             DefaultServerPort = 28630;
+            DefaultCallSign = string.Empty;
             ScreenReaderRateMs = 0f;
             SpeechBackendId = null;
             SpeechMode = SpeechOutputMode.Speech;
@@ -204,8 +162,57 @@ namespace TopSpeed.Input
             AudioVolumes.MusicPercent = AudioVolumeSettings.ClampPercent((int)Math.Round(Math.Max(0f, Math.Min(1f, MusicVolume)) * 100f));
             AudioVolumes.ClampAll();
         }
+
+        private static Dictionary<DriveIntent, AxisOrButton> CreateDefaultControllerBindings()
+        {
+            return new Dictionary<DriveIntent, AxisOrButton>
+            {
+                [DriveIntent.SteerLeft] = AxisOrButton.AxisXNeg,
+                [DriveIntent.SteerRight] = AxisOrButton.AxisXPos,
+                [DriveIntent.Throttle] = AxisOrButton.AxisRzPos,
+                [DriveIntent.Brake] = AxisOrButton.AxisZPos,
+                [DriveIntent.Clutch] = AxisOrButton.AxisSlider1Pos,
+                [DriveIntent.GearUp] = AxisOrButton.Button2,
+                [DriveIntent.GearDown] = AxisOrButton.Button1,
+                [DriveIntent.Horn] = AxisOrButton.Button3,
+                [DriveIntent.RequestInfo] = AxisOrButton.Button4,
+                [DriveIntent.CurrentGear] = AxisOrButton.Button5,
+                [DriveIntent.CurrentLapNr] = AxisOrButton.Button6,
+                [DriveIntent.CurrentRacePerc] = AxisOrButton.Button7,
+                [DriveIntent.CurrentLapPerc] = AxisOrButton.Button8,
+                [DriveIntent.CurrentRaceTime] = AxisOrButton.Button9,
+                [DriveIntent.StartEngine] = AxisOrButton.Button10,
+                [DriveIntent.ReportDistance] = AxisOrButton.Button11,
+                [DriveIntent.ReportSpeed] = AxisOrButton.Button12,
+                [DriveIntent.TrackName] = AxisOrButton.Button13,
+                [DriveIntent.Pause] = AxisOrButton.Button14
+            };
+        }
+
+        private static Dictionary<DriveIntent, Key> CreateDefaultKeyboardBindings()
+        {
+            return new Dictionary<DriveIntent, Key>
+            {
+                [DriveIntent.SteerLeft] = Key.Left,
+                [DriveIntent.SteerRight] = Key.Right,
+                [DriveIntent.Throttle] = Key.Up,
+                [DriveIntent.Brake] = Key.Down,
+                [DriveIntent.Clutch] = Key.LeftShift,
+                [DriveIntent.GearUp] = Key.A,
+                [DriveIntent.GearDown] = Key.Z,
+                [DriveIntent.Horn] = Key.Space,
+                [DriveIntent.RequestInfo] = Key.Tab,
+                [DriveIntent.CurrentGear] = Key.Q,
+                [DriveIntent.CurrentLapNr] = Key.W,
+                [DriveIntent.CurrentRacePerc] = Key.E,
+                [DriveIntent.CurrentLapPerc] = Key.R,
+                [DriveIntent.CurrentRaceTime] = Key.T,
+                [DriveIntent.StartEngine] = Key.Return,
+                [DriveIntent.ReportDistance] = Key.C,
+                [DriveIntent.ReportSpeed] = Key.S,
+                [DriveIntent.TrackName] = Key.F9,
+                [DriveIntent.Pause] = Key.P
+            };
+        }
     }
 }
-
-
-

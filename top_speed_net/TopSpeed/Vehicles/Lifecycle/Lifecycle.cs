@@ -57,7 +57,7 @@ namespace TopSpeed.Vehicles
             _speed = 0;
             _lateralVelocityMps = 0f;
             _yawRateRad = 0f;
-            _engine.Reset();
+            _engine.ResetForEngineStart();
             _prevFrequency = _idleFreq;
             _frequency = _idleFreq;
             _prevBrakeFrequency = 0;
@@ -121,6 +121,7 @@ namespace TopSpeed.Vehicles
             _speed = 0;
             _lateralVelocityMps = 0f;
             _yawRateRad = 0f;
+            _engine.ResetForEngineStart();
             _prevFrequency = _idleFreq;
             _frequency = _idleFreq;
             _prevBrakeFrequency = 0;

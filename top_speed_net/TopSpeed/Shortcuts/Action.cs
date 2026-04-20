@@ -1,5 +1,6 @@
 using System;
 using Key = TopSpeed.Input.InputKey;
+using Gesture = TopSpeed.Input.GestureIntent;
 
 namespace TopSpeed.Shortcuts
 {
@@ -14,7 +15,8 @@ namespace TopSpeed.Shortcuts
             string description,
             Key key,
             Action onTrigger,
-            Func<bool>? canExecute = null)
+            Func<bool>? canExecute = null,
+            Gesture? gestureIntent = null)
         {
             if (string.IsNullOrWhiteSpace(id))
                 throw new ArgumentException("Shortcut action id is required.", nameof(id));
@@ -28,6 +30,8 @@ namespace TopSpeed.Shortcuts
             Description = description.Trim();
             Key = key;
             DefaultKey = key;
+            GestureIntent = gestureIntent;
+            DefaultGestureIntent = gestureIntent;
             _onTrigger = onTrigger ?? throw new ArgumentNullException(nameof(onTrigger));
             _canExecute = canExecute;
         }
@@ -37,6 +41,8 @@ namespace TopSpeed.Shortcuts
         public string Description { get; }
         public Key Key { get; private set; }
         public Key DefaultKey { get; }
+        public Gesture? GestureIntent { get; private set; }
+        public Gesture? DefaultGestureIntent { get; }
 
         public void SetKey(Key key)
         {
@@ -46,6 +52,7 @@ namespace TopSpeed.Shortcuts
         public void ResetKey()
         {
             Key = DefaultKey;
+            GestureIntent = DefaultGestureIntent;
         }
 
         public bool CanExecute()

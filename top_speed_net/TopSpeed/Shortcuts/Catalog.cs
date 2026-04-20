@@ -38,9 +38,10 @@ namespace TopSpeed.Shortcuts
             string description,
             Key key,
             Action onTrigger,
-            Func<bool>? canExecute = null)
+            Func<bool>? canExecute = null,
+            GestureIntent? gestureIntent = null)
         {
-            var action = new ShortcutAction(actionId, displayName, description, key, onTrigger, canExecute);
+            var action = new ShortcutAction(actionId, displayName, description, key, onTrigger, canExecute, gestureIntent);
             _actions[action.Id] = action;
         }
 
@@ -90,7 +91,11 @@ namespace TopSpeed.Shortcuts
                 var actionId = candidateIds[i];
                 if (!_actions.TryGetValue(actionId, out var candidate))
                     continue;
-                if (!input.WasPressed(candidate.Key))
+
+                var pressedByKeyboard = input.WasPressed(candidate.Key);
+                var pressedByGesture = candidate.GestureIntent.HasValue &&
+                    input.WasGesturePressed(candidate.GestureIntent.Value);
+                if (!pressedByKeyboard && !pressedByGesture)
                     continue;
                 if (!candidate.CanExecute())
                     continue;
@@ -381,7 +386,7 @@ namespace TopSpeed.Shortcuts
 
         private static ShortcutBinding CreateBinding(ShortcutAction action)
         {
-            return new ShortcutBinding(action.Id, action.DisplayName, action.Description, action.Key);
+            return new ShortcutBinding(action.Id, action.DisplayName, action.Description, action.Key, action.GestureIntent);
         }
 
         private static string FormatName(string source)

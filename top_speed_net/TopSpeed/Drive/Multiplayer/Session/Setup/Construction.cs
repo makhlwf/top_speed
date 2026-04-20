@@ -78,6 +78,15 @@ namespace TopSpeed.Drive.Multiplayer
             return sounds;
         }
 
+        private Source[] CreateLapSounds(int laps)
+        {
+            var sounds = new Source[Math.Max(0, Math.Min(MaxLaps, laps) - 1)];
+            for (var i = 0; i < sounds.Length; i++)
+                sounds[i] = LoadLanguageSound($"race\\info\\laps2go{i + 1}");
+
+            return sounds;
+        }
+
         private Source[] CreateUnkeySounds()
         {
             var sounds = new Source[MaxUnkeys];

@@ -113,7 +113,7 @@ namespace TopSpeed.Game
                     }
                 }
 
-                if (_owner._input.WasPressed(TopSpeed.Input.InputKey.Escape))
+                if (_owner._input.WasPressed(TopSpeed.Input.InputKey.Escape) || _owner.ConsumeDriveTouchExitRequest())
                     OpenQuitConfirmation();
             }
 
@@ -157,6 +157,7 @@ namespace TopSpeed.Game
 
                 if (_owner._session != null)
                 {
+                    _owner._input.ResetState();
                     _owner._state = AppState.Menu;
                     _owner._multiplayerCoordinator.ShowMultiplayerMenuAfterRace();
                     if (resultSummary != null)
@@ -164,6 +165,7 @@ namespace TopSpeed.Game
                 }
                 else
                 {
+                    _owner._input.ResetState();
                     _owner._state = AppState.Menu;
                     _owner._menu.ShowRoot("main");
                     _owner._menu.FadeInMenuMusic();
@@ -299,6 +301,7 @@ namespace TopSpeed.Game
                 DisposeMode();
                 _binding.ClearRaceBinding();
                 _binding.ResetPending();
+                _owner._input.ResetState();
                 _owner._state = AppState.Menu;
                 _owner._menu.ShowRoot("multiplayer_lobby");
             }

@@ -302,9 +302,9 @@ internal static class InputHarness
                 state.Z,
                 state.Rz,
                 state.Slider1,
-                input.GetThrottle(),
-                input.GetBrake(),
-                input.GetClutch()));
+                input.Intents.GetAxisPercent(DriveIntent.Throttle),
+                input.Intents.GetAxisPercent(DriveIntent.Brake),
+                input.Intents.GetAxisPercent(DriveIntent.Clutch)));
         }
 
         return new WheelPedalTrace(scenario, samples);

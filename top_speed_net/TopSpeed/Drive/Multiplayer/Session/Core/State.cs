@@ -67,6 +67,7 @@ namespace TopSpeed.Drive.Multiplayer
         private readonly SnapshotState _snapshots;
         private readonly RuntimeState _runtime;
         private readonly AudioSource[] _soundNumbers;
+        private readonly AudioSource[] _soundLaps;
         private readonly AudioSource?[][] _randomSounds;
         private readonly int[] _totalRandomSounds;
         private readonly AudioSource[] _soundUnkey;
@@ -97,6 +98,7 @@ namespace TopSpeed.Drive.Multiplayer
         private bool LocalMediaLoaded => _localRadio.HasMedia;
         private bool LocalMediaPlaying => _localRadio.HasMedia && _localRadio.DesiredPlaying;
         private uint LocalMediaId => _localRadio.HasMedia ? _localRadio.MediaId : 0u;
+        private byte LocalRadioVolumePercent => (byte)Math.Max(0, Math.Min(100, _localRadio.VolumePercent));
         public bool WantsExit => _session.Context.WantsExit;
         public bool WantsPause => _session.Context.WantsPause;
     }

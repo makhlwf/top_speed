@@ -20,6 +20,8 @@ namespace TopSpeed.Drive.Multiplayer
             DisposeSound(_soundPlayer);
             for (var i = 0; i < _soundNumbers.Length; i++)
                 DisposeSound(_soundNumbers[i]);
+            for (var i = 0; i < _soundLaps.Length; i++)
+                DisposeSound(_soundLaps[i]);
             for (var i = 0; i < _soundUnkey.Length; i++)
                 DisposeSound(_soundUnkey[i]);
             for (var i = 0; i < _soundPlayerNr.Length; i++)

@@ -115,8 +115,10 @@ namespace TopSpeed.Drive.Multiplayer
                     130,
                     _track,
                     _car,
+                    _settings,
                     _remotePlayers,
                     _lapLimit,
+                    _soundLaps,
                     LocalPlayerNumber,
                     () => _lap,
                     lap => _lap = lap,
@@ -135,6 +137,7 @@ namespace TopSpeed.Drive.Multiplayer
                         AnnounceFinishOrder(_soundPlayerNr, _soundFinished, playerNumber, ref positionFinish);
                         _positionFinish = positionFinish;
                     },
+                    SpeakIfLoaded,
                     sendStarted => SendPlayerState(sendStarted),
                     SendCrash),
                 new SyncSubsystem(

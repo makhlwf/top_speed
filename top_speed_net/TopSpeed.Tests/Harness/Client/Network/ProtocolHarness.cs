@@ -34,7 +34,8 @@ internal static class ProtocolHarness
             backfiring: false,
             mediaLoaded: true,
             mediaPlaying: true,
-            mediaId: 99u);
+            mediaId: 99u,
+            radioVolumePercent: 75);
 
         var roomEvent = new PacketRoomEvent
         {
@@ -125,6 +126,7 @@ internal static class ProtocolHarness
             MediaLoaded = reader.ReadBool(),
             MediaPlaying = reader.ReadBool(),
             MediaId = reader.ReadUInt32(),
+            RadioVolumePercent = reader.ReadByte(),
             Length = payload.Length
         };
     }

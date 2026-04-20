@@ -6,6 +6,10 @@ namespace TopSpeed.Game
         {
             _updateDownloadCts?.Cancel();
             _updateDownloadCts?.Dispose();
+            _driveGyroscopeSensor?.Dispose();
+            _driveGyroscopeSensor = null;
+            _driveAccelerometerSensor?.Dispose();
+            _driveAccelerometerSensor = null;
             _logo?.Dispose();
             _menu.Dispose();
             _input.Dispose();
@@ -21,4 +25,3 @@ namespace TopSpeed.Game
         }
     }
 }
-

@@ -44,6 +44,7 @@ namespace TS.Audio
             if (_graph.ConsumeStopRequested())
             {
                 MiniAudioExNative.ma_ex_audio_source_stop(_sourceHandle);
+                _paused = false;
                 _graph.ResetEnvelope(1f);
                 _notifiedEnd = false;
                 _startRequestedUtc = null;
@@ -53,6 +54,9 @@ namespace TS.Audio
             }
 
             UpdateFade(deltaTime);
+
+            if (_paused)
+                return;
 
             if (_looping)
                 return;
@@ -120,6 +124,7 @@ namespace TS.Audio
                 throw new InvalidOperationException("Failed to start audio playback: " + result);
             }
 
+            _paused = false;
             Emit(
                 AudioDiagnosticLevel.Debug,
                 AudioDiagnosticKind.SourceStarted,
@@ -216,6 +221,7 @@ namespace TS.Audio
                 if (shouldStop)
                 {
                     MiniAudioExNative.ma_ex_audio_source_stop(_sourceHandle);
+                    _paused = false;
                     _notifiedEnd = false;
                     _startRequestedUtc = null;
                     _silentStartReported = false;

@@ -11,6 +11,14 @@
     <AssemblyName>TopSpeed</AssemblyName>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(AndroidHostBuild)' == 'true'">
+    <OutputType>Library</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(TargetFramework)' == 'net472'">
     <UseWindowsForms>true</UseWindowsForms>
     <PlatformTarget>x64</PlatformTarget>
@@ -60,23 +68,26 @@
   <ItemGroup>
     <PackageReference Include="Concentus" Version="1.1.7" />
     <PackageReference Include="LiteNetLib" Version="1.3.1" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
     <PackageReference Include="SharpDX" Version="4.2.0" />
     <PackageReference Include="SharpDX.DirectInput" Version="4.2.0" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0' or '$(TargetFramework)' == 'net10.0-windows'">
+  <ItemGroup Condition="('$(TargetFramework)' == 'net10.0' or '$(TargetFramework)' == 'net10.0-windows') and '$(AndroidHostBuild)' != 'true'">
     <PackageReference Include="Eto.Forms" Version="2.8.3" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0' and '$(RuntimeIdentifier)' == 'linux-x64'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0' and '$(RuntimeIdentifier)' == 'linux-x64' and '$(AndroidHostBuild)' != 'true'">
     <PackageReference Include="Eto.Platform.Gtk" Version="2.8.3" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0' and '$(RuntimeIdentifier)' == 'osx-x64'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0' and '$(RuntimeIdentifier)' == 'osx-x64' and '$(AndroidHostBuild)' != 'true'">
     <PackageReference Include="Eto.Platform.Mac64" Version="2.8.3" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows' and '$(RuntimeIdentifier)' == 'win-x64'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows' and '$(RuntimeIdentifier)' == 'win-x64' and '$(AndroidHostBuild)' != 'true'">
     <PackageReference Include="Eto.Platform.Windows" Version="2.8.3" />
   </ItemGroup>
 
@@ -101,7 +112,13 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0' or '$(TargetFramework)' == 'net10.0-windows'">
     <Compile Remove="Window\WinForms\**\*.cs" />
     <Compile Remove="Window\GameWindow.cs" />
+    <Compile Remove="Input\Devices\Keyboard\DirectInputKeyMap.cs" />
     <Compile Remove="Input\Devices\Keyboard\Backends\DirectInput\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(AndroidHostBuild)' == 'true'">
+    <Compile Remove="Program.cs" />
+    <Compile Remove="Window\Eto\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net472' or ('$(TargetFramework)' == 'net10.0-windows' and '$(RuntimeIdentifier)' == 'win-x64')">
@@ -203,7 +220,7 @@
       <Link>languages\client\%(RecursiveDir)%(Filename)%(Extension)</Link>
       <TargetPath>languages\client\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
     </Content>
-    <Content Include="..\..\docs\**\*" Exclude="..\..\docs\**\*.md;..\..\docs\render_docs.py">
+    <Content Include="..\..\docs\**\*.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <Link>docs\%(RecursiveDir)%(Filename)%(Extension)</Link>
@@ -212,7 +229,21 @@
   </ItemGroup>
 
   <Target Name="RenderDocsHtml" BeforeTargets="Build" Condition="Exists('$(MSBuildThisFileDirectory)..\..\docs\render_docs.py')">
-    <Exec Command="python &quot;$(MSBuildThisFileDirectory)..\..\docs\render_docs.py&quot;" ContinueOnError="WarnAndContinue" />
+    <Exec Command="python &quot;$(MSBuildThisFileDirectory)..\..\docs\render_docs.py&quot; --all" ContinueOnError="WarnAndContinue" />
+  </Target>
+
+  <Target Name="CleanMarkdownDocsFromOutput" AfterTargets="Build">
+    <ItemGroup Condition="Exists('$(OutDir)docs')">
+      <_OutputMarkdownDocs Include="$(OutDir)docs\**\*.md" />
+    </ItemGroup>
+    <Delete Files="@(_OutputMarkdownDocs)" />
+  </Target>
+
+  <Target Name="CleanMarkdownDocsFromPublish" AfterTargets="Publish">
+    <ItemGroup Condition="Exists('$(PublishDir)docs')">
+      <_PublishMarkdownDocs Include="$(PublishDir)docs\**\*.md" />
+    </ItemGroup>
+    <Delete Files="@(_PublishMarkdownDocs)" />
   </Target>
 
   <Target Name="CopyUpdater" AfterTargets="Build" Condition="'$(TargetFramework)' == 'net472'">
@@ -226,7 +257,7 @@
     <Copy SourceFiles="$(_UpdaterBuildDir)Updater.pdb" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" Condition="Exists('$(_UpdaterBuildDir)Updater.pdb')" />
   </Target>
 
-  <Target Name="CopyUpdaterNet10" AfterTargets="Build" Condition="('$(TargetFramework)' == 'net10.0' or '$(TargetFramework)' == 'net10.0-windows') and '$(RuntimeIdentifier)' != ''">
+  <Target Name="CopyUpdaterNet10" AfterTargets="Build" Condition="('$(TargetFramework)' == 'net10.0' or '$(TargetFramework)' == 'net10.0-windows') and '$(RuntimeIdentifier)' != '' and '$(AndroidHostBuild)' != 'true'">
     <PropertyGroup>
       <_UpdaterProjectPath>$(MSBuildThisFileDirectory)../Updater/Updater.csproj</_UpdaterProjectPath>
       <_UpdaterOutputPath>$([System.IO.Path]::GetFullPath('$(OutDir)'))</_UpdaterOutputPath>
@@ -240,7 +271,7 @@
     <Copy SourceFiles="@(_UpdaterPublishedFiles)" DestinationFiles="@(_UpdaterPublishedFiles->'$(_UpdaterOutputPath)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>
 
-  <Target Name="PublishUpdaterNet10" AfterTargets="Publish" Condition="('$(TargetFramework)' == 'net10.0' or '$(TargetFramework)' == 'net10.0-windows') and '$(RuntimeIdentifier)' != ''">
+  <Target Name="PublishUpdaterNet10" AfterTargets="Publish" Condition="('$(TargetFramework)' == 'net10.0' or '$(TargetFramework)' == 'net10.0-windows') and '$(RuntimeIdentifier)' != '' and '$(AndroidHostBuild)' != 'true'">
     <PropertyGroup>
       <_UpdaterProjectPath>$(MSBuildThisFileDirectory)../Updater/Updater.csproj</_UpdaterProjectPath>
       <_PublishDestinationPath>$([System.IO.Path]::GetFullPath('$(PublishDir)'))</_PublishDestinationPath>

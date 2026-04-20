@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using TopSpeed.Audio;
 using TopSpeed.Input;
 using TopSpeed.Localization;
-using TopSpeed.Audio;
 using TopSpeed.Speech.Playback;
 using TopSpeed.Speech.ScreenReaders;
 
@@ -23,12 +23,13 @@ namespace TopSpeed.Speech
 
         private readonly Stopwatch _watch = new Stopwatch();
         private readonly IScreenReader _screenReader;
+        private readonly ScreenReaderWorker _screenReaderWorker;
         private readonly Player _player;
         private long _timeRequiredMs;
         private string _lastSpoken = string.Empty;
         private Func<bool>? _isInputHeld;
         private Action? _prepareForInterruptableSpeech;
-        private bool _screenReaderReady;
+        private volatile bool _screenReaderReady;
         private float _speechRate = 0.5f;
         private bool _speechSuppressedUntilNextSpeak;
 
@@ -38,7 +39,7 @@ namespace TopSpeed.Speech
             _isInputHeld = isInputHeld;
             _prepareForInterruptableSpeech = prepareForInterruptableSpeech;
             _screenReader = Factory.Create();
-            _screenReader.BindPlayer(_player);
+            _screenReaderWorker = new ScreenReaderWorker(_screenReader, _player);
             _screenReaderReady = InitializeScreenReader();
         }
 
@@ -47,11 +48,81 @@ namespace TopSpeed.Speech
         public float ScreenReaderRateMs { get; set; }
         public SpeechOutputMode OutputMode { get; set; } = SpeechOutputMode.Speech;
         public bool ScreenReaderInterrupt { get; set; }
-        public IReadOnlyList<SpeechBackendInfo> AvailableBackends => _screenReader.AvailableBackends;
-        public IReadOnlyList<SpeechVoiceInfo> AvailableVoices => _screenReader.AvailableVoices;
-        public ulong? ActiveBackendId => _screenReader.ActiveBackendId;
-        public SpeechCapabilities ScreenReaderCapabilities => _screenReader.Capabilities;
-        public string? ScreenReaderBackendName => _screenReader.ActiveBackendName;
+
+        public IReadOnlyList<SpeechBackendInfo> AvailableBackends
+        {
+            get
+            {
+                try
+                {
+                    return _screenReaderWorker.Invoke(reader => reader.AvailableBackends);
+                }
+                catch
+                {
+                    return Array.Empty<SpeechBackendInfo>();
+                }
+            }
+        }
+
+        public IReadOnlyList<SpeechVoiceInfo> AvailableVoices
+        {
+            get
+            {
+                try
+                {
+                    return _screenReaderWorker.Invoke(reader => reader.AvailableVoices);
+                }
+                catch
+                {
+                    return Array.Empty<SpeechVoiceInfo>();
+                }
+            }
+        }
+
+        public ulong? ActiveBackendId
+        {
+            get
+            {
+                try
+                {
+                    return _screenReaderWorker.Invoke(reader => reader.ActiveBackendId);
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+        }
+
+        public SpeechCapabilities ScreenReaderCapabilities
+        {
+            get
+            {
+                try
+                {
+                    return _screenReaderWorker.Invoke(reader => reader.Capabilities);
+                }
+                catch
+                {
+                    return SpeechCapabilities.None;
+                }
+            }
+        }
+
+        public string? ScreenReaderBackendName
+        {
+            get
+            {
+                try
+                {
+                    return _screenReaderWorker.Invoke(reader => reader.ActiveBackendName);
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+        }
 
         public float SpeechRate
         {
@@ -66,21 +137,65 @@ namespace TopSpeed.Speech
 
         public ulong? PreferredBackendId
         {
-            get => _screenReader.PreferredBackendId;
+            get
+            {
+                try
+                {
+                    return _screenReaderWorker.Invoke(reader => reader.PreferredBackendId);
+                }
+                catch
+                {
+                    return null;
+                }
+            }
             set
             {
-                if (_screenReader.PreferredBackendId == value)
-                    return;
+                try
+                {
+                    _screenReaderReady = _screenReaderWorker.Invoke(reader =>
+                    {
+                        if (reader.PreferredBackendId == value)
+                            return _screenReaderReady;
 
-                _screenReader.PreferredBackendId = value;
-                _screenReaderReady = InitializeScreenReader();
+                        TrySilence(reader);
+                        reader.PreferredBackendId = value;
+                        return ReinitializeScreenReaderOnWorker(reader);
+                    });
+                }
+                catch
+                {
+                    _screenReaderReady = false;
+                }
             }
         }
 
         public int? PreferredVoiceIndex
         {
-            get => _screenReader.PreferredVoiceIndex;
-            set => _screenReader.PreferredVoiceIndex = value;
+            get
+            {
+                try
+                {
+                    return _screenReaderWorker.Invoke(reader => reader.PreferredVoiceIndex);
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+            set
+            {
+                try
+                {
+                    _screenReaderWorker.Invoke(reader =>
+                    {
+                        reader.PreferredVoiceIndex = value;
+                        return 0;
+                    });
+                }
+                catch
+                {
+                }
+            }
         }
 
         public void BindInputProbe(Func<bool> isInputHeld)
@@ -128,9 +243,7 @@ namespace TopSpeed.Speech
             }
 
             if (!spoke)
-            {
                 return;
-            }
 
             if (flag == SpeakFlag.None
                 || flag == SpeakFlag.NoInterrupt
@@ -143,13 +256,10 @@ namespace TopSpeed.Speech
 
             while (IsSpeaking())
             {
-                if (interruptable)
+                if (interruptable && IsInputHeld())
                 {
-                    if (IsInputHeld())
-                    {
-                        Purge();
-                        break;
-                    }
+                    Purge();
+                    break;
                 }
 
                 Thread.Sleep(10);
@@ -164,19 +274,17 @@ namespace TopSpeed.Speech
             if (_watch.IsRunning)
                 return _watch.ElapsedMilliseconds < _timeRequiredMs;
 
-            if (_screenReaderReady)
-            {
-                try
-                {
-                    if (_screenReader.IsSpeaking())
-                        return true;
-                }
-                catch
-                {
-                }
-            }
+            if (!_screenReaderReady)
+                return false;
 
-            return false;
+            try
+            {
+                return _screenReaderWorker.Invoke(reader => reader.IsSpeaking());
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public void Purge()
@@ -185,15 +293,19 @@ namespace TopSpeed.Speech
             _timeRequiredMs = 0;
             _speechSuppressedUntilNextSpeak = true;
 
-            if (_screenReaderReady)
+            if (!_screenReaderReady)
+                return;
+
+            try
             {
-                try
+                _screenReaderWorker.Invoke(reader =>
                 {
-                    _screenReader.Silence();
-                }
-                catch
-                {
-                }
+                    TrySilence(reader);
+                    return 0;
+                });
+            }
+            catch
+            {
             }
         }
 
@@ -203,7 +315,7 @@ namespace TopSpeed.Speech
 
             try
             {
-                _screenReader.Close();
+                _screenReaderWorker.Dispose();
             }
             catch
             {
@@ -216,20 +328,7 @@ namespace TopSpeed.Speech
         {
             try
             {
-                try
-                {
-                    _screenReader.Close();
-                }
-                catch
-                {
-                }
-
-                _screenReader.TrySAPI(true);
-                _screenReader.PreferSAPI(false);
-                var initialized = _screenReader.Initialize();
-                if (initialized)
-                    ApplySpeechRate();
-                return initialized;
+                return _screenReaderWorker.Invoke(ReinitializeScreenReaderOnWorker);
             }
             catch
             {
@@ -237,39 +336,80 @@ namespace TopSpeed.Speech
             }
         }
 
-        private bool TrySpeakWithScreenReader(string text, bool interrupt)
+        private bool ReinitializeScreenReaderOnWorker(IScreenReader reader)
         {
+            TrySilence(reader);
+            TryClose(reader);
+
+            reader.TrySAPI(true);
+            reader.PreferSAPI(false);
+
+            var initialized = false;
             try
             {
-                switch (OutputMode)
+                initialized = reader.Initialize();
+            }
+            catch
+            {
+                initialized = false;
+            }
+
+            if (initialized)
+                ApplySpeechRateOnWorker(reader);
+
+            return initialized;
+        }
+
+        private bool TrySpeakWithScreenReader(string text, bool interrupt)
+        {
+            var outputMode = OutputMode;
+            try
+            {
+                return _screenReaderWorker.Invoke(reader =>
                 {
-                    case SpeechOutputMode.Braille:
-                        if (_screenReader.Braille(text))
-                            return true;
+                    if (!_screenReaderReady)
+                        _screenReaderReady = ReinitializeScreenReaderOnWorker(reader);
 
-                        if (_screenReader.Output(text, interrupt))
-                            return true;
+                    if (!_screenReaderReady)
+                        return false;
 
-                        return _screenReader.Speak(text, interrupt);
-
-                    case SpeechOutputMode.SpeechAndBraille:
-                        if (_screenReader.Output(text, interrupt))
-                            return true;
-
-                        if (_screenReader.Speak(text, interrupt))
+                    try
+                    {
+                        switch (outputMode)
                         {
-                            _screenReader.Braille(text);
-                            return true;
+                            case SpeechOutputMode.Braille:
+                                if (reader.Braille(text))
+                                    return true;
+
+                                if (reader.Output(text, interrupt))
+                                    return true;
+
+                                return reader.Speak(text, interrupt);
+
+                            case SpeechOutputMode.SpeechAndBraille:
+                                if (reader.Output(text, interrupt))
+                                    return true;
+
+                                if (reader.Speak(text, interrupt))
+                                {
+                                    reader.Braille(text);
+                                    return true;
+                                }
+
+                                return reader.Braille(text);
+
+                            default:
+                                if (reader.Speak(text, interrupt))
+                                    return true;
+
+                                return reader.Output(text, interrupt);
                         }
-
-                        return _screenReader.Braille(text);
-
-                    default:
-                        if (_screenReader.Speak(text, interrupt))
-                            return true;
-
-                        return _screenReader.Output(text, interrupt);
-                }
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                });
             }
             catch
             {
@@ -296,6 +436,7 @@ namespace TopSpeed.Speech
         {
             if (string.IsNullOrWhiteSpace(text))
                 return 0;
+
             return text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Length;
         }
 
@@ -329,7 +470,44 @@ namespace TopSpeed.Speech
 
             try
             {
-                _screenReader.SetRate(_speechRate);
+                _screenReaderWorker.Invoke(reader =>
+                {
+                    ApplySpeechRateOnWorker(reader);
+                    return 0;
+                });
+            }
+            catch
+            {
+            }
+        }
+
+        private void ApplySpeechRateOnWorker(IScreenReader reader)
+        {
+            try
+            {
+                reader.SetRate(_speechRate);
+            }
+            catch
+            {
+            }
+        }
+
+        private static void TryClose(IScreenReader reader)
+        {
+            try
+            {
+                reader.Close();
+            }
+            catch
+            {
+            }
+        }
+
+        private static void TrySilence(IScreenReader reader)
+        {
+            try
+            {
+                reader.Silence();
             }
             catch
             {

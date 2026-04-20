@@ -47,6 +47,7 @@ namespace TopSpeed.Drive.Multiplayer
             _panels.ApplyInputPolicy(context.InputPolicy);
             if (phaseChanged.Current == Phase.Paused)
             {
+                _localRadio.PauseForGame();
                 _liveTx.Pause();
                 _soundPause?.Play(loop: false);
                 return;
@@ -54,6 +55,7 @@ namespace TopSpeed.Drive.Multiplayer
 
             if (phaseChanged.Previous == Phase.Paused)
             {
+                _localRadio.ResumeFromGame();
                 _liveTx.Resume();
                 _soundResume?.Play(loop: false);
             }

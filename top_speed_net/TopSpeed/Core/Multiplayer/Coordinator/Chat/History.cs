@@ -1,4 +1,5 @@
 using TopSpeed.Speech;
+using TopSpeed.Menu;
 
 namespace TopSpeed.Core.Multiplayer
 {
@@ -68,6 +69,44 @@ namespace TopSpeed.Core.Multiplayer
             PlayNetworkSound("buffer_switch.ogg");
             UpdateHistoryScreens();
             _speech.Speak(_state.Chat.History.CategoryLabel(), SpeechService.SpeakFlag.None);
+        }
+
+        internal void NextChatItem()
+        {
+            _chatFlow.NextItem();
+        }
+
+        internal void NextChatItemCore()
+        {
+            var result = _state.Chat.History.MoveCurrentItem(1, _menu.IsWrapNavigationEnabled);
+            if (InteractionHints.IsTouchPlatform())
+                PlayChatItemNavigationFeedback(result);
+            _speech.Speak(result.Text, SpeechService.SpeakFlag.None);
+        }
+
+        internal void PreviousChatItem()
+        {
+            _chatFlow.PreviousItem();
+        }
+
+        internal void PreviousChatItemCore()
+        {
+            var result = _state.Chat.History.MoveCurrentItem(-1, _menu.IsWrapNavigationEnabled);
+            if (InteractionHints.IsTouchPlatform())
+                PlayChatItemNavigationFeedback(result);
+            _speech.Speak(result.Text, SpeechService.SpeakFlag.None);
+        }
+
+        private void PlayChatItemNavigationFeedback(Chat.HistoryMoveResult result)
+        {
+            var menuId = _menu.CurrentId ?? string.Empty;
+            if (result.Moved)
+                _menu.TryPlayNavigateCue(menuId);
+
+            if (result.Wrapped)
+                _menu.TryPlayWrapCue(menuId);
+            else if (result.EdgeReached)
+                _menu.TryPlayEdgeCue(menuId);
         }
     }
 }

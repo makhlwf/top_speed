@@ -9,6 +9,8 @@ namespace TopSpeed.Input
         {
             if ((int)key <= 0)
                 return LocalizationService.Translate(LocalizationService.Mark("none"));
+            if (IsTechnicalScanCodeKey(key))
+                return LocalizationService.Translate(LocalizationService.Mark("Unknown"));
 
             return key switch
             {
@@ -38,22 +40,12 @@ namespace TopSpeed.Input
                 InputKey.Subtract => LocalizationService.Translate(LocalizationService.Mark("Subtract")),
                 InputKey.Add => LocalizationService.Translate(LocalizationService.Mark("Add")),
                 InputKey.Decimal => LocalizationService.Translate(LocalizationService.Mark("Decimal")),
-                InputKey.Oem102 => LocalizationService.Translate(LocalizationService.Mark("OEM 102")),
-                InputKey.Kana => LocalizationService.Translate(LocalizationService.Mark("Kana")),
-                InputKey.AbntC1 => LocalizationService.Translate(LocalizationService.Mark("ABNT C1")),
-                InputKey.Convert => LocalizationService.Translate(LocalizationService.Mark("Convert")),
-                InputKey.NoConvert => LocalizationService.Translate(LocalizationService.Mark("No Convert")),
-                InputKey.Yen => LocalizationService.Translate(LocalizationService.Mark("Yen")),
-                InputKey.AbntC2 => LocalizationService.Translate(LocalizationService.Mark("ABNT C2")),
                 InputKey.NumberPadEquals => LocalizationService.Translate(LocalizationService.Mark("Numpad Equals")),
                 InputKey.PreviousTrack => "Previous Track",
                 InputKey.AT => LocalizationService.Translate(LocalizationService.Mark("At")),
                 InputKey.Colon => LocalizationService.Translate(LocalizationService.Mark("Colon")),
                 InputKey.Underline => LocalizationService.Translate(LocalizationService.Mark("Underline")),
-                InputKey.Kanji => LocalizationService.Translate(LocalizationService.Mark("Kanji")),
                 InputKey.Stop => LocalizationService.Translate(LocalizationService.Mark("Stop")),
-                InputKey.AX => LocalizationService.Translate(LocalizationService.Mark("AX")),
-                InputKey.Unlabeled => LocalizationService.Translate(LocalizationService.Mark("Unlabeled")),
                 InputKey.NextTrack => "Next Track",
                 InputKey.NumberPadEnter => LocalizationService.Translate(LocalizationService.Mark("Numpad Enter")),
                 InputKey.RightControl => LocalizationService.Translate(LocalizationService.Mark("Right Control")),
@@ -96,6 +88,20 @@ namespace TopSpeed.Input
                 InputKey.MediaSelect => "Media Select",
                 _ => key.ToString()
             };
+        }
+
+        private static bool IsTechnicalScanCodeKey(InputKey key)
+        {
+            return key == InputKey.Oem102
+                || key == InputKey.Kana
+                || key == InputKey.AbntC1
+                || key == InputKey.Convert
+                || key == InputKey.NoConvert
+                || key == InputKey.Yen
+                || key == InputKey.AbntC2
+                || key == InputKey.Kanji
+                || key == InputKey.AX
+                || key == InputKey.Unlabeled;
         }
 
         public static string Axis(AxisOrButton axis)

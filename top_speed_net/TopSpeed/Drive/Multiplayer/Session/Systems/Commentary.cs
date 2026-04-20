@@ -75,13 +75,13 @@ namespace TopSpeed.Drive.Multiplayer.Session.Systems
                 _lastComment = 0f;
             }
 
-            if (_input.GetRequestInfo() && _infoKeyReleased)
+            if (_input.Intents.IsTriggered(DriveIntent.RequestInfo) && _infoKeyReleased)
             {
                 _infoKeyReleased = false;
                 Comment(automatic: false);
                 _lastComment = 0f;
             }
-            else if (!_input.GetRequestInfo() && !_infoKeyReleased)
+            else if (!_input.Intents.IsTriggered(DriveIntent.RequestInfo) && !_infoKeyReleased)
             {
                 _infoKeyReleased = true;
             }

@@ -25,7 +25,9 @@ namespace TopSpeed.Menu
                 new CheckBox(LocalizationService.Mark("Force feedback"),
                     () => _settings.ForceFeedback,
                     value => _settingsActions.UpdateSetting(() => _settings.ForceFeedback = value),
-                    hint: LocalizationService.Mark("Enables force feedback or vibration if your controller supports it. Press ENTER to toggle.")),
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("Enables force feedback or vibration if your controller supports it. Press ENTER to toggle."),
+                        LocalizationService.Mark("Enables force feedback or vibration if your controller supports it. Swipe up to toggle."))),
                 new RadioButton(LocalizationService.Mark("Progressive keyboard input"),
                     new[]
                     {
@@ -37,7 +39,9 @@ namespace TopSpeed.Menu
                     },
                     () => (int)_settings.KeyboardProgressiveRate,
                     value => _settingsActions.UpdateSetting(() => _settings.KeyboardProgressiveRate = (KeyboardProgressiveRate)value),
-                    hint: LocalizationService.Mark("When enabled, throttle, brake, and steering ramp in over time instead of jumping instantly to full value. Press LEFT or RIGHT to change.")),
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("When enabled, throttle, brake, and steering ramp in over time instead of jumping instantly to full value. Press LEFT or RIGHT to change."),
+                        LocalizationService.Mark("When enabled, throttle, brake, and steering ramp in over time instead of jumping instantly to full value. Swipe left or right with two fingers to change."))),
                 new MenuItem(LocalizationService.Mark("Map keyboard keys"), MenuAction.None, nextMenuId: "options_controls_keyboard"),
                 new MenuItem(LocalizationService.Mark("Map controller keys"), MenuAction.None, nextMenuId: "options_controls_controller"),
                 new MenuItem(LocalizationService.Mark("Map menu shortcuts"),
@@ -45,6 +49,18 @@ namespace TopSpeed.Menu
                     nextMenuId: ShortcutGroupsMenuId,
                     onActivate: RebuildShortcutGroupsMenu)
             };
+
+            if (InteractionHints.IsAndroidPlatform())
+            {
+                items.Insert(3,
+                    new CheckBox(
+                        LocalizationService.Mark("Use motion sensors for steering"),
+                        () => _settings.AndroidUseMotionSteering,
+                        value => _settingsActions.UpdateSetting(() => _settings.AndroidUseMotionSteering = value),
+                        hint: HintForPlatform(
+                            LocalizationService.Mark("When checked, steering uses Android motion sensors instead of drag gestures."),
+                            LocalizationService.Mark("When checked, steering uses Android motion sensors instead of drag gestures. Swipe up to toggle."))));
+            }
             return BackMenu("options_controls", items);
         }
 
@@ -77,7 +93,9 @@ namespace TopSpeed.Menu
                     },
                     () => (int)_settings.ControllerThrottleInvertMode,
                     value => _settingsActions.UpdateSetting(() => _settings.ControllerThrottleInvertMode = (PedalInvertMode)value),
-                    hint: LocalizationService.Mark("Auto detects wheel pedal direction from resting position. Use LEFT or RIGHT to change.")),
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("Auto detects wheel pedal direction from resting position. Use LEFT or RIGHT to change."),
+                        LocalizationService.Mark("Auto detects wheel pedal direction from resting position. Swipe left or right with two fingers to change."))),
                 new RadioButton(LocalizationService.Mark("Brake pedal direction"),
                     new[]
                     {
@@ -87,7 +105,9 @@ namespace TopSpeed.Menu
                     },
                     () => (int)_settings.ControllerBrakeInvertMode,
                     value => _settingsActions.UpdateSetting(() => _settings.ControllerBrakeInvertMode = (PedalInvertMode)value),
-                    hint: LocalizationService.Mark("Auto detects wheel pedal direction from resting position. Use LEFT or RIGHT to change.")),
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("Auto detects wheel pedal direction from resting position. Use LEFT or RIGHT to change."),
+                        LocalizationService.Mark("Auto detects wheel pedal direction from resting position. Swipe left or right with two fingers to change."))),
                 new RadioButton(LocalizationService.Mark("Clutch pedal direction"),
                     new[]
                     {
@@ -97,7 +117,9 @@ namespace TopSpeed.Menu
                     },
                     () => (int)_settings.ControllerClutchInvertMode,
                     value => _settingsActions.UpdateSetting(() => _settings.ControllerClutchInvertMode = (PedalInvertMode)value),
-                    hint: LocalizationService.Mark("Auto detects wheel pedal direction from resting position. Use LEFT or RIGHT to change.")),
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("Auto detects wheel pedal direction from resting position. Use LEFT or RIGHT to change."),
+                        LocalizationService.Mark("Auto detects wheel pedal direction from resting position. Swipe left or right with two fingers to change."))),
                 new RadioButton(LocalizationService.Mark("Steering dead zone"),
                     new[]
                     {
@@ -121,7 +143,9 @@ namespace TopSpeed.Menu
                             deadZone = 1;
                         _settingsActions.UpdateSetting(() => _settings.ControllerSteeringDeadZone = deadZone);
                     },
-                    hint: LocalizationService.Mark("Sets how much small steering movement is ignored around center. Default is 1 degree. Use LEFT or RIGHT to change."))
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("Sets how much small steering movement is ignored around center. Default is 1 degree. Use LEFT or RIGHT to change."),
+                        LocalizationService.Mark("Sets how much small steering movement is ignored around center. Default is 1 degree. Swipe left or right with two fingers to change.")))
             };
 
             items.AddRange(BuildMappingItems(InputMappingMode.Controller));

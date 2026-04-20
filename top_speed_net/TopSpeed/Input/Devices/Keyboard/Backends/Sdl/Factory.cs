@@ -1,6 +1,7 @@
 using System;
 using TopSpeed.Input.Devices.Keyboard;
 using TopSpeed.Runtime;
+using SdlRuntime = TS.Sdl.Runtime;
 
 namespace TopSpeed.Input.Devices.Keyboard.Backends.Sdl
 {
@@ -11,7 +12,7 @@ namespace TopSpeed.Input.Devices.Keyboard.Backends.Sdl
 
         public bool IsSupported()
         {
-            return false;
+            return SdlRuntime.IsAvailable;
         }
 
         public IKeyboardDevice Create(IntPtr windowHandle, IKeyboardEventSource? eventSource)

@@ -10,18 +10,21 @@ namespace TopSpeed.Game
         private readonly ITextInputService _textInput;
         private readonly ILoopHost _loop;
         private readonly IFileDialogs _fileDialogs;
+        private readonly IClipboardService _clipboard;
         private Game? _game;
 
         public GameApp(
             IWindowHost window,
             ITextInputService textInput,
             ILoopHost loop,
-            IFileDialogs fileDialogs)
+            IFileDialogs fileDialogs,
+            IClipboardService clipboard)
         {
             _window = window ?? throw new ArgumentNullException(nameof(window));
             _textInput = textInput ?? throw new ArgumentNullException(nameof(textInput));
             _loop = loop ?? throw new ArgumentNullException(nameof(loop));
             _fileDialogs = fileDialogs ?? throw new ArgumentNullException(nameof(fileDialogs));
+            _clipboard = clipboard ?? throw new ArgumentNullException(nameof(clipboard));
             _window.Closed += OnClosed;
             _window.Loaded += OnLoaded;
         }

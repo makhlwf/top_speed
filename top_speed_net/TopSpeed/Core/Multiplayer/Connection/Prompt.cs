@@ -54,6 +54,10 @@ namespace TopSpeed.Core.Multiplayer
                     if (!HandleServerAddressInput(result.Text))
                     {
                         var retry = string.IsNullOrWhiteSpace(result.Text) ? initialValue : result.Text;
+#if !NETFRAMEWORK
+                        if (OperatingSystem.IsAndroid())
+                            retry = null;
+#endif
                         PromptServerAddressInput(retry);
                     }
                 });
@@ -74,6 +78,23 @@ namespace TopSpeed.Core.Multiplayer
                     if (!HandleCallSignInput(result.Text))
                         PromptCallSignInput(result.Text);
                 });
+        }
+
+        private void HandleDefaultCallSignInput(string text)
+        {
+            var trimmed = (text ?? string.Empty).Trim();
+            _settings.DefaultCallSign = trimmed;
+            _saveSettings();
+
+            if (trimmed.Length == 0)
+            {
+                _speech.Speak(LocalizationService.Mark("Default call sign cleared."));
+                return;
+            }
+
+            _speech.Speak(LocalizationService.Format(
+                LocalizationService.Mark("Default call sign set to {0}."),
+                trimmed));
         }
     }
 }

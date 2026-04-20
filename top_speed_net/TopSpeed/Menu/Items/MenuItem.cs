@@ -112,7 +112,9 @@ namespace TopSpeed.Menu
 
             if (HasActions)
             {
-                var actionsHint = LocalizationService.Translate(LocalizationService.Mark("Actions available, press right arrow to view."));
+                var actionsHint = LocalizationService.Translate(InteractionHints.ForPlatform(
+                    LocalizationService.Mark("Actions available, press right arrow to view."),
+                    LocalizationService.Mark("Actions available, swipe left or right with two fingers to view.")));
                 if (string.IsNullOrWhiteSpace(translatedHint))
                     return actionsHint;
                 return $"{translatedHint} {actionsHint}";

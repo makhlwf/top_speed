@@ -8,97 +8,97 @@ namespace TopSpeed.Input
         public void SetLeft(AxisOrButton a)
         {
             _left = a;
-            _settings.ControllerLeft = a;
+            _settings.SetControllerBinding(DriveIntent.SteerLeft, a);
         }
 
         public void SetLeft(Key key)
         {
             _kbLeft = key;
-            _settings.KeyLeft = key;
+            _settings.SetKeyboardBinding(DriveIntent.SteerLeft, key);
         }
 
         public void SetRight(AxisOrButton a)
         {
             _right = a;
-            _settings.ControllerRight = a;
+            _settings.SetControllerBinding(DriveIntent.SteerRight, a);
         }
 
         public void SetRight(Key key)
         {
             _kbRight = key;
-            _settings.KeyRight = key;
+            _settings.SetKeyboardBinding(DriveIntent.SteerRight, key);
         }
 
         public void SetThrottle(AxisOrButton a)
         {
             _throttle = a;
-            _settings.ControllerThrottle = a;
+            _settings.SetControllerBinding(DriveIntent.Throttle, a);
         }
 
         public void SetThrottle(Key key)
         {
             _kbThrottle = key;
-            _settings.KeyThrottle = key;
+            _settings.SetKeyboardBinding(DriveIntent.Throttle, key);
         }
 
         public void SetBrake(AxisOrButton a)
         {
             _brake = a;
-            _settings.ControllerBrake = a;
+            _settings.SetControllerBinding(DriveIntent.Brake, a);
         }
 
         public void SetBrake(Key key)
         {
             _kbBrake = key;
-            _settings.KeyBrake = key;
+            _settings.SetKeyboardBinding(DriveIntent.Brake, key);
         }
 
         public void SetClutch(AxisOrButton a)
         {
             _clutch = a;
-            _settings.ControllerClutch = a;
+            _settings.SetControllerBinding(DriveIntent.Clutch, a);
         }
 
         public void SetClutch(Key key)
         {
             _kbClutch = key;
-            _settings.KeyClutch = key;
+            _settings.SetKeyboardBinding(DriveIntent.Clutch, key);
         }
 
         public void SetGearUp(AxisOrButton a)
         {
             _gearUp = a;
-            _settings.ControllerGearUp = a;
+            _settings.SetControllerBinding(DriveIntent.GearUp, a);
         }
 
         public void SetGearUp(Key key)
         {
             _kbGearUp = key;
-            _settings.KeyGearUp = key;
+            _settings.SetKeyboardBinding(DriveIntent.GearUp, key);
         }
 
         public void SetGearDown(AxisOrButton a)
         {
             _gearDown = a;
-            _settings.ControllerGearDown = a;
+            _settings.SetControllerBinding(DriveIntent.GearDown, a);
         }
 
         public void SetGearDown(Key key)
         {
             _kbGearDown = key;
-            _settings.KeyGearDown = key;
+            _settings.SetKeyboardBinding(DriveIntent.GearDown, key);
         }
 
         public void SetHorn(AxisOrButton a)
         {
             _horn = a;
-            _settings.ControllerHorn = a;
+            _settings.SetControllerBinding(DriveIntent.Horn, a);
         }
 
         public void SetHorn(Key key)
         {
             _kbHorn = key;
-            _settings.KeyHorn = key;
+            _settings.SetKeyboardBinding(DriveIntent.Horn, key);
         }
     }
 }

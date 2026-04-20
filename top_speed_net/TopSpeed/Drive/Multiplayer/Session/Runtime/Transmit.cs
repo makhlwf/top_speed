@@ -54,7 +54,8 @@ namespace TopSpeed.Drive.Multiplayer
                 _car.Backfiring(),
                 LocalMediaLoaded,
                 LocalMediaPlaying,
-                LocalMediaId));
+                LocalMediaId,
+                LocalRadioVolumePercent));
         }
 
         private void SendPlayerState(bool sendStarted)

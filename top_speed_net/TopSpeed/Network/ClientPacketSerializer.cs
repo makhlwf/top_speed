@@ -6,7 +6,7 @@ namespace TopSpeed.Network
 {
     internal static partial class ClientPacketSerializer
     {
-        private const int PlayerDataFieldSize = 31;
+        private const int PlayerDataFieldSize = 32;
 
         public static bool TryReadHeader(byte[] data, out Command command)
         {
@@ -170,6 +170,7 @@ namespace TopSpeed.Network
             packet.MediaLoaded = reader.ReadBool();
             packet.MediaPlaying = reader.ReadBool();
             packet.MediaId = reader.ReadUInt32();
+            packet.RadioVolumePercent = reader.ReadByte();
         }
     }
 }

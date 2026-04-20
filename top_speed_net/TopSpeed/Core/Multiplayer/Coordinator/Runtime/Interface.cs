@@ -12,6 +12,21 @@ namespace TopSpeed.Core.Multiplayer
             PreviousChatCategory();
         }
 
+        void IMultiplayerRuntime.NextChatItem()
+        {
+            NextChatItem();
+        }
+
+        void IMultiplayerRuntime.PreviousChatItem()
+        {
+            PreviousChatItem();
+        }
+
+        void IMultiplayerRuntime.CheckPing()
+        {
+            CheckCurrentPing();
+        }
+
         void IMultiplayerRuntime.OpenGlobalChatHotkey()
         {
             OpenGlobalChatHotkey();

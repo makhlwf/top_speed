@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TopSpeed.Input;
 using TopSpeed.Protocol;
 using TopSpeed.Vehicles;
 using TS.Audio;
@@ -10,8 +11,10 @@ namespace TopSpeed.Drive.Multiplayer.Session.Systems
     {
         private readonly Tracks.Track _track;
         private readonly ICar _car;
+        private readonly DriveSettings _settings;
         private readonly IDictionary<byte, RemotePlayer> _remotePlayers;
         private readonly int _lapLimit;
+        private readonly Source[] _lapSounds;
         private readonly byte _localPlayerNumber;
         private readonly Func<int> _getLap;
         private readonly Action<int> _setLap;
@@ -25,6 +28,7 @@ namespace TopSpeed.Drive.Multiplayer.Session.Systems
         private readonly Action<PlayerState> _setPlayerState;
         private readonly Action<int> _setPosition;
         private readonly Action<int> _announceFinishOrder;
+        private readonly Action<Source, bool> _speak;
         private readonly Action<bool> _sendPlayerState;
         private readonly Action _sendCrash;
 
@@ -33,8 +37,10 @@ namespace TopSpeed.Drive.Multiplayer.Session.Systems
             int order,
             Tracks.Track track,
             ICar car,
+            DriveSettings settings,
             IDictionary<byte, RemotePlayer> remotePlayers,
             int lapLimit,
+            Source[] lapSounds,
             byte localPlayerNumber,
             Func<int> getLap,
             Action<int> setLap,
@@ -48,14 +54,17 @@ namespace TopSpeed.Drive.Multiplayer.Session.Systems
             Action<PlayerState> setPlayerState,
             Action<int> setPosition,
             Action<int> announceFinishOrder,
+            Action<Source, bool> speak,
             Action<bool> sendPlayerState,
             Action sendCrash)
             : base(name, order)
         {
             _track = track ?? throw new ArgumentNullException(nameof(track));
             _car = car ?? throw new ArgumentNullException(nameof(car));
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _remotePlayers = remotePlayers ?? throw new ArgumentNullException(nameof(remotePlayers));
             _lapLimit = lapLimit;
+            _lapSounds = lapSounds ?? throw new ArgumentNullException(nameof(lapSounds));
             _localPlayerNumber = localPlayerNumber;
             _getLap = getLap ?? throw new ArgumentNullException(nameof(getLap));
             _setLap = setLap ?? throw new ArgumentNullException(nameof(setLap));
@@ -69,6 +78,7 @@ namespace TopSpeed.Drive.Multiplayer.Session.Systems
             _setPlayerState = setPlayerState ?? throw new ArgumentNullException(nameof(setPlayerState));
             _setPosition = setPosition ?? throw new ArgumentNullException(nameof(setPosition));
             _announceFinishOrder = announceFinishOrder ?? throw new ArgumentNullException(nameof(announceFinishOrder));
+            _speak = speak ?? throw new ArgumentNullException(nameof(speak));
             _sendPlayerState = sendPlayerState ?? throw new ArgumentNullException(nameof(sendPlayerState));
             _sendCrash = sendCrash ?? throw new ArgumentNullException(nameof(sendCrash));
         }
@@ -97,7 +107,17 @@ namespace TopSpeed.Drive.Multiplayer.Session.Systems
 
             _setLap(currentLap);
             if (currentLap <= _lapLimit)
+            {
+                if (_settings.AutomaticInfo != AutomaticInfoMode.Off
+                    && currentLap > 1
+                    && _lapLimit - currentLap >= 0
+                    && _lapLimit - currentLap < _lapSounds.Length)
+                {
+                    _speak(_lapSounds[_lapLimit - currentLap], true);
+                }
+
                 return;
+            }
 
             _applyPlayerFinishState();
             AnnounceLocalFinish();

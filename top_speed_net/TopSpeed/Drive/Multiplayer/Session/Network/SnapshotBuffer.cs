@@ -82,7 +82,8 @@ namespace TopSpeed.Drive.Multiplayer
                     Backfiring = item.Backfiring,
                     MediaLoaded = item.MediaLoaded,
                     MediaPlaying = item.MediaPlaying,
-                    MediaId = item.MediaId
+                    MediaId = item.MediaId,
+                    RadioVolumePercent = item.RadioVolumePercent
                 };
             }
 

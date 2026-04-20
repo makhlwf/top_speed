@@ -18,6 +18,12 @@ namespace TopSpeed.Vehicles
             _speedMps = 0f;
         }
 
+        public void ResetForEngineStart()
+        {
+            _rpm = 0f;
+            _speedMps = 0f;
+        }
+
         public void StartEngine()
         {
             _rpm = _idleRpm;

@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TopSpeed.Shared\TopSpeed.Shared.csproj" />
+    <ProjectReference Include="..\TS.Sdl\TS.Sdl.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net472'">

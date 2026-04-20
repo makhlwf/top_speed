@@ -17,7 +17,7 @@ namespace TopSpeed.Game
             _timeTrial.Run(elapsed);
             if (_timeTrial.WantsPause)
                 EnterPause(AppState.TimeTrial);
-            if (_timeTrial.WantsExit || _input.WasPressed(Key.Escape))
+            if (_timeTrial.WantsExit || _input.WasPressed(Key.Escape) || ConsumeDriveTouchExitRequest())
                 EndRace(_timeTrial.WantsExit ? _timeTrial.ConsumeResultSummary() : null);
         }
 
@@ -32,7 +32,7 @@ namespace TopSpeed.Game
             _singleRace.Run(elapsed);
             if (_singleRace.WantsPause)
                 EnterPause(AppState.SingleRace);
-            if (_singleRace.WantsExit || _input.WasPressed(Key.Escape))
+            if (_singleRace.WantsExit || _input.WasPressed(Key.Escape) || ConsumeDriveTouchExitRequest())
                 EndRace(_singleRace.WantsExit ? _singleRace.ConsumeResultSummary() : null);
         }
 
@@ -46,6 +46,7 @@ namespace TopSpeed.Game
             _singleRace?.Dispose();
             _singleRace = null;
 
+            _input.ResetState();
             _state = AppState.Menu;
             _menu.ShowRoot("main");
             _menu.FadeInMenuMusic();

@@ -84,9 +84,13 @@ namespace TopSpeed.Menu
                     _settings.SyncMusicVolumeFromAudioCategories();
                 }),
                 onChanged: _ => _audio.ApplyAudioSettings(),
-                hint: LocalizationService.Format(
-                    LocalizationService.Mark("{0} Use LEFT or RIGHT to change by 1, PAGE UP or PAGE DOWN to change by 10, HOME for maximum, END for minimum."),
-                    LocalizationService.Translate(hint)));
+                hintProvider: () => HintForPlatform(
+                    LocalizationService.Format(
+                        LocalizationService.Mark("{0} Use LEFT or RIGHT to change by 1, PAGE UP or PAGE DOWN to change by 10, HOME for maximum, END for minimum."),
+                        LocalizationService.Translate(hint)),
+                    LocalizationService.Format(
+                        LocalizationService.Mark("{0} Swipe up or down with two fingers to change by 10, swipe left or right with two fingers to change by 1, and swipe up or down with three fingers for maximum or minimum."),
+                        LocalizationService.Translate(hint))));
         }
     }
 }

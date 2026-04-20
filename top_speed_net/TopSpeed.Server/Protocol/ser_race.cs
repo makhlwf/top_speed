@@ -8,7 +8,7 @@ namespace TopSpeed.Server.Protocol
         public static bool TryReadRacePlayerData(byte[] data, out PacketRacePlayerData packet)
         {
             packet = new PacketRacePlayerData();
-            if (data.Length < 2 + 4 + 4 + 1 + 1 + 4 + 4 + 2 + 4 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 4)
+            if (data.Length < 2 + 4 + 4 + 1 + 1 + 4 + 4 + 2 + 4 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 4 + 1)
                 return false;
             var reader = new PacketReader(data);
             reader.ReadByte();
@@ -29,6 +29,7 @@ namespace TopSpeed.Server.Protocol
             packet.MediaLoaded = reader.ReadBool();
             packet.MediaPlaying = reader.ReadBool();
             packet.MediaId = reader.ReadUInt32();
+            packet.RadioVolumePercent = reader.ReadByte();
             return true;
         }
 

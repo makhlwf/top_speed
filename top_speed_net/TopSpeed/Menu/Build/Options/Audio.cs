@@ -12,15 +12,21 @@ namespace TopSpeed.Menu
                 new CheckBox(LocalizationService.Mark("Enable HRTF audio"),
                     () => _settings.HrtfAudio,
                     value => _settingsActions.UpdateSetting(() => _settings.HrtfAudio = value),
-                    hint: LocalizationService.Mark("When checked, Three-D audio uses HRTF spatialization for more realistic positioning. Press ENTER to toggle.")),
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("When checked, Three-D audio uses HRTF spatialization for more realistic positioning. Press ENTER to toggle."),
+                        LocalizationService.Mark("When checked, Three-D audio uses HRTF spatialization for more realistic positioning. Swipe up to toggle."))),
                 new CheckBox(LocalizationService.Mark("Stereo widening for own car"),
                     () => _settings.StereoWidening,
                     value => _settingsActions.UpdateSetting(() => _settings.StereoWidening = value),
-                    hint: LocalizationService.Mark("Accessibility option for clearer left-right cues with HRTF. It attenuates the opposite ear for your own car sounds only. Press ENTER to toggle.")),
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("Accessibility option for clearer left-right cues with HRTF. It attenuates the opposite ear for your own car sounds only. Press ENTER to toggle."),
+                        LocalizationService.Mark("Accessibility option for clearer left-right cues with HRTF. It attenuates the opposite ear for your own car sounds only. Swipe up to toggle."))),
                 new CheckBox(LocalizationService.Mark("Automatic audio device format"),
                     () => _settings.AutoDetectAudioDeviceFormat,
                     value => _settingsActions.UpdateSetting(() => _settings.AutoDetectAudioDeviceFormat = value),
-                    hint: LocalizationService.Mark("When checked, the game uses the device channel count and sample rate. Restart required. Press ENTER to toggle."))
+                    hint: HintForPlatform(
+                        LocalizationService.Mark("When checked, the game uses the device channel count and sample rate. Restart required. Press ENTER to toggle."),
+                        LocalizationService.Mark("When checked, the game uses the device channel count and sample rate. Restart required. Swipe up to toggle.")))
             };
 
             return BackMenu("options_audio", items);

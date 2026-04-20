@@ -72,7 +72,7 @@ namespace TopSpeed.Tracks
             };
         }
 
-        public bool NextRoad(float position, float speed, int curveAnnouncementMode, out Road road)
+        public bool NextRoad(float position, float speed, int curveAnnouncementMode, float speedDependentLeadTimeSeconds, out Road road)
         {
             road = new Road();
             if (_segmentCount == 0)
@@ -93,7 +93,9 @@ namespace TopSpeed.Tracks
                 return false;
             }
 
-            var lookAhead = _callLength + speed / 2;
+            var safeLeadTimeSeconds = Math.Max(0.5f, Math.Min(4.0f, speedDependentLeadTimeSeconds));
+            var speedMetersPerSecond = Math.Max(0f, speed) / 3.6f;
+            var lookAhead = _callLength + speedMetersPerSecond * safeLeadTimeSeconds;
             var roadAhead = RoadIndexAt(position + lookAhead);
             if (roadAhead < 0)
                 return false;

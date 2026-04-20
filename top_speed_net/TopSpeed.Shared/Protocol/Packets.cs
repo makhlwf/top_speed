@@ -66,6 +66,7 @@ namespace TopSpeed.Protocol
         public bool MediaLoaded;
         public bool MediaPlaying;
         public uint MediaId;
+        public byte RadioVolumePercent;
     }
 
     public sealed class PacketPlayerData
@@ -82,6 +83,7 @@ namespace TopSpeed.Protocol
         public bool MediaLoaded;
         public bool MediaPlaying;
         public uint MediaId;
+        public byte RadioVolumePercent;
     }
 
     public sealed class PacketRaceSnapshot

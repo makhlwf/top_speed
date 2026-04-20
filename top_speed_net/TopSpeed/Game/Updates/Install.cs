@@ -10,6 +10,9 @@ namespace TopSpeed.Game
     {
         private void LaunchUpdaterAndExit()
         {
+            if (TryInstallAndroidPackage())
+                return;
+
             var root = AppContext.BaseDirectory;
             var updaterDir = TrimTrailingDirectorySeparator(root);
             var updaterPath = ResolveExecutablePath(root, _updateConfig.UpdaterEntryName);
@@ -60,6 +63,61 @@ namespace TopSpeed.Game
                     LocalizationService.Mark("The updater could not be started."),
                     new[] { ex.Message });
             }
+        }
+
+        private bool TryInstallAndroidPackage()
+        {
+#if NETFRAMEWORK
+            return false;
+#else
+            if (!OperatingSystem.IsAndroid())
+                return false;
+
+            if (string.IsNullOrWhiteSpace(_updateZipPath) || !File.Exists(_updateZipPath))
+            {
+                ShowMessageDialog(
+                    LocalizationService.Mark("Update package missing"),
+                    LocalizationService.Mark("The update package file was not found."),
+                    new[] { LocalizationService.Mark("You can download the update again or install manually.") });
+                return true;
+            }
+
+            if (!string.Equals(Path.GetExtension(_updateZipPath), ".apk", StringComparison.OrdinalIgnoreCase))
+            {
+                ShowMessageDialog(
+                    LocalizationService.Mark("Update package invalid"),
+                    LocalizationService.Mark("Android updates require an APK package."),
+                    new[]
+                    {
+                        LocalizationService.Format(
+                            LocalizationService.Mark("Selected file: {0}"),
+                            Path.GetFileName(_updateZipPath))
+                    });
+                return true;
+            }
+
+            var installer = UpdatePackageRuntime.GetInstaller();
+            if (installer == null)
+            {
+                ShowMessageDialog(
+                    LocalizationService.Mark("Updater unavailable"),
+                    LocalizationService.Mark("Android package installer is not available."),
+                    new[] { LocalizationService.Mark("Please restart the game and try again.") });
+                return true;
+            }
+
+            if (!installer.TryInstallPackage(_updateZipPath, out var error))
+            {
+                ShowMessageDialog(
+                    LocalizationService.Mark("Updater launch failed"),
+                    LocalizationService.Mark("The updater could not be started."),
+                    new[] { string.IsNullOrWhiteSpace(error) ? LocalizationService.Mark("Unknown error.") : error });
+                return true;
+            }
+
+            ExitRequested?.Invoke();
+            return true;
+#endif
         }
 
         private static string ResolveExecutablePath(string root, string executableStem)

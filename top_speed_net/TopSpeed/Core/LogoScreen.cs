@@ -40,7 +40,11 @@ namespace TopSpeed.Core
             if (!_fading && !_logo.IsPlaying)
                 return true;
 
-            if (!_fading && (input.WasPressed(Key.Return) || input.WasPressed(Key.NumberPadEnter)))
+            if (!_fading &&
+                (input.WasPressed(Key.Return) ||
+                 input.WasPressed(Key.NumberPadEnter) ||
+                 input.WasGesturePressed(GestureIntent.SwipeUp) ||
+                 input.WasGesturePressed(GestureIntent.TwoFingerSwipeUp)))
             {
                 _fading = true;
                 _fadeProgress = 0f;

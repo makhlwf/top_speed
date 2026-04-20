@@ -40,6 +40,7 @@ namespace TS.Audio
         private bool _stopAfterFade;
         private DateTime? _startRequestedUtc;
         private bool _silentStartReported;
+        private bool _paused;
 
         internal AudioSourceHandle(AudioOutput output, AudioAsset asset, bool spatialize, bool useHrtf, AudioBus bus, bool ownsAsset = true)
         {
@@ -94,6 +95,7 @@ namespace TS.Audio
         }
 
         public bool IsPlaying => !_disposeRequested && MiniAudioExNative.ma_ex_audio_source_get_is_playing(_sourceHandle) > 0;
+        public bool IsPaused => _paused;
         public int Id => _id;
         public int InputChannels => _asset.InputChannels;
         public int InputSampleRate => _asset.InputSampleRate;
@@ -111,6 +113,7 @@ namespace TS.Audio
             ThrowIfDisposed();
 
             _looping = loop;
+            _paused = false;
             _notifiedEnd = false;
             SetLooping(loop);
 
@@ -171,6 +174,7 @@ namespace TS.Audio
             {
                 CancelFade();
                 MiniAudioExNative.ma_ex_audio_source_stop(_sourceHandle);
+                _paused = false;
                 _graph.ResetEnvelope(1f);
                 _notifiedEnd = false;
                 _startRequestedUtc = null;
@@ -253,6 +257,60 @@ namespace TS.Audio
             }
 
             BeginFade(0f, seconds, stopAfter: true);
+        }
+
+        public void Pause()
+        {
+            ThrowIfDisposed();
+            if (_paused || !IsPlaying)
+                return;
+
+            CancelFade();
+            MiniAudioExNative.ma_ex_audio_source_stop(_sourceHandle);
+            _graph.ResetEnvelope(1f);
+            _notifiedEnd = false;
+            _startRequestedUtc = null;
+            _silentStartReported = false;
+            _paused = true;
+            Emit(AudioDiagnosticLevel.Debug, AudioDiagnosticKind.SourceStopped, "Audio source paused.");
+        }
+
+        public void Resume()
+        {
+            ThrowIfDisposed();
+            if (!_paused)
+                return;
+
+            _startRequestedUtc = DateTime.UtcNow;
+            _silentStartReported = false;
+            MiniAudioExNative.ma_ex_audio_source_apply_settings(_sourceHandle);
+            ApplyPersistedState();
+            var result = MiniAudioExNative.ma_ex_audio_source_start(_sourceHandle);
+            if (result != ma_result.success)
+            {
+                Emit(
+                    AudioDiagnosticLevel.Error,
+                    AudioDiagnosticKind.SourceStarted,
+                    "Audio source resume failed.",
+                    new Dictionary<string, object?>
+                    {
+                        ["result"] = result.ToString()
+                    },
+                    new AudioDiagnosticSnapshot(source: CaptureSnapshot()));
+                throw new InvalidOperationException("Failed to resume audio playback: " + result);
+            }
+
+            _paused = false;
+            Emit(
+                AudioDiagnosticLevel.Debug,
+                AudioDiagnosticKind.SourceStarted,
+                "Audio source resumed.",
+                new Dictionary<string, object?>
+                {
+                    ["looping"] = _looping,
+                    ["isPlaying"] = IsPlaying
+                },
+                new AudioDiagnosticSnapshot(source: CaptureSnapshot()));
         }
 
         public void SetVolume(float volume)

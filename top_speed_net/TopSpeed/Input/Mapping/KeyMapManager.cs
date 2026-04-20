@@ -14,34 +14,34 @@ namespace TopSpeed.Input
             _input = input;
         }
 
-        public IReadOnlyList<InputActionDefinition> Actions => _input.GetActionDefinitions();
+        public IReadOnlyList<DriveIntentDefinition> Actions => _input.GetIntentDefinitions();
 
-        public string GetLabel(InputAction action)
+        public string GetLabel(DriveIntent action)
         {
-            return _input.GetActionLabel(action);
+            return _input.GetIntentLabel(action);
         }
 
-        public Key GetKey(InputAction action)
+        public Key GetKey(DriveIntent action)
         {
             return _input.GetKeyMapping(action);
         }
 
-        public AxisOrButton GetAxis(InputAction action)
+        public AxisOrButton GetAxis(DriveIntent action)
         {
             return _input.GetAxisMapping(action);
         }
 
-        public void ApplyKeyMapping(InputAction action, Key key)
+        public void ApplyKeyMapping(DriveIntent action, Key key)
         {
             _input.ApplyKeyMapping(action, key);
         }
 
-        public void ApplyAxisMapping(InputAction action, AxisOrButton axis)
+        public void ApplyAxisMapping(DriveIntent action, AxisOrButton axis)
         {
             _input.ApplyAxisMapping(action, axis);
         }
 
-        public bool IsKeyInUse(Key key, InputAction ignore)
+        public bool IsKeyInUse(Key key, DriveIntent ignore)
         {
             foreach (var action in Actions)
             {
@@ -53,7 +53,7 @@ namespace TopSpeed.Input
             return false;
         }
 
-        public bool IsAxisInUse(AxisOrButton axis, InputAction ignore)
+        public bool IsAxisInUse(AxisOrButton axis, DriveIntent ignore)
         {
             foreach (var action in Actions)
             {
@@ -91,7 +91,7 @@ namespace TopSpeed.Input
             return InputDisplayText.Axis(axis, profile);
         }
 
-        public string GetMappingInstruction(bool keyboard, InputAction action)
+        public string GetMappingInstruction(bool keyboard, DriveIntent action)
         {
             var label = LocalizationService.Translate(GetLabel(action)).ToLowerInvariant();
             return keyboard

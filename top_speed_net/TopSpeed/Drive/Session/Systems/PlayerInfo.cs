@@ -1,5 +1,6 @@
 using System;
 using TopSpeed.Input;
+using TopSpeed.Localization;
 
 namespace TopSpeed.Drive.Session.Systems
 {
@@ -13,6 +14,7 @@ namespace TopSpeed.Drive.Session.Systems
         private readonly Func<int, int>? _getPlayerPercent;
         private readonly Action<string> _speakText;
         private readonly Action? _updateExtra;
+        private int _focusedPlayer = -1;
 
         public PlayerInfo(
             string name,
@@ -60,6 +62,106 @@ namespace TopSpeed.Drive.Session.Systems
             {
                 _speakText(SessionText.FormatPlayerPercentage(_getPlayerPercent(positionPlayer)));
             }
+
+            if (!_isStarted())
+                return;
+
+            if (_input.GetPreviousPlayerInfoRequest())
+                SelectAndSpeakPlayer(maxPlayerIndex, -1);
+            if (_input.GetNextPlayerInfoRequest())
+                SelectAndSpeakPlayer(maxPlayerIndex, 1);
+            if (_input.GetRepeatPlayerInfoRequest())
+                SpeakFocusedPlayer(maxPlayerIndex);
+        }
+
+        private void SelectAndSpeakPlayer(int maxPlayerIndex, int direction)
+        {
+            if (!TryStepFocusedPlayer(maxPlayerIndex, direction, out var player))
+                return;
+
+            SpeakPlayerDetails(player);
+        }
+
+        private void SpeakFocusedPlayer(int maxPlayerIndex)
+        {
+            if (!TryResolveFocusedPlayer(maxPlayerIndex, out var player))
+                return;
+
+            SpeakPlayerDetails(player);
+        }
+
+        private bool TryResolveFocusedPlayer(int maxPlayerIndex, out int player)
+        {
+            if (_focusedPlayer >= 0
+                && _focusedPlayer <= maxPlayerIndex
+                && _hasPlayer(_focusedPlayer))
+            {
+                player = _focusedPlayer;
+                return true;
+            }
+
+            for (var i = 0; i <= maxPlayerIndex; i++)
+            {
+                if (!_hasPlayer(i))
+                    continue;
+
+                _focusedPlayer = i;
+                player = i;
+                return true;
+            }
+
+            player = 0;
+            return false;
+        }
+
+        private bool TryStepFocusedPlayer(int maxPlayerIndex, int direction, out int player)
+        {
+            if (!TryResolveFocusedPlayer(maxPlayerIndex, out var current))
+            {
+                player = 0;
+                return false;
+            }
+
+            var candidate = current;
+            for (var i = 0; i <= maxPlayerIndex; i++)
+            {
+                candidate += direction;
+                if (candidate < 0)
+                    candidate = maxPlayerIndex;
+                else if (candidate > maxPlayerIndex)
+                    candidate = 0;
+
+                if (!_hasPlayer(candidate))
+                    continue;
+
+                _focusedPlayer = candidate;
+                player = candidate;
+                return true;
+            }
+
+            player = current;
+            return true;
+        }
+
+        private void SpeakPlayerDetails(int playerIndex)
+        {
+            var playerLabel = LocalizationService.Format(LocalizationService.Mark("player {0}"), playerIndex + 1);
+            var vehicleName = _getVehicleName(playerIndex);
+            if (_getPlayerPercent == null)
+            {
+                _speakText(LocalizationService.Format(
+                    LocalizationService.Mark("{0}, {1}."),
+                    playerLabel,
+                    vehicleName));
+                return;
+            }
+
+            var percent = SessionText.FormatPlayerPercentage(_getPlayerPercent(playerIndex));
+            _speakText(LocalizationService.Format(
+                LocalizationService.Mark("{0}, {1}, {2}."),
+                playerLabel,
+                percent,
+                vehicleName));
         }
     }
 }

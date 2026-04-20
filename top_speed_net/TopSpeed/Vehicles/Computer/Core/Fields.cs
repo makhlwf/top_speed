@@ -119,6 +119,7 @@ namespace TopSpeed.Vehicles
         private bool _radioLoaded;
         private bool _radioPlaying;
         private uint _radioMediaId;
+        private int _remoteRadioSenderVolumePercent = 100;
 
         private Source _soundEngine = default!;
         private Source _soundHorn = default!;

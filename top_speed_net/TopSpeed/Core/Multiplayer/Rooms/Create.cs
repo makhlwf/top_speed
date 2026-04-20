@@ -21,7 +21,9 @@ namespace TopSpeed.Core.Multiplayer
                 RoomCapacityOptions,
                 GetCreateRoomPlayersToStartIndex,
                 SetCreateRoomPlayersToStart,
-                hint: LocalizationService.Mark("Choose the player capacity from 2 to 10. Use LEFT or RIGHT to change."))
+                hint: InteractionHints.ForPlatform(
+                    LocalizationService.Mark("Choose the player capacity from 2 to 10. Use LEFT or RIGHT to change."),
+                    LocalizationService.Mark("Choose the player capacity from 2 to 10. Swipe left or right with two fingers to change.")))
             {
                 Hidden = _state.RoomDrafts.CreateRoomType == GameRoomType.OneOnOne
             };
@@ -32,7 +34,9 @@ namespace TopSpeed.Core.Multiplayer
                     RoomTypeOptions,
                     GetCreateRoomTypeIndex,
                     SetCreateRoomType,
-                    hint: LocalizationService.Mark("Choose whether this room is a race with bots, a multiplayer race without bots, or a one-on-one game. Use LEFT or RIGHT to change.")),
+                    hint: InteractionHints.ForPlatform(
+                        LocalizationService.Mark("Choose whether this room is a race with bots, a multiplayer race without bots, or a one-on-one game. Use LEFT or RIGHT to change."),
+                        LocalizationService.Mark("Choose whether this room is a race with bots, a multiplayer race without bots, or a one-on-one game. Swipe left or right with two fingers to change."))),
                 maxPlayersItem,
                 new MenuItem(
                     () => string.IsNullOrWhiteSpace(_state.RoomDrafts.CreateRoomName)
@@ -42,7 +46,9 @@ namespace TopSpeed.Core.Multiplayer
                             _state.RoomDrafts.CreateRoomName),
                     MenuAction.None,
                     onActivate: UpdateCreateRoomName,
-                    hint: LocalizationService.Mark("Press ENTER to enter a room name. Leave it empty to use an automatic name.")),
+                    hint: InteractionHints.ForPlatform(
+                        LocalizationService.Mark("Press ENTER to enter a room name. Leave it empty to use an automatic name."),
+                        LocalizationService.Mark("Swipe up to enter a room name. Leave it empty to use an automatic name."))),
                 new MenuItem(LocalizationService.Mark("Create this game room"), MenuAction.None, onActivate: ConfirmCreateRoom),
                 new MenuItem(LocalizationService.Mark("Cancel room creation"), MenuAction.Back)
             };

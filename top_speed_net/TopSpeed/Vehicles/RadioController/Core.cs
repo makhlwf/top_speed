@@ -24,6 +24,7 @@ namespace TopSpeed.Vehicles
         public uint MediaId => _mediaId;
         public bool HasMedia => _source != null;
         public bool IsPlaying => _source != null && _source.IsPlaying;
+        public bool IsPaused => _source != null && _source.IsPaused;
         public bool DesiredPlaying => _desiredPlaying;
         public string? MediaPath => _mediaPath;
         public int VolumePercent => _volumePercent;
@@ -43,11 +44,10 @@ namespace TopSpeed.Vehicles
         public void SetLoopPlayback(bool loopPlayback)
         {
             _loopPlayback = loopPlayback;
-            if (_source == null || !_desiredPlaying || _pausedByGame || !_source.IsPlaying)
+            if (_source == null)
                 return;
 
-            _source.Stop();
-            _source.Play(loop: _loopPlayback);
+            _source.SetLooping(_loopPlayback);
         }
     }
 }

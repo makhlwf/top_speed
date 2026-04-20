@@ -30,16 +30,16 @@ namespace TopSpeed.Vehicles
         {
             var enginePercent = _settings.AudioVolumes?.OtherVehicleEnginePercent ?? 80;
             var eventsPercent = _settings.AudioVolumes?.OtherVehicleEventsPercent ?? 100;
-            var radioPercent = _settings.AudioVolumes?.RadioPercent ?? 100;
+            var receiverRadioPercent = _settings.AudioVolumes?.RadioPercent ?? 100;
             if (!force &&
                 enginePercent == _lastOtherEngineVolumePercent &&
                 eventsPercent == _lastOtherEventsVolumePercent &&
-                radioPercent == _lastRadioVolumePercent)
+                receiverRadioPercent == _lastRadioVolumePercent)
                 return;
 
             _lastOtherEngineVolumePercent = enginePercent;
             _lastOtherEventsVolumePercent = eventsPercent;
-            _lastRadioVolumePercent = radioPercent;
+            _lastRadioVolumePercent = receiverRadioPercent;
 
             SetOtherEngineVolumePercent(_soundEngine, 80);
             SetOtherEngineVolumePercent(_soundStart, 100);
@@ -49,8 +49,7 @@ namespace TopSpeed.Vehicles
             SetOtherEventVolumePercent(_soundMiniCrash, 100);
             SetOtherEventVolumePercent(_soundBump, 100);
             SetOtherEventVolumePercent(_soundBackfire, 100);
-            _radio.SetVolumePercent(radioPercent);
-            _liveRadio.SetVolumePercent(radioPercent);
+            ApplyRemoteRadioVolume();
         }
 
         private void SetOtherEngineVolumePercent(Source? sound, int percent)
@@ -61,6 +60,37 @@ namespace TopSpeed.Vehicles
         private void SetOtherEventVolumePercent(Source? sound, int percent)
         {
             sound.SetVolumePercent(_settings, AudioVolumeCategory.OtherVehicleEvents, percent);
+        }
+
+        private void SetRemoteRadioSenderVolumePercent(int senderRadioPercent)
+        {
+            var clamped = senderRadioPercent;
+            if (clamped < 0)
+                clamped = 0;
+            else if (clamped > 100)
+                clamped = 100;
+            if (clamped == _remoteRadioSenderVolumePercent)
+                return;
+
+            _remoteRadioSenderVolumePercent = clamped;
+            ApplyRemoteRadioVolume();
+        }
+
+        private void ApplyRemoteRadioVolume()
+        {
+            var receiverRadioPercent = _lastRadioVolumePercent >= 0
+                ? _lastRadioVolumePercent
+                : _settings.AudioVolumes?.RadioPercent ?? 100;
+            if (receiverRadioPercent < 0)
+                receiverRadioPercent = 0;
+            else if (receiverRadioPercent > 100)
+                receiverRadioPercent = 100;
+
+            var effectiveBufferedPercent = (_remoteRadioSenderVolumePercent * receiverRadioPercent + 50) / 100;
+            _radio.SetVolumePercent(effectiveBufferedPercent);
+
+            // Live radio applies receiver-side category scaling via AudioHelpers.
+            _liveRadio.SetVolumePercent(_remoteRadioSenderVolumePercent);
         }
 
         private Source CreateRequiredSound(string? path, string label, bool looped = false, bool allowHrtf = true)

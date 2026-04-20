@@ -32,7 +32,14 @@ namespace TopSpeed.Core.Multiplayer
                             LocalizationService.Mark("Server port, currently set to {0}"),
                             _state.SavedServers.Draft.Port)
                         : LocalizationService.Mark("Server port, currently empty."),
-                    UpdateSavedServerDraftPort)
+                    UpdateSavedServerDraftPort),
+                new MenuFormControl(
+                    () => string.IsNullOrWhiteSpace(_state.SavedServers.Draft.DefaultCallSign)
+                        ? LocalizationService.Mark("Default call sign, currently empty.")
+                        : LocalizationService.Format(
+                            LocalizationService.Mark("Default call sign, currently set to {0}"),
+                            _state.SavedServers.Draft.DefaultCallSign),
+                    UpdateSavedServerDraftDefaultCallSign)
             };
 
             var saveLabel = _state.SavedServers.EditIndex >= 0
@@ -66,11 +73,15 @@ namespace TopSpeed.Core.Multiplayer
             var original = NormalizeSavedServerDraft(_state.SavedServers.Original ?? new SavedServerEntry());
 
             if (_state.SavedServers.EditIndex < 0)
-                return !string.IsNullOrWhiteSpace(current.Host) || !string.IsNullOrWhiteSpace(current.Name) || current.Port != 0;
+                return !string.IsNullOrWhiteSpace(current.Host)
+                    || !string.IsNullOrWhiteSpace(current.Name)
+                    || current.Port != 0
+                    || !string.IsNullOrWhiteSpace(current.DefaultCallSign);
 
             return !string.Equals(current.Name, original.Name, StringComparison.Ordinal)
                 || !string.Equals(current.Host, original.Host, StringComparison.OrdinalIgnoreCase)
-                || current.Port != original.Port;
+                || current.Port != original.Port
+                || !string.Equals(current.DefaultCallSign, original.DefaultCallSign, StringComparison.Ordinal);
         }
 
         private void DiscardSavedServerDraftChanges()

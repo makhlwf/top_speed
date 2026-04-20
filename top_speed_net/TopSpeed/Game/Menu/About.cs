@@ -1,14 +1,8 @@
 using System;
-using System.Threading;
 using TopSpeed.Core.Updates;
 using TopSpeed.Localization;
 using TopSpeed.Menu;
 using TopSpeed.Protocol;
-#if NETFRAMEWORK
-using System.Windows.Forms;
-#else
-using Eto.Forms;
-#endif
 
 namespace TopSpeed.Game
 {
@@ -50,7 +44,7 @@ namespace TopSpeed.Game
             if (string.IsNullOrWhiteSpace(text))
                 return;
 
-            if (TrySetClipboardText(text))
+            if (_clipboard.TrySetText(text))
             {
                 _speech.Speak(LocalizationService.Mark("Copied to clipboard."));
                 return;
@@ -58,86 +52,5 @@ namespace TopSpeed.Game
 
             _speech.Speak(LocalizationService.Mark("Unable to copy to clipboard."));
         }
-
-        private static bool TrySetClipboardText(string text)
-        {
-#if NETFRAMEWORK
-            if (TrySetClipboardTextWinFormsDirect(text))
-                return true;
-
-            var success = false;
-            using (var completed = new ManualResetEventSlim(false))
-            {
-                var thread = new Thread(() =>
-                {
-                    success = TrySetClipboardTextWinFormsDirect(text);
-                    completed.Set();
-                })
-                {
-                    IsBackground = true,
-                    Name = "AboutClipboardCopy"
-                };
-                thread.SetApartmentState(ApartmentState.STA);
-                thread.Start();
-                completed.Wait(1000);
-            }
-
-            return success;
-#else
-            try
-            {
-                var app = Application.Instance;
-                if (app == null)
-                    return false;
-
-                var copied = false;
-                app.Invoke(() =>
-                {
-                    try
-                    {
-                        Clipboard.Instance.Text = text;
-                        copied = true;
-                    }
-                    catch
-                    {
-                        copied = false;
-                    }
-                });
-                return copied;
-            }
-            catch
-            {
-                return false;
-            }
-#endif
-        }
-
-#if NETFRAMEWORK
-        private static bool TrySetClipboardTextWinFormsDirect(string text)
-        {
-            for (var attempt = 0; attempt < 8; attempt++)
-            {
-                try
-                {
-                    Clipboard.SetText(text, TextDataFormat.UnicodeText);
-                    return true;
-                }
-                catch (System.Runtime.InteropServices.ExternalException)
-                {
-                    Thread.Sleep(20);
-                }
-                catch (ThreadStateException)
-                {
-                    return false;
-                }
-                catch
-                {
-                    return false;
-                }
-            }
-
-            return false;
-        }
-#endif
     }
 }

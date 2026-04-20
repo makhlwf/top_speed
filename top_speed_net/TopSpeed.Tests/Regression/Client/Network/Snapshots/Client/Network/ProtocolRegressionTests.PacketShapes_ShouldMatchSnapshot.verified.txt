@@ -35,7 +35,8 @@
     MediaLoaded: true,
     MediaPlaying: true,
     MediaId: 99,
-    Length: 37
+    RadioVolumePercent: 75,
+    Length: 38
   },
   RoomEvent: {
     Bytes: [

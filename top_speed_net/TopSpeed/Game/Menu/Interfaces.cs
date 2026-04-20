@@ -20,6 +20,7 @@ namespace TopSpeed.Game
         void IMenuServerActions.OpenSavedServersManager() => _multiplayerCoordinator.OpenSavedServersManager();
         void IMenuServerActions.BeginManualServerEntry() => _multiplayerCoordinator.BeginManualServerEntry();
         void IMenuServerActions.BeginServerPortEntry() => _multiplayerCoordinator.BeginServerPortEntry();
+        void IMenuServerActions.BeginDefaultCallSignEntry() => _multiplayerCoordinator.BeginDefaultCallSignEntry();
         void IMenuServerActions.NextChatCategory() => _multiplayerCoordinator.NextChatCategory();
         void IMenuServerActions.PreviousChatCategory() => _multiplayerCoordinator.PreviousChatCategory();
 
@@ -47,9 +48,9 @@ namespace TopSpeed.Game
         void IMenuSettingsActions.SetSpeechRate(float rate) => SetSpeechRate(rate);
         void IMenuSettingsActions.UpdateSetting(Action update) => UpdateSetting(update);
 
-        void IMenuMappingActions.BeginMapping(InputMappingMode mode, InputAction action) => _inputMapping.BeginMapping(mode, action);
+        void IMenuMappingActions.BeginMapping(InputMappingMode mode, DriveIntent action) => _inputMapping.BeginMapping(mode, action);
         void IMenuMappingActions.BeginShortcutMapping(string groupId, string actionId, string displayName) => _shortcutMapping.BeginMapping(groupId, actionId, displayName);
-        string IMenuMappingActions.FormatMappingValue(InputAction action, InputMappingMode mode) => _inputMapping.FormatMappingValue(action, mode);
+        string IMenuMappingActions.FormatMappingValue(DriveIntent action, InputMappingMode mode) => _inputMapping.FormatMappingValue(action, mode);
         void IMenuMappingActions.ResetMappings(InputMappingMode mode) => ResetMappings(mode);
     }
 }

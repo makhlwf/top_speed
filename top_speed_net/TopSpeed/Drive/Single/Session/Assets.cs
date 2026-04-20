@@ -125,7 +125,7 @@ namespace TopSpeed.Drive.Single
             if (sound != null)
                 return sound;
 
-            var errorPath = GetLegacySoundPath("error.wav");
+            var errorPath = AssetPaths.ResolveLegacySoundPath("error.wav");
             if (errorPath != null)
                 return LoadBusSource(errorPath, AudioEngineOptions.CopilotBusName, streamFromDisk: true);
 
@@ -134,26 +134,18 @@ namespace TopSpeed.Drive.Single
 
         private Source? TryLoadLanguageSound(string key, bool allowFallback, bool streamFromDisk = true)
         {
-            var path = ResolveLanguageSoundPath(_settings.Language, key);
+            var path = allowFallback
+                ? AssetPaths.ResolveLanguageSoundPathWithFallback(_settings.Language, key)
+                : AssetPaths.ResolveLanguageSoundPath(_settings.Language, key);
             if (path != null)
                 return LoadBusSource(path, AudioEngineOptions.CopilotBusName, streamFromDisk);
-
-            if (allowFallback && !string.Equals(_settings.Language, "en", StringComparison.OrdinalIgnoreCase))
-            {
-                path = ResolveLanguageSoundPath("en", key);
-                if (path != null)
-                    return LoadBusSource(path, AudioEngineOptions.CopilotBusName, streamFromDisk);
-            }
 
             return null;
         }
 
         private Source LoadLanguageMusicSound(string key, bool streamFromDisk)
         {
-            var path = ResolveLanguageSoundPath(_settings.Language, key)
-                ?? (!string.Equals(_settings.Language, "en", StringComparison.OrdinalIgnoreCase)
-                    ? ResolveLanguageSoundPath("en", key)
-                    : null);
+            var path = AssetPaths.ResolveLanguageSoundPathWithFallback(_settings.Language, key);
             if (path == null)
                 throw new FileNotFoundException($"Missing language sound {key}.");
 
@@ -162,26 +154,11 @@ namespace TopSpeed.Drive.Single
 
         private Source LoadLegacySound(string fileName)
         {
-            var path = GetLegacySoundPath(fileName);
+            var path = AssetPaths.ResolveLegacySoundPath(fileName);
             if (path == null)
                 throw new FileNotFoundException($"Missing legacy sound {fileName}.");
 
             return LoadBusSource(path, AudioEngineOptions.CopilotBusName, streamFromDisk: true);
-        }
-
-        private string? ResolveLanguageSoundPath(string language, string key)
-        {
-            var relative = key.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
-            if (string.IsNullOrWhiteSpace(Path.GetExtension(relative)))
-                relative += ".ogg";
-            var path = Path.Combine(AssetPaths.SoundsRoot, language, relative);
-            return File.Exists(path) ? path : null;
-        }
-
-        private static string? GetLegacySoundPath(string fileName)
-        {
-            var path = Path.Combine(AssetPaths.SoundsRoot, "Legacy", fileName);
-            return File.Exists(path) ? path : null;
         }
 
         private Source LoadBusSource(string path, string busName, bool streamFromDisk)

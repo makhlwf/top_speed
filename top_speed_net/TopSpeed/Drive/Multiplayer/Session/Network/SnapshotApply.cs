@@ -126,7 +126,8 @@ namespace TopSpeed.Drive.Multiplayer
                     target.Backfiring,
                     target.MediaLoaded,
                     target.MediaPlaying,
-                    target.MediaId);
+                    target.MediaId,
+                    target.RadioVolumePercent);
             }
 
             RemoveMissingSnapshotPlayers();

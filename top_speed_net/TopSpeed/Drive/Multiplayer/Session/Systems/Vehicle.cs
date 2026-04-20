@@ -99,7 +99,12 @@ namespace TopSpeed.Drive.Multiplayer.Session.Systems
             _trackCrashState();
             UpdateListener(elapsed);
 
-            if (_track.NextRoad(_car.PositionY, _car.Speed, (int)_settings.CurveAnnouncement, out var nextRoad))
+            if (_track.NextRoad(
+                _car.PositionY,
+                _car.Speed,
+                (int)_settings.CurveAnnouncement,
+                _settings.CurveAnnouncementLeadTimeSeconds,
+                out var nextRoad))
                 _setCurrentRoad(_trackAudio.AnnounceNextRoad(_getCurrentRoad(), nextRoad));
         }
 
@@ -121,7 +126,7 @@ namespace TopSpeed.Drive.Multiplayer.Session.Systems
                 return;
             if (_car.Gear == previousGear)
                 return;
-            if (!_input.GetGearUp() && !_input.GetGearDown())
+            if (!_input.Intents.IsTriggered(DriveIntent.GearUp) && !_input.Intents.IsTriggered(DriveIntent.GearDown))
                 return;
 
             _speakText(TopSpeed.Drive.Session.SessionText.FormatGearCode(_car));

@@ -1,11 +1,12 @@
 using System;
 using Key = TopSpeed.Input.InputKey;
+using Gesture = TopSpeed.Input.GestureIntent;
 
 namespace TopSpeed.Shortcuts
 {
     internal readonly struct ShortcutBinding
     {
-        public ShortcutBinding(string actionId, string displayName, string description, Key key)
+        public ShortcutBinding(string actionId, string displayName, string description, Key key, Gesture? gestureIntent = null)
         {
             if (string.IsNullOrWhiteSpace(actionId))
                 throw new ArgumentException("Shortcut action id is required.", nameof(actionId));
@@ -18,12 +19,14 @@ namespace TopSpeed.Shortcuts
             DisplayName = displayName.Trim();
             Description = description.Trim();
             Key = key;
+            GestureIntent = gestureIntent;
         }
 
         public string ActionId { get; }
         public string DisplayName { get; }
         public string Description { get; }
         public Key Key { get; }
+        public Gesture? GestureIntent { get; }
     }
 }
 

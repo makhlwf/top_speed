@@ -8,133 +8,133 @@ namespace TopSpeed.Input
         public void SetRequestInfo(AxisOrButton a)
         {
             _requestInfo = a;
-            _settings.ControllerRequestInfo = a;
+            _settings.SetControllerBinding(DriveIntent.RequestInfo, a);
         }
 
         public void SetRequestInfo(Key key)
         {
             _kbRequestInfo = key;
-            _settings.KeyRequestInfo = key;
+            _settings.SetKeyboardBinding(DriveIntent.RequestInfo, key);
         }
 
         public void SetCurrentGear(AxisOrButton a)
         {
             _currentGear = a;
-            _settings.ControllerCurrentGear = a;
+            _settings.SetControllerBinding(DriveIntent.CurrentGear, a);
         }
 
         public void SetCurrentGear(Key key)
         {
             _kbCurrentGear = key;
-            _settings.KeyCurrentGear = key;
+            _settings.SetKeyboardBinding(DriveIntent.CurrentGear, key);
         }
 
         public void SetCurrentLapNr(AxisOrButton a)
         {
             _currentLapNr = a;
-            _settings.ControllerCurrentLapNr = a;
+            _settings.SetControllerBinding(DriveIntent.CurrentLapNr, a);
         }
 
         public void SetCurrentLapNr(Key key)
         {
             _kbCurrentLapNr = key;
-            _settings.KeyCurrentLapNr = key;
+            _settings.SetKeyboardBinding(DriveIntent.CurrentLapNr, key);
         }
 
         public void SetCurrentRacePerc(AxisOrButton a)
         {
             _currentRacePerc = a;
-            _settings.ControllerCurrentRacePerc = a;
+            _settings.SetControllerBinding(DriveIntent.CurrentRacePerc, a);
         }
 
         public void SetCurrentRacePerc(Key key)
         {
             _kbCurrentRacePerc = key;
-            _settings.KeyCurrentRacePerc = key;
+            _settings.SetKeyboardBinding(DriveIntent.CurrentRacePerc, key);
         }
 
         public void SetCurrentLapPerc(AxisOrButton a)
         {
             _currentLapPerc = a;
-            _settings.ControllerCurrentLapPerc = a;
+            _settings.SetControllerBinding(DriveIntent.CurrentLapPerc, a);
         }
 
         public void SetCurrentLapPerc(Key key)
         {
             _kbCurrentLapPerc = key;
-            _settings.KeyCurrentLapPerc = key;
+            _settings.SetKeyboardBinding(DriveIntent.CurrentLapPerc, key);
         }
 
         public void SetCurrentRaceTime(AxisOrButton a)
         {
             _currentRaceTime = a;
-            _settings.ControllerCurrentRaceTime = a;
+            _settings.SetControllerBinding(DriveIntent.CurrentRaceTime, a);
         }
 
         public void SetCurrentRaceTime(Key key)
         {
             _kbCurrentRaceTime = key;
-            _settings.KeyCurrentRaceTime = key;
+            _settings.SetKeyboardBinding(DriveIntent.CurrentRaceTime, key);
         }
 
         public void SetStartEngine(AxisOrButton a)
         {
             _startEngine = a;
-            _settings.ControllerStartEngine = a;
+            _settings.SetControllerBinding(DriveIntent.StartEngine, a);
         }
 
         public void SetStartEngine(Key key)
         {
             _kbStartEngine = key;
-            _settings.KeyStartEngine = key;
+            _settings.SetKeyboardBinding(DriveIntent.StartEngine, key);
         }
 
         public void SetReportDistance(AxisOrButton a)
         {
             _reportDistance = a;
-            _settings.ControllerReportDistance = a;
+            _settings.SetControllerBinding(DriveIntent.ReportDistance, a);
         }
 
         public void SetReportDistance(Key key)
         {
             _kbReportDistance = key;
-            _settings.KeyReportDistance = key;
+            _settings.SetKeyboardBinding(DriveIntent.ReportDistance, key);
         }
 
         public void SetReportSpeed(AxisOrButton a)
         {
             _reportSpeed = a;
-            _settings.ControllerReportSpeed = a;
+            _settings.SetControllerBinding(DriveIntent.ReportSpeed, a);
         }
 
         public void SetReportSpeed(Key key)
         {
             _kbReportSpeed = key;
-            _settings.KeyReportSpeed = key;
+            _settings.SetKeyboardBinding(DriveIntent.ReportSpeed, key);
         }
 
         public void SetTrackName(AxisOrButton a)
         {
             _trackName = a;
-            _settings.ControllerTrackName = a;
+            _settings.SetControllerBinding(DriveIntent.TrackName, a);
         }
 
         public void SetTrackName(Key key)
         {
             _kbTrackName = key;
-            _settings.KeyTrackName = key;
+            _settings.SetKeyboardBinding(DriveIntent.TrackName, key);
         }
 
         public void SetPause(AxisOrButton a)
         {
             _pause = a;
-            _settings.ControllerPause = a;
+            _settings.SetControllerBinding(DriveIntent.Pause, a);
         }
 
         public void SetPause(Key key)
         {
             _kbPause = key;
-            _settings.KeyPause = key;
+            _settings.SetKeyboardBinding(DriveIntent.Pause, key);
         }
     }
 }

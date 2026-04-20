@@ -82,7 +82,8 @@ namespace TopSpeed.Server.Network
                 Backfiring = bot.BackfirePulseSeconds > 0f,
                 MediaLoaded = false,
                 MediaPlaying = false,
-                MediaId = 0
+                MediaId = 0,
+                RadioVolumePercent = 100
             };
         }
 
