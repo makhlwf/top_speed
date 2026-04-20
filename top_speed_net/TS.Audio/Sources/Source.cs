@@ -27,6 +27,7 @@ namespace TS.Audio
         public void FadeIn(float seconds) => _handle.FadeIn(seconds);
         public void FadeOut(float seconds) => _handle.FadeOut(seconds);
         public void SeekToStart() => _handle.SeekToStart();
+        public void Restart(bool loop, float fadeInSeconds) => _handle.Restart(loop, fadeInSeconds);
         public void SetLooping(bool looping) => _handle.SetLooping(looping);
         public void SetOnEnd(Action onEnd) => _handle.SetOnEnd(onEnd);
 

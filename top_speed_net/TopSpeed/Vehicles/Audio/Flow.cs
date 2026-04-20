@@ -11,7 +11,6 @@ namespace TopSpeed.Vehicles.Audio
     {
         private const int MaxSurfaceFreq = 100000;
         private const float HornFadeSeconds = 0.010f;
-        private const float HornRestartFadeSeconds = 0.010f;
 
         public void RefreshVolumes(
             DriveSettings settings,
